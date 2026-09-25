@@ -1,5 +1,11 @@
 # Engineering evidence and design revisions
 
+## CUDA identifiers and Metal entrypoint names
+
+**Problem and evidence.** Final code review found that directly emitting a CUDA function identifier as an MSL entrypoint would reject otherwise valid names that are MSL keywords, such as `kernel`. A focused codegen regression now covers this collision.
+
+**Selected revision.** Prefix every generated entrypoint with `uc_kernel_` and use that exact generated name in runtime lookup. The logical CUDA kernel name remains in IR and execution evidence. The handwritten smoke path keeps its explicit test signature. This is a uniform naming rule, never a special case for vector addition.
+
 ## Dependency installation side effect
 
 **Problem and evidence.** Homebrew's default post-install cleanup removed old package versions and an existing optional Python 3.13 installation while installing the selected build tools. The log reported autoremoving Python 3.13.12_1. LLVM, CMake, and Ninja were installed and their versions/parser behavior verified despite a separate cleanup permission error.

@@ -4,6 +4,8 @@ This is an ordered plan, not a support matrix. Actual results are in `docs/statu
 
 ## Gate A: first complete source-to-GPU program
 
+Completed on 2026-09-25; original evidence is retained in `artifacts/gate-a/`. Gate B remains deferred.
+
 1. Research prior art and record the architecture, IR choice, dependencies, and licenses.
 2. Build device discovery, checked memory handling, default queue, and error propagation.
 3. Execute handwritten Metal through the same runtime boundary used by generated kernels.

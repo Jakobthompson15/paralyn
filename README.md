@@ -2,7 +2,25 @@
 
 An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
-The current objective is Gate A: compile a complete ordinary CUDA vector-add program, preserve its host computation, lower its kernel through verified typed IR, execute on a physical Apple GPU, and independently check the output. See [status](docs/status.md) for actual results.
+**Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. This is the first working milestone, not a qualified public release.
+
+```text
+$ build/unicuda run examples/vector_add.cu
+UniCUDA v0.0.1
+
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Kernel: vector_add
+Grid: 4 × 1 × 1
+Block: 256 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+
+Verification: PASS (1024 independently checked elements)
+```
+
+The first passing run is preserved in [artifacts/gate-a](artifacts/gate-a/), including the [actual execution record](artifacts/gate-a/execution.json) and [verification transcript](artifacts/gate-a/verification.txt). See [status](docs/status.md) for the exact revision and limits.
 
 ## Build and inspect
 

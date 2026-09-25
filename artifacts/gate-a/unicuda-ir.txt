@@ -1,0 +1,8 @@
+unicuda.ir v0
+kernel vector_add(a: read buffer<f32>, b: read buffer<f32>, c: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store c[i] = (load a[i] + load b[i])
+  }
+}
+

@@ -1,0 +1,15 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "os": "Version 26.5.1 (Build 25F80)",
+  "unicuda_commit": "3f3c960f0eb712869cbc99b81e3fdd84394e8efe",
+  "unicuda_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "launches": [
+    {"kernel": "vector_add", "grid": [4,1,1], "block": [256,1,1], "command_status": "completed", "gpu_start_seconds": 3170206.3118827501, "gpu_end_seconds": 3170206.3119094167, "gpu_duration_seconds": 2.6666559278964996e-05, "error": ""}
+  ]
+}
