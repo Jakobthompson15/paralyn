@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace unicuda {
+namespace paralyn {
 namespace {
 struct RuntimeError : std::runtime_error {
   cudaError_t code;
@@ -73,7 +73,7 @@ id<MTLDevice> choose_device(const std::string &selector) {
   auto devices = enumerate_devices();
   if (devices.empty())
     throw RuntimeError(cudaErrorInitializationError,
-                       "No physical Metal device is available; UniCUDA has no CPU fallback");
+                       "No physical Metal device is available; Paralyn has no CPU fallback");
   std::size_t index = 0;
   if (selector != "auto") {
     if (selector.empty() || selector.find_first_not_of("0123456789") != std::string::npos)
@@ -118,7 +118,7 @@ void exit_shutdown();
 void ensure_shutdown_handler() {
   static const bool installed = std::atexit(exit_shutdown) == 0;
   if (!installed) {
-    std::cerr << "UniCUDA could not install its GPU shutdown handler\n";
+    std::cerr << "Paralyn could not install its GPU shutdown handler\n";
     std::_Exit(EXIT_FAILURE);
   }
 }
@@ -160,7 +160,7 @@ struct Context {
     return it->second;
   }
   void write_artifacts() {
-    const auto directory = environment("UNICUDA_ARTIFACT_DIR", "");
+    const auto directory = environment("PARALYN_ARTIFACT_DIR", "");
     if (directory.empty() || executions.empty())
       return;
     std::filesystem::create_directories(directory);
@@ -174,12 +174,12 @@ struct Context {
            << "{\n  \"backend\": \"Metal\",\n  \"device\": " << json(utf8(device.name))
            << ",\n  \"registry_id\": " << device.registryID
            << ",\n  \"os\": " << json(utf8(NSProcessInfo.processInfo.operatingSystemVersionString))
-           << ",\n  \"unicuda_commit\": " << json(environment("UNICUDA_COMMIT"))
-           << ",\n  \"unicuda_dirty\": "
-           << (environment("UNICUDA_SOURCE_DIRTY") == "true"    ? "true"
-               : environment("UNICUDA_SOURCE_DIRTY") == "false" ? "false"
+           << ",\n  \"paralyn_commit\": " << json(environment("PARALYN_COMMIT"))
+           << ",\n  \"paralyn_dirty\": "
+           << (environment("PARALYN_SOURCE_DIRTY") == "true"    ? "true"
+               : environment("PARALYN_SOURCE_DIRTY") == "false" ? "false"
                                                                 : "null")
-           << ",\n  \"llvm_version\": " << json(environment("UNICUDA_LLVM_VERSION"))
+           << ",\n  \"llvm_version\": " << json(environment("PARALYN_LLVM_VERSION"))
            << ",\n  \"math_mode\": \"safe\",\n  \"floating_point_functions\": \"precise\","
            << "\n  \"cpu_fallback\": false,\n  \"launches\": [\n";
     for (std::size_t i = 0; i < executions.size(); ++i) {
@@ -226,7 +226,7 @@ struct Context {
 Context &context() {
   if (!active_context) {
     ensure_shutdown_handler();
-    auto owned = std::make_unique<Context>(environment("UNICUDA_DEVICE", "auto"));
+    auto owned = std::make_unique<Context>(environment("PARALYN_DEVICE", "auto"));
     active_context = owned.release();
   }
   return *active_context;
@@ -247,7 +247,7 @@ cudaError_t remember_exception() noexcept {
   } catch (const std::exception &e) {
     remember(cudaErrorUnknown, e.what());
   } catch (...) {
-    remember(cudaErrorUnknown, "Unknown UniCUDA runtime failure");
+    remember(cudaErrorUnknown, "Unknown Paralyn runtime failure");
   }
   return last_error;
 }
@@ -261,7 +261,7 @@ void exit_shutdown() {
         throw RuntimeError(last_error, *last_detail);
     }
   } catch (const std::exception &e) {
-    std::cerr << "UniCUDA shutdown failed: " << e.what() << '\n';
+    std::cerr << "Paralyn shutdown failed: " << e.what() << '\n';
     std::cerr.flush();
     std::cout.flush();
     std::_Exit(EXIT_FAILURE);
@@ -500,43 +500,43 @@ void shutdown() {
       throw RuntimeError(last_error, *last_detail);
   }
 }
-} // namespace unicuda
+} // namespace paralyn
 
 extern "C" cudaError_t cudaMalloc(void **pointer, std::size_t bytes) {
   try {
-    std::lock_guard<std::mutex> lock(unicuda::runtime_mutex);
+    std::lock_guard<std::mutex> lock(paralyn::runtime_mutex);
     @autoreleasepool {
       if (!pointer)
-        throw unicuda::RuntimeError(cudaErrorInvalidValue, "cudaMalloc requires an output pointer");
+        throw paralyn::RuntimeError(cudaErrorInvalidValue, "cudaMalloc requires an output pointer");
       *pointer = nullptr;
       if (!bytes)
         return cudaSuccess;
-      auto &ctx = unicuda::context();
+      auto &ctx = paralyn::context();
       if (bytes > ctx.device.maxBufferLength)
-        throw unicuda::RuntimeError(cudaErrorMemoryAllocation,
+        throw paralyn::RuntimeError(cudaErrorMemoryAllocation,
                                     "cudaMalloc size exceeds Metal maximum buffer length");
       id<MTLBuffer> buffer = [ctx.device newBufferWithLength:bytes
                                                      options:MTLResourceStorageModeShared];
       if (!buffer)
-        throw unicuda::RuntimeError(cudaErrorMemoryAllocation, "Metal buffer allocation failed");
-      auto token = std::make_unique<unicuda::Token>();
+        throw paralyn::RuntimeError(cudaErrorMemoryAllocation, "Metal buffer allocation failed");
+      auto token = std::make_unique<paralyn::Token>();
       token->identity = ctx.tokens.size() + 1;
       void *identity = token.get();
       ctx.tokens.push_back(std::move(token));
       ctx.allocations.emplace(
-          identity, std::make_shared<unicuda::Allocation>(unicuda::Allocation{buffer, bytes}));
+          identity, std::make_shared<paralyn::Allocation>(paralyn::Allocation{buffer, bytes}));
       *pointer = identity;
       return cudaSuccess;
     }
   } catch (...) {
-    return unicuda::remember_exception();
+    return paralyn::remember_exception();
   }
 }
 extern "C" cudaError_t cudaFree(void *pointer) {
   try {
-    std::lock_guard<std::mutex> lock(unicuda::runtime_mutex);
+    std::lock_guard<std::mutex> lock(paralyn::runtime_mutex);
     @autoreleasepool {
-      auto &ctx = unicuda::context();
+      auto &ctx = paralyn::context();
       ctx.sync();
       if (pointer) {
         ctx.allocation(pointer);
@@ -545,33 +545,33 @@ extern "C" cudaError_t cudaFree(void *pointer) {
       return cudaSuccess;
     }
   } catch (...) {
-    return unicuda::remember_exception();
+    return paralyn::remember_exception();
   }
 }
 extern "C" cudaError_t cudaMemcpy(void *destination, const void *source, std::size_t bytes,
                                   cudaMemcpyKind kind) {
   try {
-    std::lock_guard<std::mutex> lock(unicuda::runtime_mutex);
+    std::lock_guard<std::mutex> lock(paralyn::runtime_mutex);
     @autoreleasepool {
       if (kind != cudaMemcpyHostToDevice && kind != cudaMemcpyDeviceToHost)
-        throw unicuda::RuntimeError(cudaErrorInvalidMemcpyDirection,
+        throw paralyn::RuntimeError(cudaErrorInvalidMemcpyDirection,
                                     "Only explicit H2D and D2H copies are supported");
-      auto &ctx = unicuda::context();
+      auto &ctx = paralyn::context();
       ctx.sync();
       if (!bytes)
         return cudaSuccess;
       if (!destination || !source)
-        throw unicuda::RuntimeError(cudaErrorInvalidValue,
+        throw paralyn::RuntimeError(cudaErrorInvalidValue,
                                     "Nonempty cudaMemcpy requires nonnull pointers");
       const bool to_device = kind == cudaMemcpyHostToDevice;
       auto allocation = ctx.allocation(to_device ? destination : source);
       if (bytes > allocation->size)
-        throw unicuda::RuntimeError(cudaErrorInvalidValue,
+        throw paralyn::RuntimeError(cudaErrorInvalidValue,
                                     "cudaMemcpy byte count exceeds allocation");
       const void *host_pointer = to_device ? source : destination;
       if (std::any_of(ctx.tokens.begin(), ctx.tokens.end(),
                       [&](const auto &token) { return token.get() == host_pointer; }))
-        throw unicuda::RuntimeError(cudaErrorInvalidValue,
+        throw paralyn::RuntimeError(cudaErrorInvalidValue,
                                     "Host side of cudaMemcpy is a device allocation token");
       if (to_device)
         std::memcpy(allocation->buffer.contents, source, bytes);
@@ -580,25 +580,25 @@ extern "C" cudaError_t cudaMemcpy(void *destination, const void *source, std::si
       return cudaSuccess;
     }
   } catch (...) {
-    return unicuda::remember_exception();
+    return paralyn::remember_exception();
   }
 }
 extern "C" cudaError_t cudaDeviceSynchronize() {
   try {
-    unicuda::synchronize();
+    paralyn::synchronize();
     return cudaSuccess;
   } catch (...) {
-    return unicuda::remember_exception();
+    return paralyn::remember_exception();
   }
 }
 extern "C" cudaError_t cudaGetLastError() {
-  const auto result = unicuda::last_error;
-  unicuda::last_error = cudaSuccess;
+  const auto result = paralyn::last_error;
+  paralyn::last_error = cudaSuccess;
   return result;
 }
 extern "C" const char *cudaGetErrorString(cudaError_t error) {
-  if (error != cudaSuccess && error == unicuda::last_detail_code && !unicuda::last_detail->empty())
-    return unicuda::last_detail->c_str();
+  if (error != cudaSuccess && error == paralyn::last_detail_code && !paralyn::last_detail->empty())
+    return paralyn::last_detail->c_str();
   switch (error) {
   case cudaSuccess:
     return "success";
@@ -619,6 +619,6 @@ extern "C" const char *cudaGetErrorString(cudaError_t error) {
   case cudaErrorNotSupported:
     return "unsupported operation";
   default:
-    return "unknown UniCUDA runtime error";
+    return "unknown Paralyn runtime error";
   }
 }

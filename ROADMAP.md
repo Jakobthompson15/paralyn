@@ -1,10 +1,10 @@
-# UniCUDA roadmap
+# Paralyn roadmap
 
 This is an ordered plan, not a support matrix. Actual results are in `docs/status.md`. Gate A is the current implementation boundary; do not add Gate B features merely because they are convenient.
 
 ## Gate A: first complete source-to-GPU program
 
-Completed on 2026-09-25; original evidence is retained in `artifacts/gate-a/`. Gate B remains deferred.
+Completed on 2026-09-25 under the original working name UniCUDA; unchanged historical evidence is retained in `artifacts/gate-a/`. The project is now Paralyn, with fresh renamed-build verification pending in `artifacts/paralyn-gate-a/`. Gate B remains deferred.
 
 1. Research prior art and record the architecture, IR choice, dependencies, and licenses.
 2. Build device discovery, checked memory handling, default queue, and error propagation.
@@ -14,7 +14,7 @@ Completed on 2026-09-25; original evidence is retained in `artifacts/gate-a/`. G
 
 The canonical demonstration uses 1,024 elements, distinct allocations, block size 256, and varied exactly representable FP32 inputs. These values must not be special-cased in the compiler or runtime. Add minimal automated tests with each enabled feature.
 
-Preserve the first successful run in `artifacts/gate-a/`: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. Record device, OS, UniCUDA revision/dirty state, LLVM version, grid/block dimensions, command completion status, and GPU timestamps. Print a PASS only after actual comparison. Gate A is an internal working milestone, not permission to tag a broadly qualified public release.
+Preserve the first successful run in `artifacts/gate-a/` unchanged: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`, including its original working-name metadata. Fresh Paralyn evidence belongs in `artifacts/paralyn-gate-a/` and uses `paralyn-ir.txt`. Record device, OS, the actual revision/dirty state, LLVM version, grid/block dimensions, command completion status, and GPU timestamps. Print a PASS only after actual comparison. Gate A is a working milestone. Publishing the source repository is separate from tagging a qualified release; public tagging still requires Gate B.
 
 ## Gate B: qualification before public tagging
 

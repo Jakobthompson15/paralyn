@@ -1,4 +1,4 @@
-#include "unicuda/ir.hpp"
+#include "paralyn/ir.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
@@ -6,7 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace unicuda {
+namespace paralyn {
 namespace {
 const char *msl_type(ScalarType t) {
   switch (t) {
@@ -19,7 +19,7 @@ const char *msl_type(ScalarType t) {
   case ScalarType::Bool:
     return "bool";
   }
-  throw std::runtime_error("UniCUDAError: unknown MSL scalar type");
+  throw std::runtime_error("ParalynError: unknown MSL scalar type");
 }
 using Names = std::map<std::string, std::string>;
 std::string expr(const Expr &e, const Names &names) {
@@ -53,7 +53,7 @@ std::string expr(const Expr &e, const Names &names) {
   case ExprKind::Load:
     return expr(e.operands[0], names) + "[" + expr(e.operands[1], names) + "]";
   }
-  throw std::runtime_error("UniCUDAError: unknown MSL expression");
+  throw std::runtime_error("ParalynError: unknown MSL expression");
 }
 void body(std::ostream &out, const std::vector<Statement> &statements, Names names, unsigned indent,
           unsigned &locals) {
@@ -77,7 +77,7 @@ void body(std::ostream &out, const std::vector<Statement> &statements, Names nam
 std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
   verify(k);
   if (layout.size() != k.parameters.size())
-    throw std::runtime_error("UniCUDAError: MSL binding layout length mismatch");
+    throw std::runtime_error("ParalynError: MSL binding layout length mismatch");
   struct Slot {
     ScalarType type;
     bool buffer;
@@ -91,17 +91,17 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
       slots.emplace(layout[i], Slot{p.type, p.buffer, !p.read_only});
     else {
       if (!p.buffer || !pos->second.buffer || p.type != pos->second.type)
-        throw std::runtime_error("UniCUDAError: mixed-type or scalar alias binding is unsupported");
+        throw std::runtime_error("ParalynError: mixed-type or scalar alias binding is unsupported");
       pos->second.writable |= !p.read_only;
     }
   }
   unsigned next = 0;
   for (const auto &entry : slots)
     if (entry.first != next++)
-      throw std::runtime_error("UniCUDAError: binding slots must be contiguous");
+      throw std::runtime_error("ParalynError: binding slots must be contiguous");
   std::ostringstream out;
   out << "#include <metal_stdlib>\nusing namespace metal;\n\n// Generated exclusively from "
-         "verified UniCUDA IR.\n";
+         "verified Paralyn IR.\n";
   out << "kernel void uc_kernel_" << k.name << "(\n";
   for (const auto &[index, s] : slots) {
     out << "  ";
@@ -133,4 +133,4 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
   out << "}\n";
   return out.str();
 }
-} // namespace unicuda
+} // namespace paralyn

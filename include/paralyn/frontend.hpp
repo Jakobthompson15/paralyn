@@ -1,9 +1,9 @@
 #pragma once
-#include "unicuda/ir.hpp"
+#include "paralyn/ir.hpp"
 #include <string>
 #include <vector>
 
-namespace unicuda {
+namespace paralyn {
 struct LaunchInfo {
   std::string kernel;
   std::string grid_expression;
@@ -16,4 +16,4 @@ struct FrontendResult {
   std::string rewritten_host;
 };
 FrontendResult compile_source(const std::string &path);
-} // namespace unicuda
+} // namespace paralyn

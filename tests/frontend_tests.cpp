@@ -1,4 +1,4 @@
-#include "unicuda/frontend.hpp"
+#include "paralyn/frontend.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -40,7 +40,7 @@ int main() {
 
 struct TemporarySources {
   std::filesystem::path root = std::filesystem::temp_directory_path() /
-                               ("unicuda_frontend_tests_" + std::to_string(getpid()));
+                               ("paralyn_frontend_tests_" + std::to_string(getpid()));
   TemporarySources() { std::filesystem::create_directories(root); }
   ~TemporarySources() {
     std::error_code ignored;
@@ -60,7 +60,7 @@ void rejects(TemporarySources &files, const std::string &source, const std::stri
              const std::string &filename) {
   const auto path = files.write(filename, source);
   try {
-    (void)unicuda::compile_source(path);
+    (void)paralyn::compile_source(path);
   } catch (const std::exception &error) {
     const std::string message = error.what();
     require(message.find(feature) != std::string::npos,
@@ -78,22 +78,22 @@ void rejects(TemporarySources &files, const std::string &source, const std::stri
 int main() {
   try {
     TemporarySources files;
-    const auto result = unicuda::compile_source(files.write("ordinary.cu", program));
+    const auto result = paralyn::compile_source(files.write("ordinary.cu", program));
     require(result.kernels.size() == 1 && result.launches.size() == 1, "kernel/launch extraction");
     const auto &kernel = result.kernels.front();
     require(kernel.parameters.size() == 4 && kernel.parameters[0].read_only &&
                 !kernel.parameters[2].read_only,
             "typed buffer parameters");
-    require(kernel.body.size() == 2 && kernel.body[0].kind == unicuda::StmtKind::Let &&
-                kernel.body[1].kind == unicuda::StmtKind::If,
+    require(kernel.body.size() == 2 && kernel.body[0].kind == paralyn::StmtKind::Let &&
+                kernel.body[1].kind == paralyn::StmtKind::If,
             "structured statements");
-    require(kernel.body[0].expression.kind == unicuda::ExprKind::Cast &&
-                kernel.body[0].expression.type == unicuda::ScalarType::I32 &&
-                kernel.body[0].expression.operands[0].type == unicuda::ScalarType::U32,
+    require(kernel.body[0].expression.kind == paralyn::ExprKind::Cast &&
+                kernel.body[0].expression.type == paralyn::ScalarType::I32 &&
+                kernel.body[0].expression.operands[0].type == paralyn::ScalarType::U32,
             "CUDA unsigned indexing conversion must remain explicit");
     const auto &store = kernel.body[1].body.at(0);
-    require(store.kind == unicuda::StmtKind::Store && store.target.operands[0].text == "c" &&
-                store.expression.operands[0].kind == unicuda::ExprKind::Load,
+    require(store.kind == paralyn::StmtKind::Store && store.target.operands[0].text == "c" &&
+                store.expression.operands[0].kind == paralyn::ExprKind::Load,
             "typed loads and stores");
     require(store.expression.line != 0 && store.expression.column != 0, "expression source span");
     const auto &host = result.rewritten_host;
@@ -102,10 +102,10 @@ int main() {
             "ordinary host code must survive");
     require(host.find("<<<") == std::string::npos && host.find("__global__") == std::string::npos,
             "CUDA-only syntax remains in rewritten host");
-    const auto grid = host.find("__unicuda_generated_grid = (grid_value())");
-    const auto block = host.find("__unicuda_generated_block = (block_value())");
+    const auto grid = host.find("__paralyn_generated_grid = (grid_value())");
+    const auto block = host.find("__paralyn_generated_block = (block_value())");
     const auto check = host.find("validate_launch_configuration");
-    const auto arg = host.find("__unicuda_generated_argument_3 = (count_value())");
+    const auto arg = host.find("__paralyn_generated_argument_3 = (count_value())");
     require(grid != std::string::npos && grid < block && block < check && check < arg,
             "configuration must be evaluated before kernel arguments");
     require(host.find("count_value()", arg + 54) == std::string::npos,

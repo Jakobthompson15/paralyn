@@ -1,5 +1,5 @@
 #pragma once
-#include "unicuda/runtime.hpp"
+#include "paralyn/runtime.hpp"
 #include <cstddef>
 #include <cstdint>
 
@@ -11,7 +11,7 @@ struct dim3 {
   constexpr dim3(unsigned int x_ = 1, unsigned int y_ = 1, unsigned int z_ = 1)
       : x(x_), y(y_), z(z_) {}
   constexpr dim3(uint3 value) : x(value.x), y(value.y), z(value.z) {}
-  constexpr operator unicuda::Dim3() const { return {x, y, z}; }
+  constexpr operator paralyn::Dim3() const { return {x, y, z}; }
 };
 using cudaStream_t = void *;
 enum cudaError_t {

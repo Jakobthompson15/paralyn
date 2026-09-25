@@ -1,26 +1,16 @@
-# UniCUDA
+# Paralyn
 
 An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
-**Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. This is the first working milestone, not a qualified public release.
+**The initial Gate A passed on the physical Apple M5 under the original working name UniCUDA.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. The project is now named Paralyn; fresh verification of the renamed build is pending. Gate B and public release qualification remain deferred.
+
+The original [execution record](artifacts/gate-a/execution.json) and [verification transcript](artifacts/gate-a/verification.txt) are retained unchanged in [artifacts/gate-a](artifacts/gate-a/), including the historical `unicuda-ir.txt` filename and original metadata keys. That transcript reports:
 
 ```text
-$ build/unicuda run examples/vector_add.cu
-UniCUDA v0.0.1
-
-Device: Apple M5
-Backend: Metal
-Selection: auto; first device in stable registry-ID order
-Kernel: vector_add
-Grid: 4 × 1 × 1
-Block: 256 × 1 × 1
-Compiling kernel...
-Executing on GPU...
-
 Verification: PASS (1024 independently checked elements)
 ```
 
-The first passing run is preserved in [artifacts/gate-a](artifacts/gate-a/), including the [actual execution record](artifacts/gate-a/execution.json) and [verification transcript](artifacts/gate-a/verification.txt). See [status](docs/status.md) for the exact revision and limits.
+Fresh Paralyn evidence is reserved for `artifacts/paralyn-gate-a/`; no renamed execution result is claimed until it is recorded. See [status](docs/status.md) for the exact original revision and current verification state.
 
 ## Build and inspect
 
@@ -33,14 +23,14 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
   -DClang_DIR="$(brew --prefix llvm@21)/lib/cmake/clang"
 cmake --build build -j 4
 ctest --test-dir build --output-on-failure
-build/unicuda devices
-build/unicuda inspect examples/vector_add.cu
-build/unicuda run examples/vector_add.cu
+build/paralyn devices
+build/paralyn inspect examples/vector_add.cu
+build/paralyn run examples/vector_add.cu
 ```
 
 `run` compiles and executes trusted local source as a native program, with the same host access as launching that program yourself. It does not sandbox host C++.
 
-Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, IR, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Intermediate native host code is retained under `build/runs/` for inspection.
+Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Intermediate native host code is retained under `build/runs/` for inspection.
 
 ## Current boundaries
 

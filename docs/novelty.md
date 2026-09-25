@@ -1,6 +1,6 @@
 # Novelty assessment
 
-Assessed 2026-09-25. **UniCUDA's novelty is unproven.** A successful Gate A is a demonstrated independent implementation, not evidence that its architecture or functionality is new. See `prior-art.md` for the dated, ten-question comparison.
+Assessed 2026-09-25. **Paralyn's novelty is unproven.** A successful Gate A is a demonstrated independent implementation, not evidence that its architecture or functionality is new. See `prior-art.md` for the dated, ten-question comparison.
 
 ## Existing solutions and overlap
 
@@ -14,7 +14,7 @@ Assessed 2026-09-25. **UniCUDA's novelty is unproven.** A successful Gate A is a
 
 ## Unresolved engineering questions
 
-This review does not identify a proven globally unsolved research problem. It identifies work UniCUDA must still demonstrate:
+This review does not identify a proven globally unsolved research problem. It identifies work Paralyn must still demonstrate:
 
 - A precise CUDA-source subset whose host and device semantics are tested on each supported vendor.
 - Consistent feature discovery, unsupported-feature diagnostics, pointer ownership, aliasing, and asynchronous error behavior across unlike backends.

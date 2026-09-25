@@ -9,24 +9,24 @@ import sys
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unicuda", required=True, type=Path)
+    parser.add_argument("--paralyn", required=True, type=Path)
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--artifacts", required=True, type=Path)
     parser.add_argument("--require-clean", action="store_true",
                         help="Require a clean recorded Git revision for permanent milestone capture")
     args = parser.parse_args()
     completed = subprocess.run([
-        str(args.unicuda.resolve()), "run", str(args.source.resolve()),
+        str(args.paralyn.resolve()), "run", str(args.source.resolve()),
         "--artifacts", str(args.artifacts.resolve()),
     ], check=False)
     if completed.returncode:
         raise RuntimeError(f"complete CUDA program failed: exit {completed.returncode}")
     evidence = json.loads((args.artifacts / "execution.json").read_text())
     if args.require_clean:
-        revision = evidence.get("unicuda_commit", "")
+        revision = evidence.get("paralyn_commit", "")
         if len(revision) != 40 or any(c not in "0123456789abcdef" for c in revision):
             raise RuntimeError("milestone capture lacks a full Git revision")
-        if evidence.get("unicuda_dirty") is not False:
+        if evidence.get("paralyn_dirty") is not False:
             raise RuntimeError("milestone capture requires a clean source checkout")
     if evidence["backend"] != "Metal" or evidence["cpu_fallback"] is not False:
         raise RuntimeError("missing Metal execution contract")
@@ -39,7 +39,7 @@ def main():
             raise RuntimeError("missing positive GPU execution timestamps")
     if (args.artifacts / "source.cu").read_bytes() != args.source.read_bytes():
         raise RuntimeError("preserved source differs from the executed input")
-    for name in ("unicuda-ir.txt", "generated.metal"):
+    for name in ("paralyn-ir.txt", "generated.metal"):
         if not (args.artifacts / name).read_text().strip():
             raise RuntimeError(f"missing {name}")
     verification = (args.artifacts / "verification.txt").read_text()

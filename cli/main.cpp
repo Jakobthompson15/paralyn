@@ -1,5 +1,5 @@
-#include "unicuda/frontend.hpp"
-#include "unicuda/runtime.hpp"
+#include "paralyn/frontend.hpp"
+#include "paralyn/runtime.hpp"
 #include <cerrno>
 #include <chrono>
 #include <cstring>
@@ -42,7 +42,7 @@ Process execute(const std::vector<std::string> &args, bool echo = false,
       argv.push_back(const_cast<char *>(a.c_str()));
     argv.push_back(nullptr);
     execvp(argv[0], argv.data());
-    std::cerr << "UniCUDAError: cannot execute " << args[0] << ": " << std::strerror(errno) << "\n";
+    std::cerr << "ParalynError: cannot execute " << args[0] << ": " << std::strerror(errno) << "\n";
     _exit(127);
   }
   close(pipes[1]);
@@ -84,14 +84,14 @@ std::string trim(std::string s) {
     s.pop_back();
   return s;
 }
-std::string ir_text(const unicuda::FrontendResult &r) {
+std::string ir_text(const paralyn::FrontendResult &r) {
   std::string s;
   for (const auto &k : r.kernels)
-    s += unicuda::dump_ir(k) + "\n";
+    s += paralyn::dump_ir(k) + "\n";
   return s;
 }
 void usage() {
-  std::cout << "UniCUDA v0.0.1\nUsage:\n  unicuda devices\n  unicuda inspect program.cu\n  unicuda "
+  std::cout << "Paralyn v0.0.1\nUsage:\n  paralyn devices\n  paralyn inspect program.cu\n  paralyn "
                "run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]\n";
 }
 } // namespace
@@ -103,13 +103,13 @@ int main(int argc, char **argv) {
     }
     std::string command = argv[1];
     if (command == "--version") {
-      std::cout << "UniCUDA v0.0.1 (LLVM " << UNICUDA_LLVM_VERSION << ")\n";
+      std::cout << "Paralyn v0.0.1 (LLVM " << PARALYN_LLVM_VERSION << ")\n";
       return 0;
     }
     if (command == "devices") {
       if (argc != 2)
         throw std::runtime_error("devices accepts no arguments");
-      std::cout << unicuda::devices_text();
+      std::cout << paralyn::devices_text();
       return 0;
     }
     if ((command != "run" && command != "inspect") || argc < 3) {
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
       } else
         throw std::runtime_error("unknown/incomplete option: " + a);
     }
-    auto frontend = unicuda::compile_source(source.string());
+    auto frontend = paralyn::compile_source(source.string());
     if (command == "inspect") {
       std::cout << "Detected kernels:\n";
       for (const auto &k : frontend.kernels) {
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
             std::cout << ", ";
           if (p.read_only)
             std::cout << "const ";
-          std::cout << unicuda::type_name(p.type) << (p.buffer ? "* " : " ") << p.name;
+          std::cout << paralyn::type_name(p.type) << (p.buffer ? "* " : " ") << p.name;
         }
         std::cout << ")\n";
       }
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
         std::cout << "  " << l.kernel << " at line " << l.line << ": grid=" << l.grid_expression
                   << ", block=" << l.block_expression << "\n";
       std::cout << "\nRequired backend capabilities: typed buffers, i32/u32/f32, index "
-                   "builtins\n\nUniCUDA IR:\n"
+                   "builtins\n\nParalyn IR:\n"
                 << ir_text(frontend);
       return 0;
     }
@@ -165,33 +165,33 @@ int main(int argc, char **argv) {
                      std::chrono::system_clock::now().time_since_epoch())
                      .count();
     auto id = std::to_string(stamp) + "-" + std::to_string(getpid());
-    fs::path work = fs::path(UNICUDA_BINARY_DIR) / "runs" / id;
+    fs::path work = fs::path(PARALYN_BINARY_DIR) / "runs" / id;
     fs::create_directories(work);
     if (artifact.empty())
-      artifact = fs::path(UNICUDA_SOURCE_DIR) / "artifacts" / "runs" / id;
+      artifact = fs::path(PARALYN_SOURCE_DIR) / "artifacts" / "runs" / id;
     if (fs::exists(artifact) && !fs::is_empty(artifact))
       throw std::runtime_error(
           "artifact directory is not empty; refusing to overwrite execution evidence");
     fs::create_directories(artifact);
     fs::copy_file(source, artifact / "source.cu");
-    write(artifact / "unicuda-ir.txt", ir_text(frontend));
+    write(artifact / "paralyn-ir.txt", ir_text(frontend));
     auto host = work / "host.cpp";
     write(host, frontend.rewritten_host);
     auto executable = work / "program";
-    std::vector<std::string> compile = {UNICUDA_HOST_CXX,
+    std::vector<std::string> compile = {PARALYN_HOST_CXX,
                                         "-std=c++17",
                                         "-O0",
                                         "-g",
                                         "-fno-fast-math",
                                         "-ffp-contract=off",
-                                        "-mmacosx-version-min=" UNICUDA_DEPLOYMENT_TARGET,
+                                        "-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
                                         "-I",
-                                        UNICUDA_INCLUDE_DIR,
+                                        PARALYN_INCLUDE_DIR,
                                         "-iquote",
                                         source.parent_path().string(),
                                         host.string(),
-                                        UNICUDA_RUNTIME_ARCHIVE,
-                                        UNICUDA_IR_ARCHIVE,
+                                        PARALYN_RUNTIME_ARCHIVE,
+                                        PARALYN_IR_ARCHIVE,
                                         "-framework",
                                         "Metal",
                                         "-framework",
@@ -204,25 +204,25 @@ int main(int argc, char **argv) {
       write(artifact / "verification.txt", "Host compilation failed\n" + compiled.output);
       return compiled.status;
     }
-    auto commit = execute({"git", "-C", UNICUDA_SOURCE_DIR, "rev-parse", "HEAD"});
+    auto commit = execute({"git", "-C", PARALYN_SOURCE_DIR, "rev-parse", "HEAD"});
     auto dirty =
-        execute({"git", "-C", UNICUDA_SOURCE_DIR, "status", "--porcelain", "--untracked-files=no"});
+        execute({"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=no"});
     std::vector<std::string> run = {executable.string()};
     run.insert(run.end(), program_args.begin(), program_args.end());
-    std::cout << "UniCUDA v0.0.1\n\n" << std::flush;
+    std::cout << "Paralyn v0.0.1\n\n" << std::flush;
     auto result = execute(run, true,
-                          {{"UNICUDA_DEVICE", device},
-                           {"UNICUDA_ARTIFACT_DIR", artifact.string()},
-                           {"UNICUDA_COMMIT", commit.status ? "uncommitted" : trim(commit.output)},
-                           {"UNICUDA_LLVM_VERSION", UNICUDA_LLVM_VERSION},
-                           {"UNICUDA_SOURCE_DIRTY", dirty.output.empty() ? "false" : "true"}});
+                          {{"PARALYN_DEVICE", device},
+                           {"PARALYN_ARTIFACT_DIR", artifact.string()},
+                           {"PARALYN_COMMIT", commit.status ? "uncommitted" : trim(commit.output)},
+                           {"PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION},
+                           {"PARALYN_SOURCE_DIRTY", dirty.output.empty() ? "false" : "true"}});
     write(artifact / "verification.txt",
           result.output + "\nHost exit status: " + std::to_string(result.status) + "\n");
     if (result.status)
-      std::cerr << "UniCUDAError: program exited with status " << result.status << "\n";
+      std::cerr << "ParalynError: program exited with status " << result.status << "\n";
     return result.status;
   } catch (const std::exception &e) {
-    std::cerr << "UniCUDAError: " << e.what() << "\n";
+    std::cerr << "ParalynError: " << e.what() << "\n";
     return 1;
   }
 }

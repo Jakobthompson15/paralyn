@@ -1,4 +1,4 @@
-#include "unicuda/ir.hpp"
+#include "paralyn/ir.hpp"
 #include <cctype>
 #include <cerrno>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace unicuda {
+namespace paralyn {
 const char *type_name(ScalarType t) {
   switch (t) {
   case ScalarType::I32:
@@ -21,11 +21,11 @@ const char *type_name(ScalarType t) {
   case ScalarType::Bool:
     return "bool";
   }
-  throw std::runtime_error("UniCUDAError: invalid IR scalar type");
+  throw std::runtime_error("ParalynError: invalid IR scalar type");
 }
 namespace {
 [[noreturn]] void bad(const std::string &why) {
-  throw std::runtime_error("UniCUDAError: invalid IR: " + why);
+  throw std::runtime_error("ParalynError: invalid IR: " + why);
 }
 bool integer(ScalarType t) { return t == ScalarType::I32 || t == ScalarType::U32; }
 bool identifier(const std::string &n) {
@@ -207,19 +207,19 @@ void dump_body(std::ostream &out, const std::vector<Statement> &body, unsigned i
 const char *cpp_type(ScalarType t) {
   switch (t) {
   case ScalarType::I32:
-    return "unicuda::ScalarType::I32";
+    return "paralyn::ScalarType::I32";
   case ScalarType::U32:
-    return "unicuda::ScalarType::U32";
+    return "paralyn::ScalarType::U32";
   case ScalarType::F32:
-    return "unicuda::ScalarType::F32";
+    return "paralyn::ScalarType::F32";
   case ScalarType::Bool:
-    return "unicuda::ScalarType::Bool";
+    return "paralyn::ScalarType::Bool";
   }
   bad("unknown type");
 }
 void cpp_expr(std::ostream &out, const Expr &e) {
   const char *names[] = {"Literal", "Ref", "Builtin", "Binary", "Cast", "Load"};
-  out << "unicuda::Expr{unicuda::ExprKind::" << names[static_cast<unsigned>(e.kind)] << ","
+  out << "paralyn::Expr{paralyn::ExprKind::" << names[static_cast<unsigned>(e.kind)] << ","
       << cpp_type(e.type) << "," << std::quoted(e.text) << ",{";
   for (const auto &x : e.operands) {
     cpp_expr(out, x);
@@ -231,7 +231,7 @@ void cpp_body(std::ostream &out, const std::vector<Statement> &body) {
   const char *names[] = {"Let", "Store", "If"};
   out << "{";
   for (const auto &s : body) {
-    out << "unicuda::Statement{unicuda::StmtKind::" << names[static_cast<unsigned>(s.kind)] << ","
+    out << "paralyn::Statement{paralyn::StmtKind::" << names[static_cast<unsigned>(s.kind)] << ","
         << std::quoted(s.name) << "," << cpp_type(s.type) << ",";
     cpp_expr(out, s.expression);
     out << ",";
@@ -260,7 +260,7 @@ void verify(const Kernel &k) {
 std::string dump_ir(const Kernel &k) {
   verify(k);
   std::ostringstream out;
-  out << "unicuda.ir v0\nkernel " << k.name << "(";
+  out << "paralyn.ir v0\nkernel " << k.name << "(";
   for (std::size_t i = 0; i < k.parameters.size(); ++i) {
     const auto &p = k.parameters[i];
     if (i)
@@ -280,13 +280,13 @@ std::string dump_ir(const Kernel &k) {
 std::string emit_cpp(const Kernel &k) {
   verify(k);
   std::ostringstream out;
-  out << "unicuda::Kernel{" << std::quoted(k.name) << ",{";
+  out << "paralyn::Kernel{" << std::quoted(k.name) << ",{";
   for (const auto &p : k.parameters)
-    out << "unicuda::Parameter{" << std::quoted(p.name) << "," << cpp_type(p.type) << ","
+    out << "paralyn::Parameter{" << std::quoted(p.name) << "," << cpp_type(p.type) << ","
         << p.buffer << "," << p.read_only << "},";
   out << "},";
   cpp_body(out, k.body);
   out << "}";
   return out.str();
 }
-} // namespace unicuda
+} // namespace paralyn

@@ -1,6 +1,6 @@
 # Architecture: Gate A
 
-Updated 2026-09-25 after implementation review. This describes the current source interfaces and their limits. Code being present is not hardware acceptance: actual test results belong in `status.md`, and the first accepted execution belongs in `../artifacts/gate-a/`. No Gate A success is asserted by this document.
+Updated 2026-09-25 after implementation review. This describes the current source interfaces and their limits. Code being present is not hardware acceptance: actual test results belong in `status.md`. The first accepted execution under the original working name UniCUDA is preserved unchanged in `../artifacts/gate-a/`; fresh Paralyn evidence is reserved for `../artifacts/paralyn-gate-a/` and is pending revalidation after the rename.
 
 ## Goal and implementation boundary
 
@@ -8,7 +8,7 @@ A complete ordinary `examples/vector_add.cu`, including `main`, memory calls, an
 
 The canonical demonstration uses 1,024 elements, distinct allocations, block size 256, and varied exactly representable FP32 inputs. These values must not be special-cased anywhere in the compiler or runtime.
 
-[CuMetal](https://github.com/Lulzx/cuda-metal) directly overlaps this goal. [IREE](https://iree.dev/guides/deployment-configurations/) already demonstrates portable compiler/runtime boundaries. UniCUDA is independently implemented, imports neither CuMetal code nor MetaXuda dependencies, and makes no novelty claim. See `prior-art.md` and `novelty.md`.
+[CuMetal](https://github.com/Lulzx/cuda-metal) directly overlaps this goal. [IREE](https://iree.dev/guides/deployment-configurations/) already demonstrates portable compiler/runtime boundaries. Paralyn is independently implemented, imports neither CuMetal code nor MetaXuda dependencies, and makes no novelty claim. See `prior-art.md` and `novelty.md`.
 
 ```text
 complete CUDA source
@@ -31,9 +31,9 @@ The selected Homebrew LLVM/Clang is **21.1.8**, with matching headers/libraries;
 The current build deployment target is **macOS 26.0**, tested on macOS 26.5.1 with SDK 26.2. The installed `libclang-cpp.dylib` declares minimum OS 26.0. Safe/precise Metal compilation APIs are available from macOS 15, but that does **not** make this CLI build compatible with macOS 15. The generated host compiler receives the configured deployment target. See `engineering-notes.md` and `../THIRD_PARTY_LICENSES.md`.
 
 ```text
-unicuda devices
-unicuda inspect program.cu
-unicuda run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]
+paralyn devices
+paralyn inspect program.cu
+paralyn run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]
 ```
 
 `devices` enumerates actual Metal devices in stable registry-ID order and reports unified-memory status, maximum buffer bytes, and recommended working-set bytes. It does not report that recommendation as free GPU memory. `auto` selects the first enumerated device; there is no memory-based scheduler.
@@ -44,7 +44,7 @@ unicuda run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program argum
 
 ## Frontend and host-preservation contract
 
-Clang uses CUDA host-only parsing, independent compatibility declarations, no NVIDIA toolkit headers/libraries, and a forced parse header before standard headers. AST visitors extract kernels and launch sites. Range edits replace the supported kernel definitions with immutable IR factories and replace launches with native C++ lambdas. Ordinary host code is otherwise retained as source and compiled by the native host compiler; UniCUDA is not a whole-C++ transpiler.
+Clang uses CUDA host-only parsing, independent compatibility declarations, no NVIDIA toolkit headers/libraries, and a forced parse header before standard headers. AST visitors extract kernels and launch sites. Range edits replace the supported kernel definitions with immutable IR factories and replace launches with native C++ lambdas. Ordinary host code is otherwise retained as source and compiled by the native host compiler; Paralyn is not a whole-C++ transpiler.
 
 The supported input boundary is a single translation unit with plain top-level, non-template, non-overloaded kernel definitions in the main file. Separate declarations, external kernels, device functions, macro-generated launches, and ambiguous ranges are rejected. Device code rejects features outside the implemented subset, including FP64, volatile types, general pointer expressions, shared/device global storage, loops, returns, else branches, atomics, barriers, and device calls.
 
@@ -88,9 +88,9 @@ Scalar argument bytes are copied into `Argument` and by Metal `setBytes`. Pendin
 
 ## Evidence, tests, and future work
 
-`run` writes a source snapshot and IR into an artifact directory and refuses to reuse a nonempty directory. By default it creates a unique directory under `artifacts/runs`; `--artifacts artifacts/gate-a` selects the canonical evidence location. Host output and exit status are written to `verification.txt`. On command completion, the runtime writes `generated.metal` and `execution.json` with device, OS, revision/dirty state, LLVM version, launch dimensions/status, and GPU timestamps. Current `generated.metal` stores the most recently completed shader; it is sufficient for the single-kernel Gate A demonstration, not a complete multi-kernel provenance archive.
+`run` writes a source snapshot and IR into an artifact directory and refuses to reuse a nonempty directory. By default it creates a unique directory under `artifacts/runs`; `--artifacts DIR` selects a new empty evidence directory. The original `artifacts/gate-a/` directory is immutable historical evidence; the post-rename canonical run is reserved for `artifacts/paralyn-gate-a/`. Host output and exit status are written to `verification.txt`. On command completion, the runtime writes `generated.metal` and `execution.json` with device, OS, revision/dirty state, LLVM version, launch dimensions/status, and GPU timestamps. Current `generated.metal` stores the most recently completed shader; it is sufficient for the single-kernel Gate A demonstration, not a complete multi-kernel provenance archive.
 
-The required preserved Gate A set is `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. A success string alone is insufficient. The example's actual CPU comparison owns `Verification: PASS`; the CLI must not synthesize it. Positive timing and successful command completion provide GPU evidence alongside the computed result. Unavailable hardware cannot satisfy this gate.
+New Paralyn runs preserve `source.cu`, `paralyn-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. The original historical set in `artifacts/gate-a/` instead retains its actual `unicuda-ir.txt` filename, original IR text, and `unicuda_commit` / `unicuda_dirty` metadata. Do not rename or rewrite those five historical files. The current verifier takes `--paralyn` and checks the new artifact naming contract. A success string alone is insufficient. The example's actual CPU comparison owns `Verification: PASS`; the CLI must not synthesize it. Positive timing and successful command completion provide GPU evidence alongside the computed result. Unavailable hardware cannot satisfy this gate.
 
 Minimal IR/codegen, frontend, and handwritten-Metal tests accompany the initial path. Full edge-size, alias, dimension, host-semantics, numerical, and performance qualification belongs after Gate A and before public tagging. See `../ROADMAP.md`.
 

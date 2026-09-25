@@ -10,7 +10,7 @@
 
 **Problem and evidence.** Homebrew's default post-install cleanup removed old package versions and an existing optional Python 3.13 installation while installing the selected build tools. The log reported autoremoving Python 3.13.12_1. LLVM, CMake, and Ninja were installed and their versions/parser behavior verified despite a separate cleanup permission error.
 
-**Resolution.** Reinstalled the available Python 3.13 package (3.13.15) and verified its executable. Future package commands and the README disable install cleanup and autoremove. Python 3.13 is not a UniCUDA runtime dependency; tests use the discovered Python 3 interpreter and standard library only.
+**Resolution.** Reinstalled the available Python 3.13 package (3.13.15) and verified its executable. Future package commands and the README disable install cleanup and autoremove. Python 3.13 is not a Paralyn runtime dependency; tests use the discovered Python 3 interpreter and standard library only.
 
 Recorded 2026-09-25 during Gate A implementation. These notes capture integration/review evidence, not a claim that Gate A has passed. Acceptance belongs in `status.md` and retained execution artifacts.
 
@@ -18,9 +18,9 @@ Recorded 2026-09-25 during Gate A implementation. These notes capture integratio
 
 **Problem.** A C++/Objective-C++-only project configuration was insufficient for the selected LLVM package's dependency checks.
 
-**Root cause.** Imported LLVM CMake modules perform compiler checks in addition to configuring C++ targets. Enabling only the languages used by UniCUDA source files did not satisfy the package's C-language checks.
+**Root cause.** Imported LLVM CMake modules perform compiler checks in addition to configuring C++ targets. Enabling only the languages used by Paralyn source files did not satisfy the package's C-language checks.
 
-**Evidence.** The local configuration failure was resolved by `project(UniCUDA ... LANGUAGES C CXX OBJCXX)`. The selected LLVM installation contains C compilation checks in its CMake modules (including `FindFFI.cmake` and `HandleLLVMOptions.cmake`). The resulting CMake cache has a configured C compiler, and LLVM 21.1.8 frontend integration tests pass. This does not require adding C implementation files.
+**Evidence.** The local configuration failure was resolved by `project(Paralyn ... LANGUAGES C CXX OBJCXX)`. The selected LLVM installation contains C compilation checks in its CMake modules (including `FindFFI.cmake` and `HandleLLVMOptions.cmake`). The resulting CMake cache has a configured C compiler, and LLVM 21.1.8 frontend integration tests pass. This does not require adding C implementation files.
 
 **Potential solutions.** Enable C normally; patch or bypass LLVM's package checks; or maintain a custom dependency-discovery layer.
 
@@ -72,7 +72,7 @@ Recorded 2026-09-25 during Gate A implementation. These notes capture integratio
 
 **Potential solutions.** Implement complete original-file line maps and context-preserving rewrites; silently accept different behavior; or reject affected constructs until they have preservation tests.
 
-**Selected solution.** Explicit rejection in Gate A. Preserve ordinary supported host C++ using native compilation and narrow CUDA edits. Add original-source line mapping or restore individual context-sensitive constructs only with tests demonstrating their semantics. This does not expand UniCUDA into a whole-C++ transpiler.
+**Selected solution.** Explicit rejection in Gate A. Preserve ordinary supported host C++ using native compilation and narrow CUDA edits. Add original-source line mapping or restore individual context-sensitive constructs only with tests demonstrating their semantics. This does not expand Paralyn into a whole-C++ transpiler.
 
 ## Defer abstractions that have no implemented consumer
 

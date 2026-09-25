@@ -1,6 +1,6 @@
 # CUDA compatibility: Gate A boundary
 
-UniCUDA accepts an explicitly limited CUDA source language. It does not implement CUDA binaries, PTX, the Driver API, CUDA libraries, arbitrary CUDA C++, or vendor floating-point equivalence. Supported here means implemented within these bounds; hardware qualification is listed separately in `status.md`.
+Paralyn accepts an explicitly limited CUDA source language. It does not implement CUDA binaries, PTX, the Driver API, CUDA libraries, arbitrary CUDA C++, or vendor floating-point equivalence. Supported here means implemented within these bounds; hardware qualification is listed separately in `status.md`.
 
 ## Frontend
 
@@ -10,7 +10,7 @@ The initial kernel grammar contains `int`, `unsigned int`, and `float` scalar/bu
 
 FP64, shared memory, barriers, atomics, warp intrinsics, device globals, dynamic parallelism, loops, templates, `return` statements inside kernels, and general local assignment are not implemented. Device local name shadowing is rejected.
 
-Host preprocessing that depends on `__CUDA_ARCH__`, `__CUDACC__`, or `__CUDA__` is rejected, including inactive user branches. Source-context constructs such as `__LINE__`, `__FILE__`, `__COUNTER__`, and function-name/location expressions are rejected explicitly rather than silently changing their values in transformed source. Preserving those constructs requires later source mapping work. This restriction includes user-site expansion through macros. Host code otherwise remains native, not interpreted by UniCUDA.
+Host preprocessing that depends on `__CUDA_ARCH__`, `__CUDACC__`, or `__CUDA__` is rejected, including inactive user branches. Source-context constructs such as `__LINE__`, `__FILE__`, `__COUNTER__`, and function-name/location expressions are rejected explicitly rather than silently changing their values in transformed source. Preserving those constructs requires later source mapping work. This restriction includes user-site expansion through macros. Host code otherwise remains native, not interpreted by Paralyn.
 
 ## Launch and memory APIs
 

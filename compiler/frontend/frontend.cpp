@@ -1,4 +1,4 @@
-#include "unicuda/frontend.hpp"
+#include "paralyn/frontend.hpp"
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/Attr.h>
@@ -21,7 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace unicuda {
+namespace paralyn {
 namespace {
 using clang::SourceLocation;
 using clang::SourceRange;
@@ -46,7 +46,7 @@ const char *context_sensitive_feature(llvm::StringRef name) {
   std::ostringstream out;
   if (p.isValid())
     out << p.getFilename() << ':' << p.getLine() << ':' << p.getColumn() << ": ";
-  out << "UniCUDAError: CUDA feature \"" << feature << "\" is not currently supported.";
+  out << "ParalynError: CUDA feature \"" << feature << "\" is not currently supported.";
   throw std::runtime_error(out.str());
 }
 
@@ -149,9 +149,9 @@ public:
     result_.kernels.push_back(kernel);
     auto range = file_range(decl->getSourceRange(), false);
     edits_.push_back({range.first, range.second,
-                      "static const unicuda::Kernel& __unicuda_generated_kernel_" + name +
+                      "static const paralyn::Kernel& __paralyn_generated_kernel_" + name +
                           "() {\n"
-                          "  static const unicuda::Kernel kernel = " +
+                          "  static const paralyn::Kernel kernel = " +
                           emit_cpp(kernel) +
                           ";\n"
                           "  return kernel;\n}\n"});
@@ -193,12 +193,12 @@ public:
     unsigned previous = static_cast<unsigned>(source_.size());
     for (const auto &edit : edits_) {
       if (edit.end > previous || edit.end < edit.begin)
-        throw std::runtime_error("UniCUDAError: overlapping CUDA source edits.");
+        throw std::runtime_error("ParalynError: overlapping CUDA source edits.");
       source_.replace(edit.begin, edit.end - edit.begin, edit.replacement);
       previous = edit.begin;
     }
     result_.rewritten_host =
-        "#include <unicuda/runtime.hpp>\n#include <cuda_runtime.h>\n" + source_;
+        "#include <paralyn/runtime.hpp>\n#include <cuda_runtime.h>\n" + source_;
   }
 
 private:
@@ -451,17 +451,17 @@ private:
       unsupported(sm_, config->getArg(3)->getExprLoc(), "non_default_stream");
     std::ostringstream text;
     text << "([&]() {\n"
-         << "  const dim3 __unicuda_generated_grid = (" << grid << ");\n"
-         << "  const dim3 __unicuda_generated_block = (" << block << ");\n"
-         << "  const std::size_t __unicuda_generated_shared = (" << shared << ");\n"
-         << "  const cudaStream_t __unicuda_generated_stream = (" << stream << ");\n"
-         << "  if (!unicuda::validate_launch_configuration(__unicuda_generated_shared, "
-            "__unicuda_generated_stream)) return;\n";
+         << "  const dim3 __paralyn_generated_grid = (" << grid << ");\n"
+         << "  const dim3 __paralyn_generated_block = (" << block << ");\n"
+         << "  const std::size_t __paralyn_generated_shared = (" << shared << ");\n"
+         << "  const cudaStream_t __paralyn_generated_stream = (" << stream << ");\n"
+         << "  if (!paralyn::validate_launch_configuration(__paralyn_generated_shared, "
+            "__paralyn_generated_stream)) return;\n";
     for (unsigned i = 0; i < call->getNumArgs(); ++i)
-      text << "  " << argument_type(kernel.parameters[i]) << " __unicuda_generated_argument_" << i
+      text << "  " << argument_type(kernel.parameters[i]) << " __paralyn_generated_argument_" << i
            << " = (" << source_expression(call->getArg(i)) << ");\n";
-    text << "  unicuda::launch_checked(__unicuda_generated_kernel_" << kernel.name
-         << "(), __unicuda_generated_grid, __unicuda_generated_block, {";
+    text << "  paralyn::launch_checked(__paralyn_generated_kernel_" << kernel.name
+         << "(), __paralyn_generated_grid, __paralyn_generated_block, {";
     for (unsigned i = 0; i < call->getNumArgs(); ++i) {
       if (i)
         text << ", ";
@@ -470,7 +470,7 @@ private:
                           : parameter.type == ScalarType::I32 ? "i32"
                           : parameter.type == ScalarType::U32 ? "u32"
                                                               : "f32";
-      text << "unicuda::Argument::from_" << method << "(__unicuda_generated_argument_" << i << ')';
+      text << "paralyn::Argument::from_" << method << "(__paralyn_generated_argument_" << i << ')';
     }
     text << "});\n}())";
     edits_.push_back({range.first, range.second, text.str()});
@@ -527,7 +527,7 @@ FrontendResult compile_source(const std::string &path) {
   const auto absolute = std::filesystem::absolute(path).lexically_normal().string();
   std::ifstream stream(absolute, std::ios::binary);
   if (!stream)
-    throw std::runtime_error("UniCUDAError: cannot read CUDA source: " + absolute);
+    throw std::runtime_error("ParalynError: cannot read CUDA source: " + absolute);
   const std::string source{std::istreambuf_iterator<char>(stream),
                            std::istreambuf_iterator<char>()};
   FrontendResult result;
@@ -537,18 +537,18 @@ FrontendResult compile_source(const std::string &path) {
                                            "-nocudainc",
                                            "-nocudalib",
                                            "-std=c++17",
-                                           "-resource-dir=" UNICUDA_RESOURCE_DIR,
+                                           "-resource-dir=" PARALYN_RESOURCE_DIR,
                                            "-isysroot",
-                                           UNICUDA_SDK_PATH,
-                                           "-I" UNICUDA_INCLUDE_DIR,
+                                           PARALYN_SDK_PATH,
+                                           "-I" PARALYN_INCLUDE_DIR,
                                            "-include",
-                                           "unicuda/cuda_parse.hpp"};
+                                           "paralyn/cuda_parse.hpp"};
   if (!clang::tooling::runToolOnCodeWithArgs(std::make_unique<Action>(result, source), source,
-                                             arguments, absolute, UNICUDA_CLANG_PATH))
+                                             arguments, absolute, PARALYN_CLANG_PATH))
     throw std::runtime_error(
-        "UniCUDAError: Clang rejected CUDA source; see source diagnostics above.");
+        "ParalynError: Clang rejected CUDA source; see source diagnostics above.");
   if (result.kernels.empty())
-    throw std::runtime_error("UniCUDAError: source contains no supported CUDA kernel definitions.");
+    throw std::runtime_error("ParalynError: source contains no supported CUDA kernel definitions.");
   return result;
 }
-} // namespace unicuda
+} // namespace paralyn

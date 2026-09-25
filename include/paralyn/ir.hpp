@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace unicuda {
+namespace paralyn {
 enum class ScalarType { I32, U32, F32, Bool };
 enum class ExprKind { Literal, Ref, Builtin, Binary, Cast, Load };
 struct Expr {
@@ -41,4 +41,4 @@ void verify(const Kernel &kernel);
 std::string dump_ir(const Kernel &kernel);
 std::string emit_cpp(const Kernel &kernel);
 std::string emit_msl(const Kernel &kernel, const BindingLayout &layout);
-} // namespace unicuda
+} // namespace paralyn

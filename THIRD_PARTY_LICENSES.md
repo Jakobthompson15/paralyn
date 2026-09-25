@@ -1,6 +1,6 @@
 # Third-party licenses and dependency inventory
 
-Recorded 2026-09-25. UniCUDA's original implementation is Apache-2.0; see `LICENSE` and `NOTICE`. External documentation references are not imported implementation code. No NVIDIA CUDA toolkit, CuMetal, or MetaXuda dependency is used.
+Recorded 2026-09-25. Paralyn's original implementation is Apache-2.0; see `LICENSE` and `NOTICE`. External documentation references are not imported implementation code. No NVIDIA CUDA toolkit, CuMetal, or MetaXuda dependency is used.
 
 ## Selected local development dependencies
 
@@ -25,7 +25,7 @@ Homebrew and the OS may install additional transitive components. This source re
 
 ## Prior art, not dependencies
 
-| Project | Observed upstream license status | UniCUDA use |
+| Project | Observed upstream license status | Paralyn use |
 |---|---|---|
 | [CuMetal](https://github.com/Lulzx/cuda-metal/blob/main/LICENSE) | Apache-2.0 | Documentation comparison only; no implementation imported |
 | [ZLUDA](https://github.com/vosen/ZLUDA) | Apache-2.0 or MIT | Documentation comparison only |

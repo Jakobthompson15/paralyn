@@ -1,12 +1,12 @@
 #pragma once
-#include "unicuda/ir.hpp"
+#include "paralyn/ir.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
-namespace unicuda {
+namespace paralyn {
 struct Dim3 {
   std::uint32_t x = 1, y = 1, z = 1;
 };
@@ -30,4 +30,4 @@ void shutdown();
 // Test-only escape hatch: exercises the actual backend with independently written MSL.
 void launch_msl_for_test(const Kernel &, const std::string &source, Dim3 grid, Dim3 block,
                          const std::vector<Argument> &);
-} // namespace unicuda
+} // namespace paralyn

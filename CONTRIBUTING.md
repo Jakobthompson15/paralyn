@@ -1,4 +1,4 @@
-# Contributing to UniCUDA
+# Contributing to Paralyn
 
 Start with `README.md`, `docs/status.md`, `docs/cuda-compatibility.md`, and `docs/architecture.md`. Planned features in `ROADMAP.md` are not supported features. Complete the active acceptance gate before expanding scope.
 

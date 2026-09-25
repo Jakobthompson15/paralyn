@@ -1,25 +1,33 @@
 # Status
 
-Updated 2026-09-25. **Gate A passed.** No public release is qualified; Gate B was not started.
+Updated 2026-09-25. **The original Gate A passed under the working name UniCUDA.** The project is now Paralyn. Fresh verification of the renamed build and public GitHub publication are pending. No public release is qualified; Gate B was not started.
+
+## Original verified implementation
 
 - CMake/Ninja build: passed with LLVM/Clang 21.1.8 and Apple Clang 17.
 - Typed IR verifier/codegen tests: passed.
 - CUDA frontend extraction/diagnostic tests: passed.
 - Handwritten Metal runtime smoke: passed on physical Apple M5; 1,024 values matched CPU reference.
-- `unicuda devices` and `unicuda inspect examples/vector_add.cu`: verified.
+- The original `unicuda devices` and `unicuda inspect examples/vector_add.cu` commands were verified before the rename.
 - Complete ordinary CUDA source → GPU → CPU comparison: passed on Apple M5, macOS 26.5.1 (25F80).
 - Automated full-pipeline test checks process success, actual command completion, positive GPU timestamps, preserved source/IR/MSL, and the independent verifier transcript.
-- Final CTest run: all four targets passed (`ir_and_codegen`, `frontend`, `metal_runtime`, `gate_a`), with no skipped tests.
+- Original pre-rename CTest run: all four targets passed (`ir_and_codegen`, `frontend`, `metal_runtime`, `gate_a`), with no skipped tests.
 
-## First successful complete execution
+## First successful complete execution — historical evidence
 
 Source revision: `3f3c960f0eb712869cbc99b81e3fdd84394e8efe`, clean checkout at execution. LLVM/Clang 21.1.8; Apple Clang 17 compiled the transformed host program; macOS SDK 26.2; configured deployment target 26.0.
 
 The source used 1,024 elements, grid `(4,1,1)`, and block `(256,1,1)`. Metal reported command status `completed`, no error, and positive GPU timestamps. The source program read the GPU output, compared each element with its own CPU reference, and returned zero. The canonical sizes/kernel name do not appear as special cases anywhere in the compiler/runtime implementation.
 
-The five original files in `../artifacts/gate-a/` are retained unchanged: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. The captured shader comes from verified IR; the runtime's handwritten-MSL test hook is not used by the CUDA path. GPU timestamps establish execution evidence, not a performance benchmark.
+The five original files in `../artifacts/gate-a/` are retained unchanged: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. Their original working-name strings and `unicuda_commit` / `unicuda_dirty` metadata are historical evidence, not stale current interfaces. The captured shader comes from verified IR; the runtime's handwritten-MSL test hook is not used by the CUDA path. GPU timestamps establish execution evidence, not a performance benchmark.
 
-## Boundaries of the result
+## Paralyn rename verification — pending
+
+Current executable and commands use `build/paralyn`; the C++ namespace is `paralyn`. New runs produce `paralyn-ir.txt` and Paralyn-named execution metadata. The automated evidence verifier accepts `--paralyn`.
+
+Fresh build, CTest, device/inspect checks, and a complete GPU run from a clean renamed revision must be recorded before this section is marked passed. Reserve `../artifacts/paralyn-gate-a/` for that run; preserve `../artifacts/gate-a/` unchanged. Public GitHub publication is pending and no remote repository is claimed here.
+
+## Boundaries of the original result
 
 | Capability | Metal evidence | CUDA / ROCm |
 |---|---|---|

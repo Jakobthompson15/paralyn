@@ -24,7 +24,7 @@ int main() {
     require(cudaMemcpy(da, a.data(), n * sizeof(float), cudaMemcpyHostToDevice));
     require(cudaMemcpy(db, b.data(), n * sizeof(float), cudaMemcpyHostToDevice));
     require(cudaMemcpy(dc, actual.data(), n * sizeof(float), cudaMemcpyHostToDevice));
-    using namespace unicuda;
+    using namespace paralyn;
     Kernel signature{"runtime_smoke",
                      {{"a", ScalarType::F32, true, true},
                       {"b", ScalarType::F32, true, true},

@@ -1,9 +1,9 @@
-#include "unicuda/ir.hpp"
+#include "paralyn/ir.hpp"
 #include <functional>
 #include <iostream>
 #include <stdexcept>
 
-using namespace unicuda;
+using namespace paralyn;
 namespace {
 void require(bool ok, const char *message) {
   if (!ok)

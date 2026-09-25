@@ -1,8 +1,8 @@
 # Prior art and compatibility boundaries
 
-Research date: **2026-09-25**. This is a primary-source desk review, not a reproduced benchmark or certification of another project. Links below were consulted on that date; moving documentation can change. Capability statements describe documented scope. No third-party implementation was executed as part of this review. UniCUDA's own results are recorded separately in `status.md`.
+Research date: **2026-09-25**. This is a primary-source desk review, not a reproduced benchmark or certification of another project. Links below were consulted on that date; moving documentation can change. Capability statements describe documented scope. No third-party implementation was executed as part of this review. Paralyn's own results are recorded separately in `status.md`.
 
-Every entry answers the same ten questions: **problem**, **hardware**, **model**, **unchanged CUDA source**, **source transformation**, **binary compatibility**, **heterogeneous hardware**, **distributed hardware**, **limitations**, and **UniCUDA difference**. “No” for CUDA binary compatibility means the layer does not itself promise NVIDIA CUDA application/driver ABI compatibility; it does not mean that it cannot load any binary. “Not intrinsic” means an enclosing system can add that capability. Proposed UniCUDA differences are design intentions, not implemented or novel capabilities.
+Every entry answers the same ten questions: **problem**, **hardware**, **model**, **unchanged CUDA source**, **source transformation**, **binary compatibility**, **heterogeneous hardware**, **distributed hardware**, **limitations**, and **Paralyn difference**. “No” for CUDA binary compatibility means the layer does not itself promise NVIDIA CUDA application/driver ABI compatibility; it does not mean that it cannot load any binary. “Not intrinsic” means an enclosing system can add that capability. Proposed Paralyn differences are design intentions, not implemented or novel capabilities.
 
 ## CUDA ecosystem and Apple execution
 
@@ -21,7 +21,7 @@ Source: [NVIDIA CUDA Programming Guide](https://docs.nvidia.com/cuda/cuda-progra
 | 7. Heterogeneous | CPU plus NVIDIA devices; not a universal vendor backend. |
 | 8. Distributed | Multi-GPU facilities exist; multi-node composition requires additional communication/software. |
 | 9. Limitations | Device features, numerical behavior, ABI, and memory rules are explicit constraints. |
-| 10. UniCUDA difference | Independently implement a tested source subset on non-NVIDIA devices. |
+| 10. Paralyn difference | Independently implement a tested source subset on non-NVIDIA devices. |
 
 ### CUDA Runtime API
 
@@ -38,7 +38,7 @@ Source: [Runtime API reference](https://docs.nvidia.com/cuda/cuda-runtime-api/in
 | 7. Heterogeneous | Host and one or more NVIDIA GPUs. |
 | 8. Distributed | Not a cluster scheduler or network data plane. |
 | 9. Limitations | Synchronization and error behavior matter; “async” cannot be inferred solely from function names. |
-| 10. UniCUDA difference | Small source-facing compatibility API with checked tokens and explicit missing features. |
+| 10. Paralyn difference | Small source-facing compatibility API with checked tokens and explicit missing features. |
 
 ### CUDA Driver API
 
@@ -55,7 +55,7 @@ Source: [Driver API reference](https://docs.nvidia.com/cuda/cuda-driver-api/inde
 | 7. Heterogeneous | Host/NVIDIA devices, not an independent multi-vendor abstraction. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Exposes NVIDIA module, context, and capability semantics. |
-| 10. UniCUDA difference | Gate A compiles source and links its own runtime; no drop-in driver ABI promise. |
+| 10. Paralyn difference | Gate A compiles source and links its own runtime; no drop-in driver ABI promise. |
 
 ### PTX
 
@@ -72,7 +72,7 @@ Source: [PTX ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/index.h
 | 7. Heterogeneous | Other targets require translators with semantic coverage. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | NVIDIA-specific semantics and versioned instructions complicate cross-vendor lowering. |
-| 10. UniCUDA difference | Start above PTX with source AST and a restricted portable IR. |
+| 10. Paralyn difference | Start above PTX with source AST and a restricted portable IR. |
 
 ### Metal
 
@@ -81,7 +81,7 @@ Source: [Apple Metal documentation](https://developer.apple.com/documentation/me
 | Question | Finding |
 |---|---|
 | 1. Problem | Explicit GPU graphics and compute execution on Apple platforms. |
-| 2. Hardware | Metal-capable devices supported by the OS; initial UniCUDA target is Apple Silicon. |
+| 2. Hardware | Metal-capable devices supported by the OS; initial Paralyn target is Apple Silicon. |
 | 3. Model | Devices, resources, pipelines, command buffers, command encoders, queues. |
 | 4. Unchanged CUDA source | No native CUDA frontend. |
 | 5. Source transformation | CUDA needs a frontend/lowering layer producing supported shaders and host calls. |
@@ -89,7 +89,7 @@ Source: [Apple Metal documentation](https://developer.apple.com/documentation/me
 | 7. Heterogeneous | CPU/GPU and multiple Metal devices where present; not a cross-OS universal runtime. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Feature sets and numerical/address-space rules differ from CUDA. |
-| 10. UniCUDA difference | Supply the CUDA-facing frontend/runtime above public Metal. |
+| 10. Paralyn difference | Supply the CUDA-facing frontend/runtime above public Metal. |
 
 ### Metal Shading Language (MSL)
 
@@ -106,7 +106,7 @@ Source: [MSL specification](https://developer.apple.com/metal/Metal-Shading-Lang
 | 7. Heterogeneous | Portable within supported Metal targets and feature contracts. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Entry-buffer aliasing, FP64 availability, SIMD and memory semantics need explicit treatment. |
-| 10. UniCUDA difference | Verified IR emits MSL with one binding per unique allocation; no textual CUDA substitution. |
+| 10. Paralyn difference | Verified IR emits MSL with one binding per unique allocation; no textual CUDA substitution. |
 
 ### Metal compute pipelines
 
@@ -123,7 +123,7 @@ Source: [Performing calculations on a GPU](https://developer.apple.com/documenta
 | 7. Heterogeneous | Integrates CPU submission with GPU execution. |
 | 8. Distributed | No cluster execution contract. |
 | 9. Limitations | Dispatch geometry, pipeline limits, resource lifetimes, and asynchronous failures are application responsibilities. |
-| 10. UniCUDA difference | Runtime validates CUDA geometry and records actual GPU completion evidence. |
+| 10. Paralyn difference | Runtime validates CUDA geometry and records actual GPU completion evidence. |
 
 ### Apple unified memory
 
@@ -140,7 +140,7 @@ Source: [Choosing a resource storage mode for Apple GPUs](https://developer.appl
 | 7. Heterogeneous | CPU/GPU physical-memory sharing. |
 | 8. Distributed | No; memory in separate machines remains separately placed. |
 | 9. Limitations | Shared storage does not remove races, command ordering, resource limits, or ownership requirements. |
-| 10. UniCUDA difference | Explicit copies and opaque tokens initially; do not advertise CUDA managed-memory semantics. |
+| 10. Paralyn difference | Explicit copies and opaque tokens initially; do not advertise CUDA managed-memory semantics. |
 
 ## Portable APIs and compiler infrastructure
 
@@ -159,7 +159,7 @@ Sources: [ROCm programming guide](https://rocm-handbook.amd.com/), [AMD ROCm rep
 | 7. Heterogeneous | CPU/AMD GPU computing and component-specific portability. |
 | 8. Distributed | Ecosystem communication/framework components provide multi-node use. |
 | 9. Limitations | Hardware/OS support and library/API coverage are version-specific. |
-| 10. UniCUDA difference | Later ROCm backend beneath the same tested CUDA-source subset. |
+| 10. Paralyn difference | Later ROCm backend beneath the same tested CUDA-source subset. |
 
 ### HIP
 
@@ -176,7 +176,7 @@ Sources: [HIP project](https://github.com/ROCm/HIP), [Clang HIP support](https:/
 | 7. Heterogeneous | CPU/GPU; backend coverage depends on implementation. |
 | 8. Distributed | Through libraries and enclosing runtimes. |
 | 9. Limitations | API/architecture differences and vendor-specific tuning remain. |
-| 10. UniCUDA difference | Preserve a declared CUDA source interface and begin on Metal. |
+| 10. Paralyn difference | Preserve a declared CUDA source interface and begin on Metal. |
 
 ### HIPIFY
 
@@ -193,7 +193,7 @@ Source: [HIPIFY documentation](https://rocm.docs.amd.com/projects/HIPIFY/en/late
 | 7. Heterogeneous | Inherited from HIP, not executed by HIPIFY itself. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Unsupported CUDA libraries/features need manual work and tests. |
-| 10. UniCUDA difference | Internal lowering/runtime compatibility rather than requiring a maintained HIP port. |
+| 10. Paralyn difference | Internal lowering/runtime compatibility rather than requiring a maintained HIP port. |
 
 ### OpenCL
 
@@ -210,7 +210,7 @@ Source: [Khronos OpenCL specification](https://registry.khronos.org/OpenCL/specs
 | 7. Heterogeneous | Yes, a central design goal. |
 | 8. Distributed | Not guaranteed by the base standard. |
 | 9. Limitations | Optional capabilities and implementation availability affect portability. |
-| 10. UniCUDA difference | CUDA-source compatibility layered over backends rather than a new application language/API. |
+| 10. Paralyn difference | CUDA-source compatibility layered over backends rather than a new application language/API. |
 
 ### SYCL
 
@@ -227,7 +227,7 @@ Source: [Khronos SYCL](https://www.khronos.org/sycl/). Standard specification te
 | 7. Heterogeneous | Yes, including multiple device kinds in an application. |
 | 8. Distributed | Requires additional libraries/runtime integration. |
 | 9. Limitations | Feature and performance portability are different; target tuning remains necessary. |
-| 10. UniCUDA difference | Retain supported CUDA syntax instead of asking users to adopt SYCL. |
+| 10. Paralyn difference | Retain supported CUDA syntax instead of asking users to adopt SYCL. |
 
 ### oneAPI
 
@@ -244,7 +244,7 @@ Source: [oneAPI specifications](https://oneapi.io/spec/). Umbrella of specificat
 | 7. Heterogeneous | Yes, at the programming/library level. |
 | 8. Distributed | Communication components may support it; not automatic memory unification. |
 | 9. Limitations | Specification presence does not guarantee a backend or complete feature implementation. |
-| 10. UniCUDA difference | Narrow CUDA compatibility contract with explicit execution evidence. |
+| 10. Paralyn difference | Narrow CUDA compatibility contract with explicit execution evidence. |
 
 ### Vulkan Compute
 
@@ -261,7 +261,7 @@ Source: [Khronos Vulkan Guide](https://docs.vulkan.org/guide/latest/). Khronos s
 | 7. Heterogeneous | Multiple implementations/device kinds, with explicit selection. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Addressing, subgroup, synchronization, and feature limits need explicit mapping. |
-| 10. UniCUDA difference | Potential later backend; CUDA host semantics remain a separate responsibility. |
+| 10. Paralyn difference | Potential later backend; CUDA host semantics remain a separate responsibility. |
 
 ### LLVM
 
@@ -278,7 +278,7 @@ Sources: [LLVM documentation](https://llvm.org/docs/), [LLVM license](https://gi
 | 7. Heterogeneous | Supports component toolchains, not a universal scheduling runtime. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Data layout, address spaces, target intrinsics, and runtime semantics remain target-specific. |
-| 10. UniCUDA difference | Reuse Clang parsing; preserve a small higher-level IR for initial MSL output. |
+| 10. Paralyn difference | Reuse Clang parsing; preserve a small higher-level IR for initial MSL output. |
 
 ### Clang CUDA support and LibTooling
 
@@ -295,7 +295,7 @@ Sources: [Compiling CUDA with Clang](https://llvm.org/docs/CompileCudaWithLLVM.h
 | 7. Heterogeneous | Compiler infrastructure supports offloading models. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Standard native CUDA flow expects CUDA SDK support; LibTooling API/version coupling matters. |
-| 10. UniCUDA difference | Independent declarations plus restricted AST extraction and host launch rewrites. |
+| 10. Paralyn difference | Independent declarations plus restricted AST extraction and host launch rewrites. |
 
 ### MLIR
 
@@ -312,7 +312,7 @@ Sources: [MLIR](https://mlir.llvm.org/), [design rationale](https://mlir.llvm.or
 | 7. Heterogeneous | Enables heterogeneous compiler stacks. |
 | 8. Distributed | Can model such programs; no cluster runtime by itself. |
 | 9. Limitations | Dialect integration and semantic lowering remain engineering work. |
-| 10. UniCUDA difference | Defer integration cost for Gate A; reconsider as operations and backends grow. |
+| 10. Paralyn difference | Defer integration cost for Gate A; reconsider as operations and backends grow. |
 
 ### SPIR-V
 
@@ -329,7 +329,7 @@ Source: [Khronos SPIR-V](https://www.khronos.org/spirv/). Specification and tool
 | 7. Heterogeneous | Portable across compatible implementations, not all capability sets. |
 | 8. Distributed | Not intrinsic. |
 | 9. Limitations | Environment rules differ; host API and CUDA semantics remain unimplemented. |
-| 10. UniCUDA difference | Keep kernel IR above backend formats; potential later Vulkan lowering. |
+| 10. Paralyn difference | Keep kernel IR above backend formats; potential later Vulkan lowering. |
 
 ## Direct compatibility projects
 
@@ -348,7 +348,7 @@ Sources: [upstream repository](https://github.com/vosen/ZLUDA), [project updates
 | 7. Heterogeneous | Non-NVIDIA execution is the goal, not proof of every vendor combination. |
 | 8. Distributed | No cluster scheduling guarantee established by this review. |
 | 9. Limitations | Driver/library API coverage, PTX semantics, application behavior, and backend support. |
-| 10. UniCUDA difference | Source-first restricted frontend on Metal rather than beginning with binary interception. |
+| 10. Paralyn difference | Source-first restricted frontend on Metal rather than beginning with binary interception. |
 
 ### CuMetal / cuda-metal
 
@@ -365,9 +365,9 @@ Sources: [upstream project](https://github.com/Lulzx/cuda-metal), [license](http
 | 7. Heterogeneous | Apple Metal target; not demonstrated cross-vendor coverage here. |
 | 8. Distributed | Not established in reviewed documentation. |
 | 9. Limitations | Experimental; documented compiler gaps and differing source/PTX path coverage. |
-| 10. UniCUDA difference | No unique Gate A feature established. A future common multi-vendor conformance contract is only a potential contribution. |
+| 10. Paralyn difference | No unique Gate A feature established. A future common multi-vendor conformance contract is only a potential contribution. |
 
-This is direct prior art, including upstream GPU-provenance requirements. Do not describe source-to-Metal execution, inspectable IR, or no-fallback validation as inventions of UniCUDA. Upstream reported results have not been independently reproduced here.
+This is direct prior art, including upstream GPU-provenance requirements. Do not describe source-to-Metal execution, inspectable IR, or no-fallback validation as inventions of Paralyn. Upstream reported results have not been independently reproduced here.
 
 ### MetaXuda
 
@@ -384,9 +384,9 @@ Sources: [README](https://github.com/Perinban/MetaXuda), [license](https://githu
 | 7. Heterogeneous | Single Apple GPU is the documented initial target. |
 | 8. Distributed | Not established. |
 | 9. Limitations | Upstream explicitly documents ignored scalar arithmetic in kernel arguments and incomplete APIs. |
-| 10. UniCUDA difference | Independent C++ AST/IR lowering with explicit rejection rather than silently discarded operations. |
+| 10. Paralyn difference | Independent C++ AST/IR lowering with explicit rejection rather than silently discarded operations. |
 
-The documented scalar issue is a concrete reason to vary semantics and inputs during qualification. It is an upstream limitation statement, not a result reproduced by UniCUDA.
+The documented scalar issue is a concrete reason to vary semantics and inputs during qualification. It is an upstream limitation statement, not a result reproduced by Paralyn.
 
 ## Scheduling, frameworks, and compiler research
 
@@ -405,7 +405,7 @@ Sources: [Ray accelerator scheduling](https://docs.ray.io/en/latest/ray-core/sch
 | 7. Heterogeneous | Yes at resource scheduling level. |
 | 8. Distributed | Yes, a central function. |
 | 9. Limitations | Resource assignment does not make a kernel compatible or guarantee memory isolation/capacity. |
-| 10. UniCUDA difference | Establish device execution compatibility first; borrow explicit placement lessons later. |
+| 10. Paralyn difference | Establish device execution compatibility first; borrow explicit placement lessons later. |
 
 ### Heterogeneous compute schedulers: StarPU
 
@@ -422,7 +422,7 @@ Sources: [StarPU](https://starpu.gitlabpages.inria.fr/), [features](https://star
 | 7. Heterogeneous | Yes, a defining capability. |
 | 8. Distributed | Cluster communication and scheduling are documented. |
 | 9. Limitations | Requires suitable implementations; task granularity and transfers affect efficiency. |
-| 10. UniCUDA difference | Compile a CUDA subset to device variants; future scheduling must acknowledge this prior art. |
+| 10. Paralyn difference | Compile a CUDA subset to device variants; future scheduling must acknowledge this prior art. |
 
 ### PyTorch device/backend architecture
 
@@ -439,7 +439,7 @@ Sources: [device abstractions](https://docs.pytorch.org/cppdocs/api/c10/device.h
 | 7. Heterogeneous | Multiple device types; coverage depends on operator/backend. |
 | 8. Distributed | Framework facilities exist; backend communication support is separate work. |
 | 9. Limitations | Registering a device does not implement its operators or libraries. |
-| 10. UniCUDA difference | Native CUDA-source runtime first; no transparent PyTorch claim. |
+| 10. Paralyn difference | Native CUDA-source runtime first; no transparent PyTorch claim. |
 
 ### JAX
 
@@ -456,7 +456,7 @@ Sources: [JAX documentation](https://docs.jax.dev/en/latest/), [license](https:/
 | 7. Heterogeneous | Multiple backend ecosystems; mixing arbitrary devices is not automatic. |
 | 8. Distributed | Explicit multi-host, distributed arrays, and sharding facilities. |
 | 9. Limitations | Staging, backend availability, shapes, and numerical semantics constrain programs. |
-| 10. UniCUDA difference | CUDA C++ source is the initial interface; interoperability is deferred. |
+| 10. Paralyn difference | CUDA C++ source is the initial interface; interoperability is deferred. |
 
 ### XLA / OpenXLA
 
@@ -473,7 +473,7 @@ Sources: [XLA overview](https://openxla.org/xla), [license](https://github.com/o
 | 7. Heterogeneous | Multiple targets and extensible backend infrastructure. |
 | 8. Distributed | Partitioning and parallel computation are supported in the stack. |
 | 9. Limitations | Graph semantics and backend coverage differ from arbitrary imperative CUDA. |
-| 10. UniCUDA difference | Preserve ordinary host C++ around a source-level CUDA subset. |
+| 10. Paralyn difference | Preserve ordinary host C++ around a source-level CUDA subset. |
 
 ### Triton
 
@@ -490,7 +490,7 @@ Sources: [Triton documentation](https://triton-lang.org/main/index.html), [upstr
 | 7. Heterogeneous | Multiple GPU backends, not arbitrary backend equivalence. |
 | 8. Distributed | Integrates with larger distributed systems; not a general cluster scheduler. |
 | 9. Limitations | DSL semantics, supported operations, layouts, and target performance constraints. |
-| 10. UniCUDA difference | CUDA C++ entrypoint and compatibility, rather than a replacement kernel language. |
+| 10. Paralyn difference | CUDA C++ entrypoint and compatibility, rather than a replacement kernel language. |
 
 ### IREE
 
@@ -507,7 +507,7 @@ Sources: [deployment configurations](https://iree.dev/guides/deployment-configur
 | 7. Heterogeneous | Yes; explicit compiler target/runtime driver separation. |
 | 8. Distributed | Do not infer cluster CUDA compatibility from multi-backend support. |
 | 9. Limitations | Frontend/model and backend feature coverage determine supported programs. |
-| 10. UniCUDA difference | CUDA source/host semantics; multi-backend IR/runtime architecture already exists. |
+| 10. Paralyn difference | CUDA source/host semantics; multi-backend IR/runtime architecture already exists. |
 
 ### Compiler research: MLIR paper (2021)
 
@@ -524,7 +524,7 @@ Source: [Lattner et al., “MLIR: Scaling Compiler Infrastructure for Domain Spe
 | 7. Heterogeneous | Supports designing compilers for varied targets. |
 | 8. Distributed | Not a distributed runtime deliverable. |
 | 9. Limitations | Infrastructure does not supply every frontend or semantics-preserving lowering. |
-| 10. UniCUDA difference | Use a tiny initial IR while retaining an explicit future migration criterion. |
+| 10. Paralyn difference | Use a tiny initial IR while retaining an explicit future migration criterion. |
 
 ### Compiler research: Triton paper (2019)
 
@@ -541,7 +541,7 @@ Source: [Tillet, Kung, and Cox, “Triton: An Intermediate Language and Compiler
 | 7. Heterogeneous | Compiler retargetability differs from demonstrated universal portability. |
 | 8. Distributed | Outside the paper's primary objective. |
 | 9. Limitations | Domain-specific model and evaluated workloads bound conclusions. |
-| 10. UniCUDA difference | Source compatibility first; postpone performance transformations until correctness. |
+| 10. Paralyn difference | Source compatibility first; postpone performance transformations until correctness. |
 
 ### Compiler research: TinyIREE (2022)
 
@@ -558,9 +558,9 @@ Source: [Liu et al., “TinyIREE: An ML Execution Environment for Embedded Syste
 | 7. Heterogeneous | Designed for heterogeneous accelerators and deployment targets. |
 | 8. Distributed | Scaling deployment targets is not evidence of transparent cluster execution. |
 | 9. Limitations | Embedded deployment conclusions do not establish CUDA compatibility. |
-| 10. UniCUDA difference | Study clean compiler/runtime boundaries while targeting a different source interface. |
+| 10. Paralyn difference | Study clean compiler/runtime boundaries while targeting a different source interface. |
 
-## Consequences for UniCUDA
+## Consequences for Paralyn
 
 CUDA-source translation, typed portable IR, cross-vendor APIs, backend registries, device placement, and heterogeneous scheduling all have substantial prior art. CuMetal directly overlaps the initial Apple milestone. Gate A establishes that this independent implementation works; it does not establish novelty.
 
