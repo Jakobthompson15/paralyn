@@ -2,7 +2,7 @@
 
 An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
-**Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. All four automated tests pass. Gate B and public release qualification remain deferred.
+**Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. The Gate B correctness suite and benchmark are implemented; clean-revision qualification evidence is being captured. No tagged release has been published.
 
 The fresh [execution record](artifacts/paralyn-gate-a/execution.json), [generated Metal](artifacts/paralyn-gate-a/generated.metal), and [verification transcript](artifacts/paralyn-gate-a/verification.txt) preserve a run from a clean Paralyn revision:
 
@@ -42,7 +42,7 @@ build/paralyn run examples/vector_add.cu
 
 `run` compiles and executes trusted local source as a native program, with the same host access as launching that program yourself. It does not sandbox host C++.
 
-Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Intermediate native host code is retained under `build/runs/` for inspection.
+Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
 
 ## Current boundaries
 
@@ -50,6 +50,20 @@ Specify `--device auto` (default) or a listed index. Pass host arguments after `
 - Supported kernel expression/statement nodes are deliberately narrow; unknown behavior fails explicitly.
 - Device pointers are opaque base tokens. Host pointer arithmetic or dereference is unsupported.
 - Metal only. No NVIDIA/AMD backend, binary/PTX compatibility, framework integration, or distributed execution.
-- No persistent cache, benchmark claims, or public release qualification yet.
+- No persistent cache or cross-vendor/performance claim. See the qualification and benchmark evidence for the tested Metal subset.
 
 Read [CUDA compatibility](docs/cuda-compatibility.md), [architecture](docs/architecture.md), [prior art](docs/prior-art.md), and [roadmap](ROADMAP.md). CuMetal and other projects already overlap these goals; novelty is unproven. Original code is Apache-2.0; dependency and platform terms are listed in [third-party licenses](THIRD_PARTY_LICENSES.md).
+
+## Qualification
+
+`ctest` runs compiler/runtime negatives, Gate A, and the Gate B correctness suite on actual Metal hardware. Hardware absence fails qualification. Run the benchmark separately with an otherwise idle GPU:
+
+```sh
+python3 scripts/qualify_gate_b.py --paralyn build/paralyn --artifacts artifacts/runs/correctness-new
+python3 scripts/verify_benchmark.py --benchmark build/gate_b_benchmark --paralyn build/paralyn \
+  --source examples/vector_add.cu --artifacts artifacts/runs/benchmark-new
+```
+
+Use a fresh artifact directory each time. Add `--require-clean` for permanent milestone captures. The [benchmark protocol](benchmarks/README.md) explains the measured regions and limits; [numerics](docs/numerics.md) defines the FP32 policy.
+
+The deprecated `build/unicuda` command and `unicuda/*.hpp` namespace aliases forward to Paralyn during the naming transition. New code should use Paralyn. The [v1.1 portfolio](docs/frontend-matrix.md) tracks required future work; unimplemented rows are not advertised as supported.

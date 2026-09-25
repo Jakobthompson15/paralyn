@@ -85,3 +85,13 @@ Recorded 2026-09-25 during Gate A implementation. These notes capture integratio
 **Potential solutions.** Implement unused registry/offset/analysis machinery now, or clearly distinguish current code from future extension points.
 
 **Selected solution.** Document the current interfaces exactly. Preserve portable types and backend-private native objects. Add a registry when another backend exists, offset views when pointer support is tested, and constant launch analysis when it serves a concrete need. None belongs on Gate A's critical path.
+
+## Gate B: source identity, decimal literals, and floating-point contraction
+
+**Evidence.** Qualification added generated/handwritten comparisons, mixed alias layouts, integer boundaries, exceptional FP32 values, and negative backend tests. A missing-entrypoint test exposed that the pipeline map previously keyed only MSL source. The same source with a different entrypoint could reuse the earlier pipeline. The key now includes the entrypoint; the negative test requires actual rejection.
+
+Independent verifier review also found two latent IR serialization hazards: unused statement target fields could reach enum-indexed serialization, and decimal IR text such as `00012` could become an octal Metal literal. Inactive targets are now serialized canonically, illegal statement children/type mismatches are rejected, and integer literals emit their parsed decimal values. Focused IR regressions cover these paths.
+
+Apple's [MSL specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf), sections 1.6.3 and 8, allows contraction in safe math mode and permits subnormal flushing. Generated shaders now explicitly disable contraction. The physical-M5 numerical fixture distinguishes fused and separate multiply/add results, tests normal values against a 1-ULP bound, and classifies exceptional/subnormal behavior separately. These are bounded guarantees; there is no claim of universal CUDA bitwise equivalence.
+
+**Chosen revision.** Keep the existing typed IR and Metal backend. Strengthen the contracts and tests that exposed the assumptions. New evidence archives host.cpp and every dispatched MSL source with per-launch references. Git failures/untracked source files cannot be mislabeled as a clean revision. Original first-execution artifacts stay unchanged.

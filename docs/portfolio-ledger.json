@@ -1,0 +1,1730 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-25",
+  "software_version": "0.0.1",
+  "mandate": {
+    "version": "1.1",
+    "path": "docs/master-mandate-v1.1.md",
+    "sha256": "15daa7f0a48e4e0fe586a923512b44f8f22542d0d8ad9c61164a9e96c5f44ac0",
+    "all_frontends_required": true
+  },
+  "status_definitions": {
+    "implementation": [
+      "not_started",
+      "implementing",
+      "implemented",
+      "blocked"
+    ],
+    "qualification": [
+      "unavailable",
+      "failing",
+      "verified"
+    ],
+    "unavailable": "No qualifying evidence for the stated full scope; reason distinguishes absent implementation, incomplete testing, and unavailable hardware.",
+    "verified": "Actual physical-device execution for the exact stated subset/version; does not imply full track completion.",
+    "blocked": "An investigated prerequisite prevents progress; not a synonym for work not yet started."
+  },
+  "baseline": {
+    "head_at_adoption": "86f406f",
+    "verified_clean_gate_a_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+    "gate_a": "verified",
+    "gate_b": "implementing_not_complete",
+    "evidence_record": {
+      "scope": "cuda_complete_program_gate_a",
+      "input_contract": "CUDA-style C++17 subset / Clang 21.1.8",
+      "operation": "bounds_checked_fp32_vector_add",
+      "source_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "qualification": "verified",
+      "artifacts": [
+        "artifacts/paralyn-gate-a/source.cu",
+        "artifacts/paralyn-gate-a/paralyn-ir.txt",
+        "artifacts/paralyn-gate-a/generated.metal",
+        "artifacts/paralyn-gate-a/execution.json",
+        "artifacts/paralyn-gate-a/verification.txt"
+      ],
+      "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+    },
+    "note": "Gate B development tests may run after adoption; final accepted evidence must be added explicitly. No benchmark results are asserted here."
+  },
+  "frontend_tracks": [
+    {
+      "id": "cuda_cpp",
+      "name": "CUDA C++",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "A",
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": "CUDA-style C++17; Clang 21.1.8",
+        "subset": "Preserve the documented complete-program CUDA subset.",
+        "subset_status": "gate_a_implemented_gate_b_in_progress"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Batched affine vector transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [
+          "LLVM/Clang 21.1.8",
+          "Apple Clang 17.0.0",
+          "macOS SDK 26.2"
+        ],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Independent source implementation"
+      },
+      "execution_path": "CUDA AST -> host rewrite + verified typed IR -> generated MSL -> shared Metal runtime",
+      "tests": {
+        "positive_negative_integration": "Gate A tests exist; Gate B active.",
+        "numerical_contract": "docs/numerics.md",
+        "reproduction": "README.md and scripts/verify_gate_a.py"
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": [
+            {
+              "scope": "cuda_complete_program_gate_a",
+              "input_contract": "CUDA-style C++17 subset / Clang 21.1.8",
+              "operation": "bounds_checked_fp32_vector_add",
+              "source_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "qualification": "verified",
+              "artifacts": [
+                "artifacts/paralyn-gate-a/source.cu",
+                "artifacts/paralyn-gate-a/paralyn-ir.txt",
+                "artifacts/paralyn-gate-a/generated.metal",
+                "artifacts/paralyn-gate-a/execution.json",
+                "artifacts/paralyn-gate-a/verification.txt"
+              ],
+              "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+            }
+          ]
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Complete existing Gate B correctness and benchmark qualification without changing the demonstrated host/kernel contract."
+    },
+    {
+      "id": "native_c_cpp",
+      "name": "Native C/C++",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "B",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Native allocation, owned buffers/views, typed launch, completion and structured errors without CUDA allocation APIs.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Vector AXPY through native C and C++ wrappers",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "After Gate B, implement the smallest shared-runtime C/C++ ownership and launch slice described in docs/native-api.md."
+    },
+    {
+      "id": "native_python",
+      "name": "Native Python",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "B",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Real bindings to the shared runtime, then an agreed small array/operator surface.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Batched vector transform from Python buffers",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Implement and qualify native C/C++ first, pin Python/binding versions, then bind that runtime and test explicit copies/launch/completion."
+    },
+    {
+      "id": "hip_cpp",
+      "name": "HIP C++",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Compiler-assisted complete source/runtime path for an explicitly scoped HIP subset.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Bounded HIP affine transform application",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin HIP/Clang versions and define the initial host/runtime contract plus Metal lowering bridge."
+    },
+    {
+      "id": "triton",
+      "name": "Triton",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Pinned compiler/backend integration retaining supported tile, mask, layout and dtype semantics.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Masked tiled affine transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin an upstream compiler boundary, license, and Metal-capable lowering plan; qualify real tile/mask execution."
+    },
+    {
+      "id": "opencl_c",
+      "name": "OpenCL C",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Kernel import, reflection, lowering and runtime launch; no full OpenCL host API claim.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Strided elementwise transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Define OpenCL C version/address spaces and compiler bridge with resource reflection and negative tests."
+    },
+    {
+      "id": "sycl_cpp",
+      "name": "SYCL C++",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Bounded complete SYCL application through an existing compiler/runtime boundary.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Buffer-based affine transform application",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin SYCL compiler/runtime and select a complete application/offload boundary; extracted kernel alone is insufficient."
+    },
+    {
+      "id": "openmp_target",
+      "name": "OpenMP target offload",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Supported target region with explicit tested mapping, completion, errors and no host fallback.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Target-mapped vector transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin compiler/offload ABI and define supported mapping/data-lifetime semantics before implementing its runtime bridge."
+    },
+    {
+      "id": "slang",
+      "name": "Slang",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Compute compilation, reflection, resources and actual runtime execution.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Resource-bound image-channel transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin Slang and Metal target path, define entrypoint/resource subset, then implement compilation/reflection and launches."
+    },
+    {
+      "id": "hlsl_compute",
+      "name": "HLSL compute",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Qualified compute-source bridge and verified resource binding; no graphics claim.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Compute image-channel transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Select and pin a licensed compiler bridge and explicit shader-model/resource subset independently of GLSL."
+    },
+    {
+      "id": "glsl_compute",
+      "name": "GLSL compute",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Separate GLSL compute import and execution qualification.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Compute buffer affine transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin GLSL version/environment and compiler bridge; implement separate input/reflection tests rather than counting HLSL."
+    },
+    {
+      "id": "wgsl",
+      "name": "WGSL",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Validated compute import, explicit features/environment and resource mapping.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Bounds-checked elementwise transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Pin validator/translator and resource layout contract, then integrate actual Metal execution."
+    },
+    {
+      "id": "spirv",
+      "name": "SPIR-V inputs",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Named SPIR-V versions, capabilities and compute execution environments with validation.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Validated compute-module affine transform",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Choose a bounded compute environment, pin validator/translation dependencies, and define reflected argument/ABI validation."
+    },
+    {
+      "id": "mlir",
+      "name": "MLIR inputs",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Named versioned dialects/operations with a working lowering/execution bridge.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Restricted tensor/kernel transform module",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Evaluate existing dialect/StableHLO bridges and pin an explicit accepted dialect/operator subset; arbitrary MLIR is not supported."
+    },
+    {
+      "id": "metal_source",
+      "name": "Metal source",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "E",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "backend_specific_metal",
+      "input_contract": {
+        "version": null,
+        "subset": "Native MSL module compilation, argument contract and runtime execution; backend-specific.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Native MSL affine transform module",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Turn the test-only handwritten-MSL hook into a scoped real module/reflection/argument API after the native-runtime foundation.",
+      "related_evidence": {
+        "kind": "internal_test_hook_only",
+        "path": "tests/runtime_smoke.cpp",
+        "note": "Handwritten MSL smoke is real backend evidence, but it does not qualify a native-MSL frontend/module API."
+      }
+    },
+    {
+      "id": "ptx",
+      "name": "PTX",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "H",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "Versioned PTX subset lowered to non-NVIDIA hardware and validated against NVIDIA reference artifacts.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Versioned PTX vector and affine-transform artifacts",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Establish authorized artifact/tool provenance, named PTX/ABI subset, and reference hardware before feasibility implementation.",
+      "unmet_prerequisites": [
+        "authorized_artifact_and_tooling_provenance",
+        "versioned_input_and_ABI_contract",
+        "reference_hardware",
+        "feasibility_prototype"
+      ]
+    },
+    {
+      "id": "sass",
+      "name": "SASS",
+      "kind": "frontend_or_native_interface",
+      "required": true,
+      "stage": "H",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "complete": false,
+      "portability": "required_common_subset_metal_cuda_rocm",
+      "input_contract": {
+        "version": null,
+        "subset": "One explicitly named NVIDIA ISA generation/subset decoded/lowered to non-NVIDIA execution with reference validation.",
+        "subset_status": "design_target_not_yet_pinned"
+      },
+      "workloads": {
+        "reference": "bounds_checked_vector_add",
+        "useful": "Named-generation vector and second-operation binary artifacts",
+        "useful_status": "proposed_not_qualified"
+      },
+      "dependencies": {
+        "compiler_provider_versions": [],
+        "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
+        "provenance": "Not yet established for this track."
+      },
+      "execution_path": null,
+      "tests": {
+        "positive_negative_integration": "not_started",
+        "numerical_contract": null,
+        "reproduction": null
+      },
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "blockers": [],
+      "next_task": "Establish authorized tooling/artifacts, exact ISA/ABI subset, reference hardware, and feasibility evidence; retain as incomplete if prerequisites block it.",
+      "unmet_prerequisites": [
+        "authorized_artifact_and_tooling_provenance",
+        "versioned_input_and_ABI_contract",
+        "reference_hardware",
+        "feasibility_prototype"
+      ]
+    }
+  ],
+  "required_interoperability_clients": [
+    {
+      "id": "numba_cuda",
+      "name": "Numba CUDA",
+      "kind": "interoperability_client",
+      "required": true,
+      "stage": "F",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "complete": false,
+      "upstream_version": null,
+      "integration_surface": null,
+      "surface_status": "must_select_and_approve_explicit_bounded_surface",
+      "workload": "Scoped Numba CUDA vector/affine workload",
+      "workload_status": "proposed_not_qualified",
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "dependencies_licenses_provenance": "Not yet pinned; review before integration.",
+      "tests_evidence": [],
+      "blockers": [],
+      "next_task": "After native/runtime foundation, pin upstream version, choose the explicit integration surface and useful workload, then implement and qualify without device-identity spoofing."
+    },
+    {
+      "id": "cupy",
+      "name": "CuPy",
+      "kind": "interoperability_client",
+      "required": true,
+      "stage": "F",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "complete": false,
+      "upstream_version": null,
+      "integration_surface": null,
+      "surface_status": "must_select_and_approve_explicit_bounded_surface",
+      "workload": "Scoped CuPy raw-kernel or explicit supported-operation workload",
+      "workload_status": "proposed_not_qualified",
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "dependencies_licenses_provenance": "Not yet pinned; review before integration.",
+      "tests_evidence": [],
+      "blockers": [],
+      "next_task": "After native/runtime foundation, pin upstream version, choose the explicit integration surface and useful workload, then implement and qualify without device-identity spoofing."
+    },
+    {
+      "id": "cuda_python",
+      "name": "CUDA Python",
+      "kind": "interoperability_client",
+      "required": true,
+      "stage": "F",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "complete": false,
+      "upstream_version": null,
+      "integration_surface": null,
+      "surface_status": "must_select_and_approve_explicit_bounded_surface",
+      "workload": "Scoped allocation/launch/copy workload through an agreed CUDA Python surface",
+      "workload_status": "proposed_not_qualified",
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": true,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "dependencies_licenses_provenance": "Not yet pinned; review before integration.",
+      "tests_evidence": [],
+      "blockers": [],
+      "next_task": "After native/runtime foundation, pin upstream version, choose the explicit integration surface and useful workload, then implement and qualify without device-identity spoofing."
+    }
+  ],
+  "framework_requirement_groups": [
+    {
+      "id": "first_framework_workload",
+      "required": true,
+      "minimum_qualified_surfaces": 1,
+      "stage": "F",
+      "selected_surface": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "next_task": "After native/runtime and provider foundations, compare bounded PyTorch, JAX, and ONNX paths and select one useful real workload."
+    }
+  ],
+  "framework_targets": [
+    {
+      "id": "pytorch_custom_op",
+      "framework": "PyTorch",
+      "surface": "custom operator",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "pytorch_device",
+      "framework": "PyTorch",
+      "surface": "accelerator/device backend",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "pytorch_export",
+      "framework": "PyTorch",
+      "surface": "exported graph",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "pytorch_compile",
+      "framework": "PyTorch",
+      "surface": "torch.compile backend",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "jax_pjrt",
+      "framework": "JAX",
+      "surface": "PJRT/compiler integration",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "onnx_import",
+      "framework": "ONNX",
+      "surface": "tested importer or ONNX Runtime execution provider",
+      "required": false,
+      "requirement_group": "first_framework_workload",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "tensorflow",
+      "framework": "TensorFlow",
+      "surface": "explicit export or plugin route",
+      "required": false,
+      "requirement_group": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "mlx",
+      "framework": "MLX",
+      "surface": "tested data exchange and scoped operators",
+      "required": false,
+      "requirement_group": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "numpy",
+      "framework": "NumPy",
+      "surface": "tested copies/data exchange and scoped operators",
+      "required": false,
+      "requirement_group": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "array_api",
+      "framework": "Array API",
+      "surface": "named specification subset",
+      "required": false,
+      "requirement_group": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    },
+    {
+      "id": "dlpack",
+      "framework": "DLPack",
+      "surface": "validated ownership/device/synchronization exchange",
+      "required": false,
+      "requirement_group": null,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "upstream_version": null,
+      "subset": null,
+      "backend_results": [
+        {
+          "backend": "metal",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "cuda",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        },
+        {
+          "backend": "rocm",
+          "required": false,
+          "qualification": "unavailable",
+          "reason": "No complete required-subset qualification record yet.",
+          "verified_subsets": []
+        }
+      ],
+      "evidence": [],
+      "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
+      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+    }
+  ],
+  "backend_qualifications": [
+    {
+      "id": "metal",
+      "name": "Apple Metal",
+      "required": true,
+      "implementation": "implemented",
+      "qualification": "verified",
+      "qualification_scope": "CUDA Gate A and handwritten runtime smoke only, not all frontend/operator cells.",
+      "hardware_availability": "available_Apple_M5",
+      "verified_subsets": [
+        {
+          "scope": "cuda_complete_program_gate_a",
+          "input_contract": "CUDA-style C++17 subset / Clang 21.1.8",
+          "operation": "bounds_checked_fp32_vector_add",
+          "source_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "qualification": "verified",
+          "artifacts": [
+            "artifacts/paralyn-gate-a/source.cu",
+            "artifacts/paralyn-gate-a/paralyn-ir.txt",
+            "artifacts/paralyn-gate-a/generated.metal",
+            "artifacts/paralyn-gate-a/execution.json",
+            "artifacts/paralyn-gate-a/verification.txt"
+          ],
+          "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+        }
+      ],
+      "full_portfolio_qualification": "unavailable",
+      "next_task": "Complete Gate B and qualify each subsequently implemented frontend/operator separately."
+    },
+    {
+      "id": "cuda",
+      "name": "NVIDIA CUDA",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "hardware_availability": "not_observed_in_current_environment",
+      "verified_subsets": [],
+      "next_task": "At Stage C/G establish available NVIDIA reference hardware, supported public stack, and independent execution backend."
+    },
+    {
+      "id": "rocm",
+      "name": "AMD HIP/ROCm",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "hardware_availability": "not_observed_in_current_environment",
+      "verified_subsets": [],
+      "next_task": "At Stage C/G establish available AMD hardware, supported public stack, and independent execution backend."
+    }
+  ],
+  "operator_provider_targets": [
+    {
+      "id": "fp32_matmul",
+      "required": true,
+      "stage": "D",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "contract": null,
+      "candidate_providers": [
+        "Apple MPS",
+        "NVIDIA cuBLAS",
+        "AMD rocBLAS",
+        "generated qualified GPU kernel"
+      ],
+      "note": "Candidates are not imported providers or compatibility shims. Define layout/strides/accumulation/alias/workspace/ordering contract before implementation.",
+      "next_task": "After native API and a second backend path, specify and implement one useful FP32 matmul provider path with numerical and provider reporting."
+    }
+  ],
+  "operation_backend_version_evidence": [
+    {
+      "scope": "cuda_complete_program_gate_a",
+      "input_contract": "CUDA-style C++17 subset / Clang 21.1.8",
+      "operation": "bounds_checked_fp32_vector_add",
+      "source_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "qualification": "verified",
+      "artifacts": [
+        "artifacts/paralyn-gate-a/source.cu",
+        "artifacts/paralyn-gate-a/paralyn-ir.txt",
+        "artifacts/paralyn-gate-a/generated.metal",
+        "artifacts/paralyn-gate-a/execution.json",
+        "artifacts/paralyn-gate-a/verification.txt"
+      ],
+      "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+    }
+  ],
+  "deferred_systems": [
+    {
+      "id": "distributed_and_specialized_accelerators",
+      "stage": "I",
+      "implementation": "not_started",
+      "qualification": "unavailable",
+      "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
+    }
+  ],
+  "next_acceptance_gap": "Finish existing CUDA/Metal Gate B correctness, numerical behavior, failures, and full documented benchmark protocol before beginning the native runtime slice."
+}

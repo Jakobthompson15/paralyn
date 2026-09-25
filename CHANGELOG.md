@@ -6,6 +6,15 @@
 - Independent CUDA AST frontend, typed verified IR, native host rewrite, and inspect command.
 - Metal runtime with explicit memory copies, opaque allocation tokens, error propagation, and GPU execution evidence.
 - Ordinary CUDA vector-add example and focused compiler/runtime tests.
-- Prior-art and architecture documentation; public release qualification remains deferred.
+- Prior-art and architecture documentation; no tagged release has been published.
 - First complete CUDA-source execution on physical Apple M5: 1,024 results independently matched the CPU reference. Preserved five unchanged historical Gate A artifacts, including `unicuda-ir.txt`, from clean original-name implementation revision `3f3c960f0eb712869cbc99b81e3fdd84394e8efe`.
 - Repeated the complete GPU proof under Paralyn from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1`; saved fresh evidence in `artifacts/paralyn-gate-a/`.
+
+### Gate B implementation
+
+- Adopted mandate v1.1 without changing the software version; tracked all 17 required frontend families and three named clients with separate backend evidence.
+- Added physical-GPU correctness qualification for edge/odd lengths, seeded inputs, changed arithmetic, scalar values, aliases, x/y/z indexing, integer conversions, FP32 numerical policy, host semantics and explicit failures.
+- Added a four-size generated/handwritten-Metal benchmark with all 880 samples and independent evidence/provenance auditing.
+- Fixed entrypoint pipeline-cache identity, inactive IR target serialization and decimal integer emission; disabled implicit FP32 contraction in generated Metal.
+- Preserved transformed host code and per-launch shader source; added runtime timing and buffer accounting.
+- Restored deprecated unicuda command, CMake library aliases and C++ compatibility includes/namespace while retaining Paralyn as the project name.

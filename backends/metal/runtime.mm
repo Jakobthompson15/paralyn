@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <cuda_runtime.h>
@@ -102,6 +103,8 @@ struct Pending {
   std::string source;
   Dim3 grid;
   Dim3 block;
+  std::size_t source_index;
+  double compile_seconds;
 };
 struct Execution {
   std::string kernel;
@@ -111,6 +114,8 @@ struct Execution {
   double end;
   bool complete;
   std::string error;
+  std::size_t source_index;
+  double compile_seconds;
 };
 struct Context;
 Context *active_context = nullptr;
@@ -134,6 +139,8 @@ struct Context {
   std::vector<Execution> executions;
   std::string terminal_failure;
   std::string latest_source;
+  std::vector<std::string> sources;
+  RuntimeStatistics statistics;
   bool announced = false;
 
   explicit Context(const std::string &selector)
@@ -169,11 +176,25 @@ struct Context {
     metal.close();
     if (!metal)
       throw RuntimeError(cudaErrorUnknown, "Cannot write generated.metal");
+    for (std::size_t i = 0; i < sources.size(); ++i) {
+      const auto name = "source-" + std::to_string(i) + ".metal";
+      std::ofstream source(std::filesystem::path(directory) / name);
+      source << sources[i];
+      source.close();
+      if (!source)
+        throw RuntimeError(cudaErrorUnknown, "Cannot write " + name);
+    }
     std::ofstream output(std::filesystem::path(directory) / "execution.json");
     output << std::setprecision(17)
            << "{\n  \"backend\": \"Metal\",\n  \"device\": " << json(utf8(device.name))
            << ",\n  \"registry_id\": " << device.registryID
            << ",\n  \"os\": " << json(utf8(NSProcessInfo.processInfo.operatingSystemVersionString))
+           << ",\n  \"physical_memory_bytes\": " << NSProcessInfo.processInfo.physicalMemory
+           << ",\n  \"unified_memory\": " << (device.hasUnifiedMemory ? "true" : "false")
+           << ",\n  \"metal_language_version\": \"3.1\""
+           << ",\n  \"thermal_state_at_capture\": " << NSProcessInfo.processInfo.thermalState
+           << ",\n  \"low_power_mode_at_capture\": "
+           << (NSProcessInfo.processInfo.lowPowerModeEnabled ? "true" : "false")
            << ",\n  \"paralyn_commit\": " << json(environment("PARALYN_COMMIT"))
            << ",\n  \"paralyn_dirty\": "
            << (environment("PARALYN_SOURCE_DIRTY") == "true"    ? "true"
@@ -181,7 +202,11 @@ struct Context {
                                                                 : "null")
            << ",\n  \"llvm_version\": " << json(environment("PARALYN_LLVM_VERSION"))
            << ",\n  \"math_mode\": \"safe\",\n  \"floating_point_functions\": \"precise\","
-           << "\n  \"cpu_fallback\": false,\n  \"launches\": [\n";
+           << "\n  \"cpu_fallback\": false,"
+           << "\n  \"runtime_owned_current_buffer_bytes\": " << statistics.current_buffer_bytes
+           << ",\n  \"runtime_owned_peak_buffer_bytes\": " << statistics.peak_buffer_bytes
+           << ",\n  \"buffer_accounting\": \"requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations\","
+           << "\n  \"launches\": [\n";
     for (std::size_t i = 0; i < executions.size(); ++i) {
       const auto &e = executions[i];
       output << "    {\"kernel\": " << json(e.kernel) << ", \"grid\": [" << e.grid.x << ','
@@ -190,6 +215,8 @@ struct Context {
              << "], \"command_status\": " << json(e.complete ? "completed" : "failed")
              << ", \"gpu_start_seconds\": " << e.start << ", \"gpu_end_seconds\": " << e.end
              << ", \"gpu_duration_seconds\": " << (e.end - e.start)
+             << ", \"pipeline_compile_seconds\": " << e.compile_seconds
+             << ", \"source_file\": " << json("source-" + std::to_string(e.source_index) + ".metal")
              << ", \"error\": " << json(e.error) << '}'
              << (i + 1 == executions.size() ? "\n" : ",\n");
     }
@@ -211,7 +238,13 @@ struct Context {
       double end = work.command.GPUEndTime;
       if (completed && (!(start > 0) || !(end > start)))
         failure = "Metal completed " + work.kernel + " without positive GPU timing evidence";
-      executions.push_back({work.kernel, work.grid, work.block, start, end, completed, failure});
+      executions.push_back({work.kernel, work.grid, work.block, start, end, completed, failure,
+                            work.source_index, work.compile_seconds});
+      if (completed && failure.empty()) {
+        statistics.last_gpu_seconds = end - start;
+        statistics.gpu_seconds += end - start;
+        ++statistics.completed_launches;
+      }
       latest_source = work.source;
       if (!failure.empty() && terminal_failure.empty())
         terminal_failure = failure;
@@ -334,9 +367,13 @@ void submit(const Kernel &kernel, Dim3 grid, Dim3 block, const std::vector<Argum
   ctx.announce_device();
   std::cout << "Kernel: " << kernel.name << "\nGrid: " << grid.x << " × " << grid.y << " × "
             << grid.z << "\nBlock: " << block.x << " × " << block.y << " × " << block.z << '\n';
-  auto found = ctx.pipelines.find(source);
+  const std::string entrypoint = handwritten ? kernel.name : "uc_kernel_" + kernel.name;
+  const std::string pipeline_key = entrypoint + '\n' + source;
+  auto found = ctx.pipelines.find(pipeline_key);
+  double compile_seconds = 0;
   id<MTLComputePipelineState> pipeline;
   if (found == ctx.pipelines.end()) {
+    const auto compile_start = std::chrono::steady_clock::now();
     MTLCompileOptions *options = [[MTLCompileOptions alloc] init];
     options.languageVersion = MTLLanguageVersion3_1;
     if (@available(macOS 15.0, *)) {
@@ -357,7 +394,6 @@ void submit(const Kernel &kernel, Dim3 grid, Dim3 block, const std::vector<Argum
                          "Metal shader compilation failed: " + metal_error(error));
     if (error)
       std::cerr << "Metal compiler: " << metal_error(error) << '\n';
-    const std::string entrypoint = handwritten ? kernel.name : "uc_kernel_" + kernel.name;
     NSString *name = [NSString stringWithUTF8String:entrypoint.c_str()];
     id<MTLFunction> function = [library newFunctionWithName:name];
     if (!function)
@@ -367,7 +403,10 @@ void submit(const Kernel &kernel, Dim3 grid, Dim3 block, const std::vector<Argum
     if (!pipeline)
       throw RuntimeError(cudaErrorLaunchFailure,
                          "Metal pipeline creation failed: " + metal_error(error));
-    ctx.pipelines.emplace(source, pipeline);
+    ctx.pipelines.emplace(pipeline_key, pipeline);
+    compile_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - compile_start).count();
+    ctx.statistics.pipeline_compile_seconds += compile_seconds;
+    ++ctx.statistics.pipeline_compilations;
   } else {
     std::cout << "Reusing kernel pipeline...\n" << std::flush;
     pipeline = found->second;
@@ -393,8 +432,13 @@ void submit(const Kernel &kernel, Dim3 grid, Dim3 block, const std::vector<Argum
   [encoder dispatchThreadgroups:MTLSizeMake(grid.x, grid.y, grid.z)
           threadsPerThreadgroup:MTLSizeMake(block.x, block.y, block.z)];
   [encoder endEncoding];
+  auto source_it = std::find(ctx.sources.begin(), ctx.sources.end(), source);
+  const std::size_t source_index = std::distance(ctx.sources.begin(), source_it);
+  if (source_it == ctx.sources.end())
+    ctx.sources.push_back(source);
   ctx.pending.push_back(
-      {command, std::move(bindings.allocations), kernel.name, source, grid, block});
+      {command, std::move(bindings.allocations), kernel.name, source, grid, block, source_index,
+       compile_seconds});
   std::cout << "Executing on GPU...\n" << std::flush;
   [command commit];
 }
@@ -423,6 +467,10 @@ Argument Argument::from_f32(float value) {
   a.type = ScalarType::F32;
   std::memcpy(a.bytes.data(), &value, 4);
   return a;
+}
+RuntimeStatistics runtime_statistics() {
+  std::lock_guard<std::mutex> lock(runtime_mutex);
+  return active_context ? active_context->statistics : RuntimeStatistics{};
 }
 void select_device(const std::string &selector) {
   std::lock_guard<std::mutex> lock(runtime_mutex);
@@ -525,6 +573,9 @@ extern "C" cudaError_t cudaMalloc(void **pointer, std::size_t bytes) {
       ctx.tokens.push_back(std::move(token));
       ctx.allocations.emplace(
           identity, std::make_shared<paralyn::Allocation>(paralyn::Allocation{buffer, bytes}));
+      ctx.statistics.current_buffer_bytes += bytes;
+      ctx.statistics.peak_buffer_bytes =
+          std::max(ctx.statistics.peak_buffer_bytes, ctx.statistics.current_buffer_bytes);
       *pointer = identity;
       return cudaSuccess;
     }
@@ -539,7 +590,7 @@ extern "C" cudaError_t cudaFree(void *pointer) {
       auto &ctx = paralyn::context();
       ctx.sync();
       if (pointer) {
-        ctx.allocation(pointer);
+        ctx.statistics.current_buffer_bytes -= ctx.allocation(pointer)->size;
         ctx.allocations.erase(pointer);
       }
       return cudaSuccess;
@@ -573,10 +624,19 @@ extern "C" cudaError_t cudaMemcpy(void *destination, const void *source, std::si
                       [&](const auto &token) { return token.get() == host_pointer; }))
         throw paralyn::RuntimeError(cudaErrorInvalidValue,
                                     "Host side of cudaMemcpy is a device allocation token");
+      const auto copy_start = std::chrono::steady_clock::now();
       if (to_device)
         std::memcpy(allocation->buffer.contents, source, bytes);
       else
         std::memcpy(destination, allocation->buffer.contents, bytes);
+      const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - copy_start).count();
+      if (to_device) {
+        ctx.statistics.host_to_device_seconds += seconds;
+        ctx.statistics.host_to_device_bytes += bytes;
+      } else {
+        ctx.statistics.device_to_host_seconds += seconds;
+        ctx.statistics.device_to_host_bytes += bytes;
+      }
       return cudaSuccess;
     }
   } catch (...) {

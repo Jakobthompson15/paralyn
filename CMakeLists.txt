@@ -30,6 +30,12 @@ target_compile_definitions(paralyn_frontend PRIVATE
   PARALYN_RESOURCE_DIR="${PARALYN_RESOURCE_DIR}"
   PARALYN_SDK_PATH="${PARALYN_SDK_PATH}")
 add_executable(paralyn cli/main.cpp)
+add_custom_command(TARGET paralyn POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E create_symlink paralyn ${PROJECT_BINARY_DIR}/unicuda
+  COMMENT "Preserving the deprecated unicuda command as a Paralyn alias")
+add_library(unicuda_ir ALIAS paralyn_ir)
+add_library(unicuda_frontend ALIAS paralyn_frontend)
+add_library(unicuda_runtime ALIAS paralyn_runtime)
 target_link_libraries(paralyn PRIVATE paralyn_frontend paralyn_runtime)
 target_compile_definitions(paralyn PRIVATE
   PARALYN_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
@@ -51,7 +57,11 @@ add_test(NAME frontend COMMAND frontend_tests)
 add_executable(runtime_smoke tests/runtime_smoke.cpp)
 target_link_libraries(runtime_smoke PRIVATE paralyn_runtime)
 add_test(NAME metal_runtime COMMAND runtime_smoke)
-set_tests_properties(metal_runtime PROPERTIES SKIP_RETURN_CODE 77)
+set_tests_properties(metal_runtime PROPERTIES LABELS "gpu")
+add_test(NAME unobserved_runtime_failure COMMAND ${CMAKE_COMMAND}
+  -DRUNTIME=$<TARGET_FILE:runtime_smoke>
+  -P ${PROJECT_SOURCE_DIR}/tests/runtime_failure.cmake)
+set_tests_properties(unobserved_runtime_failure PROPERTIES LABELS "gpu;gate-b" TIMEOUT 30)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME gate_a COMMAND ${CMAKE_COMMAND}
   -DPYTHON=${Python3_EXECUTABLE}
@@ -59,3 +69,12 @@ add_test(NAME gate_a COMMAND ${CMAKE_COMMAND}
   -DPARALYN=$<TARGET_FILE:paralyn>
   -P ${PROJECT_SOURCE_DIR}/tests/gate_a.cmake)
 set_tests_properties(gate_a PROPERTIES LABELS "gpu;gate-a" TIMEOUT 120)
+add_test(NAME gate_b_correctness COMMAND ${CMAKE_COMMAND}
+  -DPYTHON=${Python3_EXECUTABLE}
+  -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
+  -DPARALYN=$<TARGET_FILE:paralyn>
+  -P ${PROJECT_SOURCE_DIR}/tests/gate_b.cmake)
+set_tests_properties(gate_b_correctness PROPERTIES LABELS "gpu;gate-b" TIMEOUT 300)
+add_executable(gate_b_benchmark benchmarks/gate_b_benchmark.cpp)
+target_link_libraries(gate_b_benchmark PRIVATE paralyn_frontend paralyn_runtime)
+target_compile_options(gate_b_benchmark PRIVATE -O2 -fno-fast-math -ffp-contract=off)

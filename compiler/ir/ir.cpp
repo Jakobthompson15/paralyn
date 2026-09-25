@@ -45,6 +45,9 @@ using Symbols = std::map<std::string, Symbol>;
 void literal(const Expr &e) {
   if (e.text.empty())
     bad("empty literal");
+  for (unsigned char c : e.text)
+    if (std::isspace(c) || std::iscntrl(c))
+      bad("whitespace/control character in literal");
   char *end = nullptr;
   errno = 0;
   if (e.type == ScalarType::F32) {
@@ -144,6 +147,8 @@ void statements(const std::vector<Statement> &body, Symbols symbols) {
   for (const auto &s : body) {
     switch (s.kind) {
     case StmtKind::Let:
+      if (!s.body.empty())
+        bad("local declaration cannot contain statements");
       if (!identifier(s.name) || symbols.count(s.name))
         bad("duplicate/invalid local " + s.name);
       expression(s.expression, symbols);
@@ -152,11 +157,13 @@ void statements(const std::vector<Statement> &body, Symbols symbols) {
       symbols.emplace(s.name, Symbol{s.type, false, false});
       break;
     case StmtKind::Store:
+      if (!s.body.empty())
+        bad("store cannot contain statements");
       if (s.target.kind != ExprKind::Load)
         bad("store target is not indexed buffer");
       expression(s.target, symbols);
       expression(s.expression, symbols);
-      if (s.target.type != s.expression.type)
+      if (s.target.type != s.expression.type || s.type != s.target.type)
         bad("store type mismatch");
       if (symbols.at(s.target.operands[0].text).read_only)
         bad("store to read-only buffer");
@@ -235,7 +242,8 @@ void cpp_body(std::ostream &out, const std::vector<Statement> &body) {
         << std::quoted(s.name) << "," << cpp_type(s.type) << ",";
     cpp_expr(out, s.expression);
     out << ",";
-    cpp_expr(out, s.target);
+    // Only Store owns a target. Never index an enum from an unused, unverified field.
+    cpp_expr(out, s.kind == StmtKind::Store ? s.target : Expr{});
     out << ",";
     cpp_body(out, s.body);
     out << "},";

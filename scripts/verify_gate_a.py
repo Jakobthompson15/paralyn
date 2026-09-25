@@ -39,7 +39,7 @@ def main():
             raise RuntimeError("missing positive GPU execution timestamps")
     if (args.artifacts / "source.cu").read_bytes() != args.source.read_bytes():
         raise RuntimeError("preserved source differs from the executed input")
-    for name in ("paralyn-ir.txt", "generated.metal"):
+    for name in ("paralyn-ir.txt", "generated.metal", "host.cpp"):
         if not (args.artifacts / name).read_text().strip():
             raise RuntimeError(f"missing {name}")
     verification = (args.artifacts / "verification.txt").read_text()

@@ -177,6 +177,7 @@ int main(int argc, char **argv) {
     write(artifact / "paralyn-ir.txt", ir_text(frontend));
     auto host = work / "host.cpp";
     write(host, frontend.rewritten_host);
+    write(artifact / "host.cpp", frontend.rewritten_host);
     auto executable = work / "program";
     std::vector<std::string> compile = {PARALYN_HOST_CXX,
                                         "-std=c++17",
@@ -206,7 +207,7 @@ int main(int argc, char **argv) {
     }
     auto commit = execute({"git", "-C", PARALYN_SOURCE_DIR, "rev-parse", "HEAD"});
     auto dirty =
-        execute({"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=no"});
+        execute({"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=normal"});
     std::vector<std::string> run = {executable.string()};
     run.insert(run.end(), program_args.begin(), program_args.end());
     std::cout << "Paralyn v0.0.1\n\n" << std::flush;
@@ -215,7 +216,8 @@ int main(int argc, char **argv) {
                            {"PARALYN_ARTIFACT_DIR", artifact.string()},
                            {"PARALYN_COMMIT", commit.status ? "uncommitted" : trim(commit.output)},
                            {"PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION},
-                           {"PARALYN_SOURCE_DIRTY", dirty.output.empty() ? "false" : "true"}});
+                           {"PARALYN_SOURCE_DIRTY", dirty.status ? "unknown" :
+                             (dirty.output.empty() ? "false" : "true")}});
     write(artifact / "verification.txt",
           result.output + "\nHost exit status: " + std::to_string(result.status) + "\n");
     if (result.status)

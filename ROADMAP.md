@@ -1,49 +1,49 @@
-# Paralyn roadmap
+# Paralyn roadmap — adopted mandate v1.1
 
-This is an ordered plan, not a support matrix. Actual results are in `docs/status.md`. Gate A is the current implementation boundary; do not add Gate B features merely because they are convenient.
+The [user-adopted mandate](docs/master-mandate-v1.1.md) expands the required portfolio without restarting the repository or changing software version 0.0.1. Stage letters below are sequencing labels, not release versions or completion claims. The [portfolio ledger](docs/portfolio-ledger.json) retains all 17 frontend/input families, all three required clients, separate framework targets, operator providers, and per-backend evidence. Later required tracks are not optional research ideas.
 
-## Gate A: first complete source-to-GPU program
+## Stage A — finish the existing CUDA/Metal foundation
 
-Completed on 2026-09-25 under the original working name UniCUDA; unchanged historical evidence is retained in `artifacts/gate-a/`. The project is now Paralyn, with fresh renamed-build verification pending in `artifacts/paralyn-gate-a/`. Gate B remains deferred.
+**Gate A passed.** Original working-name evidence is unchanged in `artifacts/gate-a/`, including `unicuda-ir.txt`. Fresh Paralyn evidence from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1` is unchanged in `artifacts/paralyn-gate-a/`, including `paralyn-ir.txt`. Actual status and qualification limits are in `docs/status.md`.
 
-1. Research prior art and record the architecture, IR choice, dependencies, and licenses.
-2. Build device discovery, checked memory handling, default queue, and error propagation.
-3. Execute handwritten Metal through the same runtime boundary used by generated kernels.
-4. Parse complete ordinary `vector_add.cu`, implement `inspect`, preserve host C++, rewrite its launch, verify typed IR, and generate MSL.
-5. Execute generated MSL on the physical Apple GPU and compare all outputs against an independent CPU reference. There is no CPU kernel fallback.
+The canonical program uses 1,024 elements, distinct allocations, block size 256, and exactly representable FP32 inputs. Never special-case these values or its kernel name. The complete source must traverse CUDA AST extraction, preserved/transformed host C++, verified typed IR, generated MSL, and the physical GPU, followed by independent CPU-reference verification. There is no CPU kernel fallback.
 
-The canonical demonstration uses 1,024 elements, distinct allocations, block size 256, and varied exactly representable FP32 inputs. These values must not be special-cased in the compiler or runtime. Add minimal automated tests with each enabled feature.
+**Gate B is active and incomplete.** Finish varied lengths, including zero/boundaries/1,000,003; changed arithmetic and randomized inputs; scalar arguments and repeated launches; supported x/y/z indexing; sentinels/canaries; same-type alias layouts and rejected mixed types; invalid source/IR/memory/geometry/backend behavior; ordinary host sequencing and exit semantics; and documented numerical policy. A passing development fixture does not complete the entire gate.
 
-Preserve the first successful run in `artifacts/gate-a/` unchanged: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`, including its original working-name metadata. Fresh Paralyn evidence belongs in `artifacts/paralyn-gate-a/` and uses `paralyn-ir.txt`. Record device, OS, the actual revision/dirty state, LLVM version, grid/block dimensions, command completion status, and GPU timestamps. Print a PASS only after actual comparison. Gate A is a working milestone. Publishing the source repository is separate from tagging a qualified release; public tagging still requires Gate B.
+After correctness, retain the full benchmark protocol: 1,024, 65,536, 1,048,576, and 16,777,216 elements; 10 warmups; 100 measured iterations; alternating generated/native order; every sample saved. Report compilation, transfers, GPU command duration, total latency, and peak runtime-owned buffer bytes with exact hardware/toolchain. No fabricated targets or cherry-picked performance claims.
 
-## Gate B: qualification before public tagging
+Future evidence also preserves transformed host source, per-launch backend artifacts, real revision/dirty state, device identity, launch dimensions, command status, timestamps, and actual verification output. Do not retrofit the immutable five-file historical captures. Hardware-unavailable results cannot pass a GPU gate. Gate B remains necessary before a qualified release/tag; publication is a separately authorized action, not a side effect of the mandate.
 
-After Gate A, test zero, tiny, boundary, partial-block, and large odd lengths, including 1,000,003; changed arithmetic and randomized inputs; varied scalar arguments; repeated launches; supported x/y/z indexing; sentinels/canaries; same-type alias cases and changing alias layouts; invalid source/IR/memory/geometry and backend failures; and host expression/exit semantics.
+## Stages B–D — native interfaces, another backend, useful operators
 
-Publish a numerical policy with FP32 ULP treatment, signed-zero and subnormal limits, exceptional-value behavior, and exact nonoverflowing integer cases. A GPU-unavailable result cannot satisfy a hardware gate.
+**B: Native C/C++ and Python.** After Stage A, expose actual device/context ownership, buffers/views, supported module/kernel launch, queue completion and structured errors through a native runtime boundary without CUDA allocation APIs. Add C++ wrappers and bind the same runtime to Python, then the agreed small array/operator surface. `docs/native-api.md` is a design target; the current internal launch/test helpers do not qualify it.
 
-After correctness, compare generated and handwritten Metal at 1,024, 65,536, 1,048,576, and 16,777,216 elements. Use 10 warmups and 100 measured iterations, alternating order, retaining all samples. Report compile time, copies, GPU command-buffer duration, total latency, and peak runtime-owned buffer bytes with environment metadata. No performance claim precedes that evidence.
+**C: A second hardware backend.** Implement and prove NVIDIA CUDA or AMD HIP/ROCm against available hardware, keeping native-API and CUDA-source evidence separate. The other vendor remains required; lack of hardware is an explicit unavailable cell, not a canceled obligation. Interleave independent ready work when a hardware prerequisite blocks execution, recording the reason.
 
-Persistent artifact caching is a stretch goal. Its key/invalidation design is documented now; if implemented later, test dependency/option/toolchain changes and corrupt entries. In-process pipeline reuse is sufficient for Gate A.
+**D: FP32 matmul provider path.** Define shape/layout/strides/transposition/batching, accumulation precision, tolerance, aliasing, workspace, ordering and errors. Implement a useful operator via a qualified native provider or generated GPU kernel, with visible provider/numerical policy. A matmul operator is not full cuBLAS compatibility. Do not force graph/operator representations through the scalar kernel IR.
 
-## Subsequent device capabilities
+## Stages E–H — complete the required frontend and integration portfolio
 
-Proceed in order, with compiler/runtime/backend and applicable conformance tests at each step:
+**E: Source/IR campaign.** Validate extension boundaries with one non-CUDA input, then continue through **HIP C++, Triton, OpenCL C, SYCL C++, OpenMP target offload, Slang, HLSL compute, GLSL compute, WGSL, SPIR-V, MLIR, and Metal source**. HLSL/GLSL and SPIR-V/MLIR are separate deliverables. Use licensed mature compiler bridges where useful, with real resource/reflection, execution, error, and verification integration. MSL is backend-specific unless translation is separately demonstrated. A handwritten-MSL backend smoke does not complete this frontend.
 
-1. Matrix addition, then matrix multiplication.
-2. Shared memory, then barriers, then atomics.
-3. Streams and events.
-4. One useful, small, license-compatible external CUDA project.
-5. NVIDIA backend, retaining native CUDA facilities where appropriate.
-6. AMD ROCm/HIP backend.
-7. Python API and carefully scoped NumPy/PyTorch/JAX/Triton interoperability experiments.
+**F: Clients and a first framework workload.** Implement scoped, pinned **Numba CUDA, CuPy, and CUDA Python** integrations separately. Choose and deliver one useful PyTorch, JAX, or ONNX integration using a real extension boundary after the native foundation. Do not conflate custom operators, device backends, graph import, compiler backends, or client compatibility. TensorFlow/MLX/NumPy/Array API/DLPack investigation targets remain distinct; being named in research does not mandate every possible framework surface.
 
-The cross-vendor gate uses the exact same source and conformance inputs on each physical backend. A backend implementation is not supported merely because it compiles. Version numbers follow demonstrated capability, not calendar promises.
+**G: Portable-subset cross-vendor qualification.** Complete both NVIDIA and AMD backends and qualify each designated portable common subset on Metal/Apple, CUDA/NVIDIA, and HIP/ROCm/AMD. Keep frontend × operation × backend × version evidence. Expand CUDA language capabilities, matrix operations, shared memory, barriers, atomics, streams/events, and scoped external projects through separate conformance milestones. A small external CUDA project can enter once the tested subset permits it.
 
-## Distributed experiments, deferred
+**H: PTX and SASS.** Implement both separate binary tracks after establishing authorized artifacts/tooling, versions or a named NVIDIA ISA generation, ABI subsets, reference hardware, and feasibility. PTX must execute through genuine non-NVIDIA lowering and reference comparison; native NVIDIA loading does not qualify portability. SASS requires actual supported machine-instruction decode/lowering/execution and reference artifacts. An unresolved investigated prerequisite is a visible blocker, never a completion claim or deletion of the track.
 
-Only after individual device backends are reliable, investigate explicit placement, device capability advertisements, explainable scheduling, health, and separate control/data planes. Account for memory requirements, compatibility, utilization, transfer cost, bandwidth, and locality. Keep data transfers direct where appropriate. Aggregate device-accessible memory across nodes is not one unified GPU memory space.
+Each track requires an explicit input contract, a reference example plus a useful second workload/operation, positive/negative/integration tests, exact dependencies/licenses, numerical/error guarantees, actual GPU evidence, and a concrete next task. Research/scaffolding is incomplete work. A useful checkpoint does not complete the all-frontends project.
 
-## Design changes
+## Stage I — distributed systems and specialized accelerators
 
-When an assumption fails, record the problem, root cause, evidence, potential solutions, and selected revision. Revise the architecture rather than hide a mismatch behind example-specific behavior. Stop expansion at the active gate until it passes.
+Defer distributed implementation, dashboards, cloud provisioning, and marketplaces until the preceding foundations justify them. Start with independent jobs or explicitly partitioned tasks. Later graph partitioning needs a supported graph and data-placement contract. Separate control metadata from data transfers; account for locality, bandwidth, latency, bounded queues, budgets, cancellation, version negotiation, failure and safe retry semantics.
+
+Aggregate memory is not one GPU address space. A possible Core ML/ANE or other specialized provider has its own graph/operator contract and public tooling path; it does not imply arbitrary GPU-kernel execution. Do not promise exclusive accelerator placement without evidence or allow hidden CPU execution to satisfy GPU-only qualification.
+
+No new cloud costs, uploads, machine enrollment, or remote service access follow automatically from this roadmap. Preserve applicable user authorization boundaries.
+
+## Ongoing rules
+
+Persistent caching remains deferred until the current path is correct; document/version source dependencies, compiler/IR/runtime, targets, options, numerical policy, and alias layout before implementation. Corrupt/incompatible entries need tests. In-process reuse is sufficient for current work.
+
+Preserve naming-transition compatibility through tested aliases rather than rewriting historical evidence. Document architectural changes with problem, cause, evidence, alternatives, and chosen revision. Keep actual results in status/evidence and resumable obligations in the ledger. Advance to the next ready bounded milestone when authorized and possible; do not describe an invocation's limit as completion of the mandatory portfolio.

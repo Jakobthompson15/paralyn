@@ -32,10 +32,10 @@ std::string expr(const Expr &e, const Names &names) {
       return "as_type<float>(" + std::to_string(bits) + "u)";
     }
     if (e.type == ScalarType::U32)
-      return e.text + "u";
+      return std::to_string(std::strtoull(e.text.c_str(), nullptr, 10)) + "u";
     if (e.type == ScalarType::Bool)
       return e.text == "1" ? "true" : "false";
-    return "int(" + e.text + ")";
+    return "int(" + std::to_string(std::strtoll(e.text.c_str(), nullptr, 10)) + ")";
   case ExprKind::Ref:
     return names.at(e.text);
   case ExprKind::Builtin: {
@@ -100,7 +100,7 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
     if (entry.first != next++)
       throw std::runtime_error("ParalynError: binding slots must be contiguous");
   std::ostringstream out;
-  out << "#include <metal_stdlib>\nusing namespace metal;\n\n// Generated exclusively from "
+  out << "#include <metal_stdlib>\nusing namespace metal;\n#pragma STDC FP_CONTRACT OFF\n\n// Generated exclusively from "
          "verified Paralyn IR.\n";
   out << "kernel void uc_kernel_" << k.name << "(\n";
   for (const auto &[index, s] : slots) {

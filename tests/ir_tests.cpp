@@ -54,6 +54,27 @@ int main() {
     broken.body[0].expression.type = ScalarType::I32;
     rejects([&] { verify(broken); });
     broken = k;
+    broken.body[0].type = ScalarType::I32;
+    rejects([&] { verify(broken); });
+    broken = k;
+    broken.body[0].body = k.body;
+    rejects([&] { verify(broken); });
+    broken = k;
+    broken.body[0].expression.kind = static_cast<ExprKind>(999);
+    rejects([&] { emit_cpp(broken); });
+    auto local = Statement{StmtKind::Let, "value", ScalarType::I32,
+                           {ExprKind::Literal, ScalarType::I32, "1", {}}, {}, {}};
+    local.target.kind = static_cast<ExprKind>(999); // Inactive field must never reach serializer.
+    broken = k;
+    broken.body.insert(broken.body.begin(), local);
+    require(!emit_cpp(broken).empty(), "serializer read inactive target field");
+    local.expression.text = "00012";
+    broken.body[0] = local;
+    require(emit_msl(broken, {0, 1}).find("int(12)") != std::string::npos,
+            "decimal IR literal must not become an octal Metal literal");
+    broken.body[0].expression.text = "\n12";
+    rejects([&] { emit_cpp(broken); });
+    broken = k;
     broken.body[0].target.operands[1].text = "threadIdx.w";
     rejects([&] { verify(broken); });
     rejects([&] { emit_msl(k, {0}); });
