@@ -1,4 +1,4 @@
-# CUDA compatibility: Gate A boundary
+# CUDA compatibility: qualified initial subset
 
 Paralyn accepts an explicitly limited CUDA source language. It does not implement CUDA binaries, PTX, the Driver API, CUDA libraries, arbitrary CUDA C++, or vendor floating-point equivalence. Supported here means implemented within these bounds; hardware qualification is listed separately in `status.md`.
 
@@ -20,10 +20,10 @@ Launch configuration is evaluated before arguments, each expression once. Option
 
 CUDA-visible pointers are opaque allocation tokens. They may be stored, copied, passed to supported APIs, and checked against null. Only live allocation-base tokens are accepted. Dereference, arithmetic, interior pointers, ordering, subtraction, arbitrary integer conversions, and treating tokens as GPU addresses are unsupported. Kernel-side `buffer[index]` remains valid.
 
-Same-allocation arguments with one pointee type are lowered to one Metal binding and derived local references. Mixed pointee types in an alias group are rejected. The implementation mechanism exists; broader aliasing behavior remains unqualified until its planned physical-GPU tests run. No `restrict` assumptions are introduced.
+Same-allocation arguments with one pointee type are lowered to one Metal binding and derived local references. Mixed pointee types in an alias group are rejected. Gate B verified mutable and const/mutable same-type alias groups, dependent reads after writes, layout changes and pipeline reuse on Apple M5. Interior-pointer and mixed-pointee aliases remain unsupported. No `restrict` assumptions are introduced.
 
 ## Numerical and execution limits
 
-Metal compilation uses safe math and precise functions. Gate A tests finite, exactly representable FP32 additions against an independent CPU reference using exact equality. This does not establish complete IEEE-754/CUDA equivalence. Subnormals, exceptional values, rounding/ULP policy, and broader arithmetic are qualification work. FP64 is not silently narrowed.
+Metal compilation uses safe math, precise functions and explicit contraction-off in generated MSL. Gate A tests exact FP32 additions; Gate B adds seeded affine arithmetic, integer boundaries and a numerical suite with a 1-ULP normal add/multiply policy plus separately classified signed-zero, exceptional and subnormal cases. The full contract and physical-M5 observations are in [numerics.md](numerics.md). This does not establish complete IEEE-754/CUDA equivalence. FP64 is not silently narrowed.
 
 Launch geometry is validated against device and pipeline limits. The implementation dispatches uniform threadgroups and retains source bounds guards. No kernel runs on the CPU. Missing GPU execution or GPU timing evidence is a failure, not a successful skipped hardware gate.

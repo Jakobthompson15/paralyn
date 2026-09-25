@@ -1,0 +1,2 @@
+Verification: PASS
+880 real GPU launches; every output independently compared with CPU reference.

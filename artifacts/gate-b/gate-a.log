@@ -1,0 +1,13 @@
+Paralyn v0.0.1
+
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Kernel: vector_add
+Grid: 4 × 1 × 1
+Block: 256 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+
+Verification: PASS (1024 independently checked elements)
+Gate A evidence verified: /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/gate-a

@@ -1,0 +1,31 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "os": "Version 26.5.1 (Build 25F80)",
+  "physical_memory_bytes": 17179869184,
+  "unified_memory": true,
+  "metal_language_version": "3.1",
+  "thermal_state_at_capture": 0,
+  "low_power_mode_at_capture": false,
+  "paralyn_commit": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+  "paralyn_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "runtime_owned_current_buffer_bytes": 0,
+  "runtime_owned_peak_buffer_bytes": 416,
+  "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+  "launches": [
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8821812919, "gpu_end_seconds": 3202997.8821875001, "gpu_duration_seconds": 6.2081962823867798e-06, "pipeline_compile_seconds": 0.00080091600000000004, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8838762501, "gpu_end_seconds": 3202997.883882625, "gpu_duration_seconds": 6.3749030232429504e-06, "pipeline_compile_seconds": 8.5708e-05, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8852627501, "gpu_end_seconds": 3202997.8852690002, "gpu_duration_seconds": 6.2501057982444763e-06, "pipeline_compile_seconds": 6.2125000000000006e-05, "source_file": "source-2.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8869884168, "gpu_end_seconds": 3202997.886994625, "gpu_duration_seconds": 6.2081962823867798e-06, "pipeline_compile_seconds": 7.5875000000000001e-05, "source_file": "source-3.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8886238751, "gpu_end_seconds": 3202997.8886303753, "gpu_duration_seconds": 6.5001659095287323e-06, "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [1,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8902224167, "gpu_end_seconds": 3202997.8902287916, "gpu_duration_seconds": 6.3749030232429504e-06, "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "unsigned_values", "grid": [1,1,1], "block": [8,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.891886042, "gpu_end_seconds": 3202997.8918916667, "gpu_duration_seconds": 5.6247226893901825e-06, "pipeline_compile_seconds": 6.9791999999999999e-05, "source_file": "source-4.metal", "error": ""},
+    {"kernel": "const_alias", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.893240375, "gpu_end_seconds": 3202997.8932466251, "gpu_duration_seconds": 6.2501057982444763e-06, "pipeline_compile_seconds": 6.8666999999999998e-05, "source_file": "source-5.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [1,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3202997.8939171252, "gpu_end_seconds": 3202997.893923542, "gpu_duration_seconds": 6.416812539100647e-06, "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""}
+  ]
+}

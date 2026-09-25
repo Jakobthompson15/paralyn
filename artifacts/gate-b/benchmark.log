@@ -1,0 +1,6 @@
+Verified 1024 elements: 10 warmups + 100 measured iterations per variant
+Verified 65536 elements: 10 warmups + 100 measured iterations per variant
+Verified 1048576 elements: 10 warmups + 100 measured iterations per variant
+Verified 16777216 elements: 10 warmups + 100 measured iterations per variant
+Benchmark verification: PASS; all 880 samples saved to "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/benchmark"
+Benchmark capture: PASS (Apple M5); /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/benchmark

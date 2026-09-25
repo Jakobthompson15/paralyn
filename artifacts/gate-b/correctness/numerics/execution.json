@@ -1,0 +1,25 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "os": "Version 26.5.1 (Build 25F80)",
+  "physical_memory_bytes": 17179869184,
+  "unified_memory": true,
+  "metal_language_version": "3.1",
+  "thermal_state_at_capture": 0,
+  "low_power_mode_at_capture": false,
+  "paralyn_commit": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+  "paralyn_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "runtime_owned_current_buffer_bytes": 0,
+  "runtime_owned_peak_buffer_bytes": 131072,
+  "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+  "launches": [
+    {"kernel": "numeric_add", "grid": [64,1,1], "block": [128,1,1], "command_status": "completed", "gpu_start_seconds": 3202996.7495645001, "gpu_end_seconds": 3202996.7495715418, "gpu_duration_seconds": 7.0417299866676331e-06, "pipeline_compile_seconds": 0.00086095799999999999, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "numeric_mul", "grid": [64,1,1], "block": [128,1,1], "command_status": "completed", "gpu_start_seconds": 3202996.7508396669, "gpu_end_seconds": 3202996.7508470002, "gpu_duration_seconds": 7.3332339525222778e-06, "pipeline_compile_seconds": 6.9957999999999997e-05, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "numeric_separate", "grid": [1,1,1], "block": [32,1,1], "command_status": "completed", "gpu_start_seconds": 3202996.7519386252, "gpu_end_seconds": 3202996.751945375, "gpu_duration_seconds": 6.7497603595256805e-06, "pipeline_compile_seconds": 7.3708999999999995e-05, "source_file": "source-2.metal", "error": ""}
+  ]
+}

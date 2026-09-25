@@ -1,0 +1,8 @@
+paralyn.ir v0
+kernel guarded_affine(a: read buffer<f32>, b: read buffer<f32>, output: read_write buffer<f32>, n: i32, scale: f32, guard: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store output[(i + guard)] = ((load a[(i + guard)] * scale) + load b[(i + guard)])
+  }
+}
+

@@ -18,3 +18,5 @@
 - Fixed entrypoint pipeline-cache identity, inactive IR target serialization and decimal integer emission; disabled implicit FP32 contraction in generated Metal.
 - Preserved transformed host code and per-launch shader source; added runtime timing and buffer accounting.
 - Restored deprecated unicuda command, CMake library aliases and C++ compatibility includes/namespace while retaining Paralyn as the project name.
+
+- Qualified Gate B on Apple M5 from clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb`: all six CTest targets, 75 correctness launches and 880 benchmark launches passed. Preserved full raw evidence under `artifacts/gate-b/`; native APIs and the wider frontend/backend portfolio remain incomplete.

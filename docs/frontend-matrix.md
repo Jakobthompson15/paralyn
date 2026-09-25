@@ -2,13 +2,13 @@
 
 Mandate v1.1 requires **all 17 frontend/input families and all three named interoperability clients** below. They remain required when implementation or hardware qualification is unavailable. This is an obligation/evidence ledger, not a support advertisement. The machine-readable source is [portfolio-ledger.json](portfolio-ledger.json).
 
-Software remains v0.0.1. CUDA/Metal Gate A is verified; Gate B is being implemented and is not complete. No benchmark or universal portability result is claimed. Research, a CLI registry entry, a printed IR, and a command wrapper do not complete a track.
+Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documented current subset on Apple M5 at clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb`. [Gate B evidence](../artifacts/gate-b/build-validation.json) includes six passing CTest targets, 75 correctness GPU launches, and the complete 880-launch generated/handwritten-Metal benchmark. These measurements do not establish universal portability or performance. Research, a CLI registry entry, a printed IR, and a command wrapper do not complete a track.
 
 ## Required frontend/input families
 
 | Track | Stage | Implementation | Full-track qualification | Proven narrower scope |
 |---|---|---|---|---|
-| CUDA C++ | A | `implementing` | `unavailable` | CUDA/Metal Gate A only |
+| CUDA C++ | A | `implementing` | `unavailable` | Documented CUDA/Metal subset, Gates A and B; other vendors unqualified |
 | Native C/C++ | B | `not_started` | `unavailable` | None |
 | Native Python | B | `not_started` | `unavailable` | None |
 | HIP C++ | E | `not_started` | `unavailable` | None |
@@ -46,7 +46,7 @@ A separate Stage F requirement selects **one first useful PyTorch, JAX, or ONNX 
 
 | Backend | Implementation | Actual verified evidence | Full portfolio |
 |---|---|---|---|
-| Metal / Apple | `implemented` | CUDA Gate A and handwritten runtime smoke on Apple M5 | `unavailable` |
+| Metal / Apple | `implemented` | CUDA Gates A/B and handwritten runtime smoke on Apple M5 | `unavailable` |
 | CUDA / NVIDIA | `not_started` | None; hardware not observed in this environment | `unavailable` |
 | HIP/ROCm / AMD | `not_started` | None; hardware not observed in this environment | `unavailable` |
 
@@ -54,10 +54,10 @@ The native MSL smoke hook exercises backend submission, but lacks the public mod
 
 ## Evidence and status rules
 
-`implementation` is `not_started`, `implementing`, `implemented`, or `blocked`. `qualification` is `unavailable`, `failing`, or `verified`. Qualification always has a scope: a verified Gate A subset is recorded inside the CUDA/Metal cell while the full initial track remains unqualified. Unavailable reasons distinguish missing implementation, incomplete qualification, and missing hardware. Failed executed tests are failing; an uninvestigated future prerequisite is not yet an evidenced blocker.
+`implementation` is `not_started`, `implementing`, `implemented`, or `blocked`. `qualification` is `unavailable`, `failing`, or `verified`. Qualification always has a scope: verified Gate A/B subsets are recorded inside the CUDA/Metal cell while the required cross-vendor track remains unqualified. Unavailable reasons distinguish missing implementation, incomplete qualification, and missing hardware. Failed executed tests are failing; an uninvestigated future prerequisite is not yet an evidenced blocker.
 
 The preserved clean Paralyn Gate A revision is `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1`; the ledger references its original source, IR, shader, actual device/timing/status, and CPU verification. The older UniCUDA-name evidence and renamed evidence remain immutable. New tests and evidence are appended as separate records.
 
 For each claimed frontend × operation × backend × version, require actual input, validated compilation/import, resources and arguments, synchronization/errors, physical execution, and independent results. At minimum vary inputs/dimensions, repeat work, reject unsupported input, and verify a reference example plus a second meaningful operation/useful workload. Binary tracks need real executable reference artifacts.
 
-Next: finish existing CUDA/Metal Gate B, including its full benchmark protocol, then implement the smallest native C/C++ runtime slice. The [roadmap](../ROADMAP.md) preserves every later required track.
+Next: implement the smallest native C/C++ runtime slice, then bind the same runtime into Python. Gate B does not implement those interfaces or remove any later obligation. The [roadmap](../ROADMAP.md) preserves every later required track.

@@ -1,10 +1,10 @@
 # Native runtime API — design target, not implemented
 
-Status at mandate adoption, 2026-09-25: **design only**. The internal C++ `paralyn::Argument`/`Kernel` launch helpers and handwritten-MSL test hook do not constitute the required public native C/C++ interface. Memory allocation still uses the CUDA compatibility shim. No Python runtime binding, `paralyn.asarray`, or public native module loader is available.
+Status after CUDA/Metal Gate B, 2026-09-25: **design only; next implementation milestone**. The internal C++ `paralyn::Argument`/`Kernel` launch helpers and handwritten-MSL test hook do not constitute the required public native C/C++ interface. Memory allocation still uses the CUDA compatibility shim. No Python runtime binding, `paralyn.asarray`, or public native module loader is available.
 
 ## First native milestone
 
-After existing CUDA/Metal qualification, expose the same actual runtime through a small C-compatible boundary and ergonomic C++ ownership wrappers. Do not build a second execution engine. Initial success is a native application that discovers one GPU, allocates and copies buffers without CUDA API names, launches a supported compiled kernel, observes completion/errors, reads output, and independently verifies vector addition and a second useful operation.
+With [CUDA/Metal Gate B qualified](../artifacts/gate-b/build-validation.json), expose the same actual runtime through a small C-compatible boundary and ergonomic C++ ownership wrappers. Do not build a second execution engine. Initial success is a native application that discovers one GPU, allocates and copies buffers without CUDA API names, launches a supported compiled kernel, observes completion/errors, reads output, and independently verifies vector addition and a second useful operation.
 
 The API must distinguish context, device, owned buffer, borrowed view, compiled module, kernel, typed argument, queue, event, and structured error. These are design responsibilities, not currently exported handle types or a stable ABI promise. Choose exact spellings/ABI versions in the implementation change and make introductory examples executable documentation tests.
 

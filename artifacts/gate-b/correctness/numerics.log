@@ -1,0 +1,22 @@
+Paralyn v0.0.1
+
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Kernel: numeric_add
+Grid: 64 × 1 × 1
+Block: 128 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+Kernel: numeric_mul
+Grid: 64 × 1 × 1
+Block: 128 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+Kernel: numeric_separate
+Grid: 1 × 1 × 1
+Block: 32 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+Numerics: normal_max_ulp=0 subnormal_flush_variations=4 contraction=off signed_zero=preserved exceptional_classes=matched
+Verification: PASS (FP32 add/multiply, exceptional values, subnormals and contraction)

@@ -31,3 +31,9 @@ Separate frontend adapters, framework adapters, operator providers, and executio
 PTX/SASS retain distinct authorized artifact/ABI/tooling/reference requirements. Hardware absence or an evidenced prerequisite blocker remains incomplete required work; independent ready tracks can proceed. Publication, paid resources, machine enrollment, and remote execution remain separate authorization matters.
 
 The next acceptance gap is complete CUDA/Metal Gate B, including the prescribed benchmark record. The next new interface after that is the smallest native C/C++ runtime slice. No required family is removed at this checkpoint.
+
+## Subsequent checkpoint — CUDA/Metal Gate B qualified
+
+The adoption snapshot above is retained as chronology. On 2026-09-25, clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb` passed a fresh configure/build, repeated Gate A, all six CTest targets, 75 correctness GPU launches, and the prescribed 880-launch benchmark on Apple M5/macOS 26.5.1 with LLVM 21.1.8. [Permanent Gate B evidence](../artifacts/gate-b/build-validation.json) records the exact environment, commands, revision, and results; correctness and benchmark reports remain separate. Original Gate A captures are unchanged.
+
+The current next acceptance gap is the native C/C++ runtime slice described in [native-api.md](native-api.md), followed by the same runtime's Python binding. The API remains design only. All 17 frontend/input families, three named clients, the selected first framework workload, and required Metal/CUDA/ROCm qualification remain in the [portfolio ledger](portfolio-ledger.json); this checkpoint does not complete that portfolio.

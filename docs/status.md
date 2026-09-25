@@ -1,6 +1,21 @@
 # Status
 
-Updated 2026-09-25. **Paralyn's Gate A passed on the physical Apple M5.** A fresh build, all four tests, device/IR inspection, and a clean-revision execution passed after the project rename. No public release is qualified; Gate B was not started.
+Updated 2026-09-25. **CUDA/Metal Gates A and B passed on the physical Apple M5.** The Gate B checkpoint was captured from clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb` and independently audited. All six tests passed with no skips. No release tag has been created; the broader v1.1 frontend portfolio remains incomplete.
+
+## Gate B — qualified documented CUDA/Metal subset
+
+Evidence: [artifacts/gate-b](../artifacts/gate-b/README.md), including [build/test record](../artifacts/gate-b/build-validation.json), [correctness summary](../artifacts/gate-b/correctness/summary.json), [benchmark audit](../artifacts/gate-b/benchmark/capture.json), and all raw samples/shaders/host code.
+
+- Five positive CUDA fixtures executed 66 GPU launches; the deliberate host-exit-37 case executed nine more and returned 37 without reporting success.
+- Coverage includes zero/tiny/boundary/partial/large-odd lengths through 1,000,003, seeded exact FP32 arithmetic, varying scalars/blocks, dependent queued launches, sentinels, all xyz builtins, integer boundaries, same-allocation aliases including const/mutable arguments, and alias pipeline reuse.
+- Normal FP32 add/multiply observed max 0 ULP under the specified 1-ULP gate. Signed-zero and NaN/Inf-class checks passed; four subnormal variations were allowed flush-to-zero cases. A discriminating probe verifies disabled contraction. These observations are not a universal cross-vendor IEEE-754 guarantee.
+- Unsupported source, malformed IR, invalid allocation/copy/launch arguments, mixed-type aliases, missing/invalid Metal entrypoints, and ignored-error process shutdown have rejection tests. This does not simulate every hardware/driver failure.
+- The four-size benchmark completed 880 launches: ten warmups and one hundred measured iterations per variant/size, alternating order. Every output was independently checked. Full samples separate compilation, transfers, GPU duration and total latency. Counted runtime-owned buffers peaked at 201,326,592 bytes and returned to zero. No speedup threshold was used.
+- A fresh build directory using already-installed dependencies reached its first verified GPU result in 6.698 seconds on this machine; dependency installation and a fresh OS were not measured.
+
+The next implementation gap is the native C/C++ owned-buffer/context API, followed by Python bindings on that same runtime. All 17 required frontend/input families and three clients remain tracked in the [portfolio ledger](portfolio-ledger.json). NVIDIA/AMD execution remains unavailable and unqualified.
+
+The sections below preserve the history of Gate A.
 
 ## Original verified implementation
 
@@ -34,9 +49,9 @@ The fresh build and all four CTest targets passed without skips. `paralyn device
 | Complete ordinary vector-add source | Gate A passed | Backends not implemented |
 | Allocation, H2D/D2H copies, sync, cleanup | Exercised by Gate A and runtime smoke | Not implemented |
 | FP32 addition and x-axis i32/u32 indexing | Exact CPU-reference match for canonical data | Not implemented |
-| Same-type alias grouping, other index dimensions and arithmetic cases | Mechanism exists; broader GPU qualification deferred | Not implemented |
+| Same-type alias grouping, other index dimensions and arithmetic cases | Gate B now exercises same-type/const aliases and all xyz dimensions | Not implemented |
 | FP64, shared memory, barriers, atomics, streams | Unsupported | Not implemented |
 
 The source is written in ordinary CUDA style but has not been compiled/run with `nvcc` here. No NVIDIA hardware/toolkit test is claimed. Source-context macros and certain host preprocessing are explicitly rejected as documented in `cuda-compatibility.md`.
 
-Metal is the only implemented backend. CUDA, ROCm, Python, distributed execution, persistent caching, benchmarks, and Gate B qualification are deferred.
+Metal is the only implemented backend. CUDA/ROCm backends, the native API/Python, distributed execution and persistent caching remain unimplemented. Gate B correctness and its benchmark are qualified only for the documented current Metal subset.

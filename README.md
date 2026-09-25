@@ -2,7 +2,7 @@
 
 An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
-**Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. The Gate B correctness suite and benchmark are implemented; clean-revision qualification evidence is being captured. No tagged release has been published.
+**Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. **Gate B also passed on Apple M5:** all six tests, 75 correctness launches and 880 benchmark launches have [clean-revision evidence](artifacts/gate-b/README.md). No tagged release has been published.
 
 The fresh [execution record](artifacts/paralyn-gate-a/execution.json), [generated Metal](artifacts/paralyn-gate-a/generated.metal), and [verification transcript](artifacts/paralyn-gate-a/verification.txt) preserve a run from a clean Paralyn revision:
 
@@ -64,6 +64,6 @@ python3 scripts/verify_benchmark.py --benchmark build/gate_b_benchmark --paralyn
   --source examples/vector_add.cu --artifacts artifacts/runs/benchmark-new
 ```
 
-Use a fresh artifact directory each time. Add `--require-clean` for permanent milestone captures. The [benchmark protocol](benchmarks/README.md) explains the measured regions and limits; [numerics](docs/numerics.md) defines the FP32 policy.
+Use a fresh artifact directory each time. Add `--require-clean` for permanent milestone captures, saving under ignored `artifacts/runs/` or outside the checkout before archiving the results. The [benchmark protocol](benchmarks/README.md) explains the measured regions and limits; [numerics](docs/numerics.md) defines the FP32 policy.
 
 The deprecated `build/unicuda` command and `unicuda/*.hpp` namespace aliases forward to Paralyn during the naming transition. New code should use Paralyn. The [v1.1 portfolio](docs/frontend-matrix.md) tracks required future work; unimplemented rows are not advertised as supported.

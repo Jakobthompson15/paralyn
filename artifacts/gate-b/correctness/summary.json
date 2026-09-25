@@ -1,0 +1,80 @@
+{
+  "suite": "gate-b-correctness",
+  "status": "verified",
+  "started_utc": "2026-09-25T22:35:09.113613+00:00",
+  "benchmarks_included": false,
+  "hardware_skip_allowed": false,
+  "cases": [
+    {
+      "name": "exact_arithmetic",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 46
+    },
+    {
+      "name": "xyz_builtins",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 3
+    },
+    {
+      "name": "aliases_and_host",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 9
+    },
+    {
+      "name": "integer_semantics",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 5
+    },
+    {
+      "name": "numerics",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 3
+    },
+    {
+      "name": "inspect_without_execution",
+      "status": "verified"
+    },
+    {
+      "name": "host_exit_propagation",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "dirty": false,
+      "launches": 9
+    },
+    {
+      "name": "unsupported_shared",
+      "status": "verified_rejection"
+    },
+    {
+      "name": "unsupported_double",
+      "status": "verified_rejection"
+    },
+    {
+      "name": "unsupported_operator",
+      "status": "verified_rejection"
+    }
+  ],
+  "finished_utc": "2026-09-25T22:35:15.428831+00:00"
+}

@@ -1,0 +1,22 @@
+Test project /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c
+    Start 1: ir_and_codegen
+1/6 Test #1: ir_and_codegen ...................   Passed    0.19 sec
+    Start 2: frontend
+2/6 Test #2: frontend .........................   Passed    2.20 sec
+    Start 3: metal_runtime
+3/6 Test #3: metal_runtime ....................   Passed    0.25 sec
+    Start 4: unobserved_runtime_failure
+4/6 Test #4: unobserved_runtime_failure .......   Passed    0.02 sec
+    Start 5: gate_a
+5/6 Test #5: gate_a ...........................   Passed    0.88 sec
+    Start 6: gate_b_correctness
+6/6 Test #6: gate_b_correctness ...............   Passed    6.55 sec
+
+100% tests passed out of 6
+
+Label Time Summary:
+gate-a    =   0.88 sec*proc (1 test)
+gate-b    =   6.56 sec*proc (2 tests)
+gpu       =   7.70 sec*proc (4 tests)
+
+Total Test time (real) =  10.09 sec

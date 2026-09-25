@@ -1,0 +1,1 @@
+ParalynError: /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/qualification/unsupported_double.cu:1:44: ParalynError: CUDA feature "device_type_double" is not currently supported.

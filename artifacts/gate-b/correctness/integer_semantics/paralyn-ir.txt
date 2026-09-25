@@ -1,0 +1,31 @@
+paralyn.ir v0
+kernel signed_affine(input: read buffer<i32>, output: read_write buffer<i32>, n: i32, scale: i32, bias: i32) {
+  let i:i32 = i32(threadIdx.x)
+  if (i < n) {
+    store output[i] = ((load input[i] * scale) + bias)
+  }
+}
+
+paralyn.ir v0
+kernel unsigned_to_signed(input: read buffer<u32>, output: read_write buffer<i32>, n: i32) {
+  let i:i32 = i32(threadIdx.x)
+  if (i < n) {
+    store output[i] = i32(load input[i])
+  }
+}
+
+paralyn.ir v0
+kernel signed_to_unsigned(input: read buffer<i32>, output: read_write buffer<u32>, n: i32) {
+  let i:i32 = i32(threadIdx.x)
+  if (i < n) {
+    store output[i] = u32(load input[i])
+  }
+}
+
+paralyn.ir v0
+kernel unsigned_comparison(output: read_write buffer<i32>, bound: i32) {
+  if (threadIdx.x < u32(bound)) {
+    store output[threadIdx.x] = 1:i32
+  }
+}
+

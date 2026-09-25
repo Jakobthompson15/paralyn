@@ -28,7 +28,7 @@
     "head_at_adoption": "86f406f",
     "verified_clean_gate_a_revision": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
     "gate_a": "verified",
-    "gate_b": "implementing_not_complete",
+    "gate_b": "verified_current_cuda_metal_subset",
     "evidence_record": {
       "scope": "cuda_complete_program_gate_a",
       "input_contract": "CUDA-style C++17 subset / Clang 21.1.8",
@@ -47,7 +47,63 @@
       ],
       "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
     },
-    "note": "Gate B development tests may run after adoption; final accepted evidence must be added explicitly. No benchmark results are asserted here."
+    "note": "Original adoption and Gate A records are retained. A separate clean Gate B capture now qualifies the documented current CUDA/Metal subset; the all-frontends portfolio remains incomplete.",
+    "verified_clean_gate_b_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+    "gate_b_evidence_record": {
+      "scope": "cuda_complete_program_gate_b_current_metal_subset",
+      "frontend": "cuda_cpp",
+      "backend": "metal",
+      "input_contract": "Documented CUDA-style C++17 scalar subset / Clang 21.1.8; see docs/cuda-compatibility.md",
+      "operations": [
+        "bounds_checked_fp32_vector_add",
+        "guarded_fp32_affine_transform",
+        "xyz_builtin_indexing",
+        "same_type_alias_updates",
+        "i32_u32_conversions_and_comparisons",
+        "fp32_add_multiply_numerical_policy"
+      ],
+      "source_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "validation": {
+        "fresh_configure_build": true,
+        "dependencies_preinstalled": true,
+        "gate_a_repeated": true,
+        "ctest_passed": 6,
+        "correctness_gpu_launches": 75,
+        "positive_fixture_gpu_launches": 66,
+        "expected_exit_37_gpu_launches": 9,
+        "benchmark_gpu_launches": 880,
+        "benchmark_sizes": [
+          1024,
+          65536,
+          1048576,
+          16777216
+        ],
+        "warmups_per_variant_per_size": 10,
+        "measured_iterations_per_variant_per_size": 100,
+        "cpu_fallback": false
+      },
+      "artifacts": [
+        "artifacts/gate-b/build-validation.json",
+        "artifacts/gate-b/ctest.log",
+        "artifacts/gate-b/correctness/summary.json",
+        "artifacts/gate-b/correctness/exact_arithmetic/verification.txt",
+        "artifacts/gate-b/correctness/xyz_builtins/verification.txt",
+        "artifacts/gate-b/correctness/aliases_and_host/verification.txt",
+        "artifacts/gate-b/correctness/integer_semantics/verification.txt",
+        "artifacts/gate-b/correctness/numerics/verification.txt",
+        "artifacts/gate-b/benchmark/capture.json",
+        "artifacts/gate-b/benchmark/benchmark.json",
+        "artifacts/gate-b/benchmark/samples.csv"
+      ],
+      "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
+    }
   },
   "frontend_tracks": [
     {
@@ -58,18 +114,18 @@
       "stage": "A",
       "implementation": "implementing",
       "qualification": "unavailable",
-      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "qualification_scope": "Full required portable track, including independent Metal/CUDA/ROCm qualification; current Metal Gate B subset is verified separately.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
         "version": "CUDA-style C++17; Clang 21.1.8",
         "subset": "Preserve the documented complete-program CUDA subset.",
-        "subset_status": "gate_a_implemented_gate_b_in_progress"
+        "subset_status": "gate_a_and_gate_b_current_metal_subset_verified"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
-        "useful": "Batched affine vector transform",
-        "useful_status": "proposed_not_qualified"
+        "useful": "Bounds-checked FP32 affine transform with changed scalar values and dependent launches",
+        "useful_status": "verified_current_metal_subset"
       },
       "dependencies": {
         "compiler_provider_versions": [
@@ -82,16 +138,16 @@
       },
       "execution_path": "CUDA AST -> host rewrite + verified typed IR -> generated MSL -> shared Metal runtime",
       "tests": {
-        "positive_negative_integration": "Gate A tests exist; Gate B active.",
+        "positive_negative_integration": "Clean Gate A repeat and six CTest targets passed; separate Gate B correctness capture verified 75 GPU launches, source rejections, inspect without execution, and expected host exit propagation.",
         "numerical_contract": "docs/numerics.md",
-        "reproduction": "README.md and scripts/verify_gate_a.py"
+        "reproduction": "README.md; scripts/verify_gate_a.py; scripts/qualify_gate_b.py; scripts/verify_benchmark.py; benchmarks/README.md"
       },
       "backend_results": [
         {
           "backend": "metal",
           "required": true,
-          "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "qualification": "verified",
+          "reason": "Clean current-subset qualification passed; future CUDA language expansion and cross-vendor cells remain separate.",
           "verified_subsets": [
             {
               "scope": "cuda_complete_program_gate_a",
@@ -110,8 +166,64 @@
                 "artifacts/paralyn-gate-a/verification.txt"
               ],
               "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+            },
+            {
+              "scope": "cuda_complete_program_gate_b_current_metal_subset",
+              "frontend": "cuda_cpp",
+              "backend": "metal",
+              "input_contract": "Documented CUDA-style C++17 scalar subset / Clang 21.1.8; see docs/cuda-compatibility.md",
+              "operations": [
+                "bounds_checked_fp32_vector_add",
+                "guarded_fp32_affine_transform",
+                "xyz_builtin_indexing",
+                "same_type_alias_updates",
+                "i32_u32_conversions_and_comparisons",
+                "fp32_add_multiply_numerical_policy"
+              ],
+              "source_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "validation": {
+                "fresh_configure_build": true,
+                "dependencies_preinstalled": true,
+                "gate_a_repeated": true,
+                "ctest_passed": 6,
+                "correctness_gpu_launches": 75,
+                "positive_fixture_gpu_launches": 66,
+                "expected_exit_37_gpu_launches": 9,
+                "benchmark_gpu_launches": 880,
+                "benchmark_sizes": [
+                  1024,
+                  65536,
+                  1048576,
+                  16777216
+                ],
+                "warmups_per_variant_per_size": 10,
+                "measured_iterations_per_variant_per_size": 100,
+                "cpu_fallback": false
+              },
+              "artifacts": [
+                "artifacts/gate-b/build-validation.json",
+                "artifacts/gate-b/ctest.log",
+                "artifacts/gate-b/correctness/summary.json",
+                "artifacts/gate-b/correctness/exact_arithmetic/verification.txt",
+                "artifacts/gate-b/correctness/xyz_builtins/verification.txt",
+                "artifacts/gate-b/correctness/aliases_and_host/verification.txt",
+                "artifacts/gate-b/correctness/integer_semantics/verification.txt",
+                "artifacts/gate-b/correctness/numerics/verification.txt",
+                "artifacts/gate-b/benchmark/capture.json",
+                "artifacts/gate-b/benchmark/benchmark.json",
+                "artifacts/gate-b/benchmark/samples.csv"
+              ],
+              "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
             }
-          ]
+          ],
+          "qualification_scope": "Documented current CUDA/Metal Gate A/B subset only."
         },
         {
           "backend": "cuda",
@@ -129,7 +241,7 @@
         }
       ],
       "blockers": [],
-      "next_task": "Complete existing Gate B correctness and benchmark qualification without changing the demonstrated host/kernel contract."
+      "next_task": "Preserve the qualified Metal subset while implementing the native C/C++ runtime slice; later qualify the required portable subset independently on NVIDIA and AMD."
     },
     {
       "id": "native_c_cpp",
@@ -187,7 +299,7 @@
         }
       ],
       "blockers": [],
-      "next_task": "After Gate B, implement the smallest shared-runtime C/C++ ownership and launch slice described in docs/native-api.md."
+      "next_task": "Next ready milestone: implement the smallest shared-runtime C/C++ ownership and launch slice described in docs/native-api.md, then qualify it independently."
     },
     {
       "id": "native_python",
@@ -1633,7 +1745,7 @@
       "required": true,
       "implementation": "implemented",
       "qualification": "verified",
-      "qualification_scope": "CUDA Gate A and handwritten runtime smoke only, not all frontend/operator cells.",
+      "qualification_scope": "Documented CUDA Gate A/B subset and handwritten runtime smoke on Apple M5, not all frontend/operator cells.",
       "hardware_availability": "available_Apple_M5",
       "verified_subsets": [
         {
@@ -1653,10 +1765,65 @@
             "artifacts/paralyn-gate-a/verification.txt"
           ],
           "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+        },
+        {
+          "scope": "cuda_complete_program_gate_b_current_metal_subset",
+          "frontend": "cuda_cpp",
+          "backend": "metal",
+          "input_contract": "Documented CUDA-style C++17 scalar subset / Clang 21.1.8; see docs/cuda-compatibility.md",
+          "operations": [
+            "bounds_checked_fp32_vector_add",
+            "guarded_fp32_affine_transform",
+            "xyz_builtin_indexing",
+            "same_type_alias_updates",
+            "i32_u32_conversions_and_comparisons",
+            "fp32_add_multiply_numerical_policy"
+          ],
+          "source_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "validation": {
+            "fresh_configure_build": true,
+            "dependencies_preinstalled": true,
+            "gate_a_repeated": true,
+            "ctest_passed": 6,
+            "correctness_gpu_launches": 75,
+            "positive_fixture_gpu_launches": 66,
+            "expected_exit_37_gpu_launches": 9,
+            "benchmark_gpu_launches": 880,
+            "benchmark_sizes": [
+              1024,
+              65536,
+              1048576,
+              16777216
+            ],
+            "warmups_per_variant_per_size": 10,
+            "measured_iterations_per_variant_per_size": 100,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/gate-b/build-validation.json",
+            "artifacts/gate-b/ctest.log",
+            "artifacts/gate-b/correctness/summary.json",
+            "artifacts/gate-b/correctness/exact_arithmetic/verification.txt",
+            "artifacts/gate-b/correctness/xyz_builtins/verification.txt",
+            "artifacts/gate-b/correctness/aliases_and_host/verification.txt",
+            "artifacts/gate-b/correctness/integer_semantics/verification.txt",
+            "artifacts/gate-b/correctness/numerics/verification.txt",
+            "artifacts/gate-b/benchmark/capture.json",
+            "artifacts/gate-b/benchmark/benchmark.json",
+            "artifacts/gate-b/benchmark/samples.csv"
+          ],
+          "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
         }
       ],
       "full_portfolio_qualification": "unavailable",
-      "next_task": "Complete Gate B and qualify each subsequently implemented frontend/operator separately."
+      "next_task": "Expose the shared native C/C++ runtime boundary and qualify each newly implemented frontend/operator separately."
     },
     {
       "id": "cuda",
@@ -1715,6 +1882,61 @@
         "artifacts/paralyn-gate-a/verification.txt"
       ],
       "limits": "1024 elements, grid 4x1x1, block 256x1x1, exactly representable FP32 inputs; Gate B and full frontend portfolio not established."
+    },
+    {
+      "scope": "cuda_complete_program_gate_b_current_metal_subset",
+      "frontend": "cuda_cpp",
+      "backend": "metal",
+      "input_contract": "Documented CUDA-style C++17 scalar subset / Clang 21.1.8; see docs/cuda-compatibility.md",
+      "operations": [
+        "bounds_checked_fp32_vector_add",
+        "guarded_fp32_affine_transform",
+        "xyz_builtin_indexing",
+        "same_type_alias_updates",
+        "i32_u32_conversions_and_comparisons",
+        "fp32_add_multiply_numerical_policy"
+      ],
+      "source_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "validation": {
+        "fresh_configure_build": true,
+        "dependencies_preinstalled": true,
+        "gate_a_repeated": true,
+        "ctest_passed": 6,
+        "correctness_gpu_launches": 75,
+        "positive_fixture_gpu_launches": 66,
+        "expected_exit_37_gpu_launches": 9,
+        "benchmark_gpu_launches": 880,
+        "benchmark_sizes": [
+          1024,
+          65536,
+          1048576,
+          16777216
+        ],
+        "warmups_per_variant_per_size": 10,
+        "measured_iterations_per_variant_per_size": 100,
+        "cpu_fallback": false
+      },
+      "artifacts": [
+        "artifacts/gate-b/build-validation.json",
+        "artifacts/gate-b/ctest.log",
+        "artifacts/gate-b/correctness/summary.json",
+        "artifacts/gate-b/correctness/exact_arithmetic/verification.txt",
+        "artifacts/gate-b/correctness/xyz_builtins/verification.txt",
+        "artifacts/gate-b/correctness/aliases_and_host/verification.txt",
+        "artifacts/gate-b/correctness/integer_semantics/verification.txt",
+        "artifacts/gate-b/correctness/numerics/verification.txt",
+        "artifacts/gate-b/benchmark/capture.json",
+        "artifacts/gate-b/benchmark/benchmark.json",
+        "artifacts/gate-b/benchmark/samples.csv"
+      ],
+      "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
     }
   ],
   "deferred_systems": [
@@ -1726,5 +1948,5 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Finish existing CUDA/Metal Gate B correctness, numerical behavior, failures, and full documented benchmark protocol before beginning the native runtime slice."
+  "next_acceptance_gap": "Implement and independently qualify the native C/C++ shared-runtime slice in docs/native-api.md; then bind the same runtime into Python. Preserve verified CUDA/Metal Gate B and every later required portfolio/backend obligation."
 }

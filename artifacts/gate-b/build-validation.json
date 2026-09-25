@@ -1,0 +1,109 @@
+{
+  "status": "verified",
+  "source_revision": "8af773c9b8925a27041fcca1ab4cc58c82c56edb",
+  "source_dirty": false,
+  "setup_scope": "Fresh configure/build directory with already-installed dependencies; not a fresh OS or dependency installation",
+  "time_to_first_verified_gpu_result_seconds": 6.698034666,
+  "steps": [
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "-S",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DLLVM_DIR=/opt/homebrew/opt/llvm@21/lib/cmake/llvm",
+        "-DClang_DIR=/opt/homebrew/opt/llvm@21/lib/cmake/clang"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 1.576557584
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c",
+        "-j",
+        "4"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 3.5969476249999994
+    },
+    {
+      "name": "gate-a",
+      "command": [
+        "python3",
+        "scripts/verify_gate_a.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/gate-a",
+        "--require-clean"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 1.499526833
+    },
+    {
+      "name": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c",
+        "--output-on-failure"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 10.104302542
+    },
+    {
+      "name": "correctness",
+      "command": [
+        "python3",
+        "scripts/qualify_gate_b.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c/paralyn",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/correctness",
+        "--require-clean"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 6.355386958
+    },
+    {
+      "name": "benchmark",
+      "command": [
+        "python3",
+        "scripts/verify_benchmark.py",
+        "--benchmark",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c/gate_b_benchmark",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/gate-b-clean-8af773c/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/gate-b-clean-8af773c/benchmark",
+        "--require-clean"
+      ],
+      "exit_status": 0,
+      "elapsed_seconds": 3.988540209
+    }
+  ],
+  "toolchain": {
+    "host_cxx": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "llvm": "21.1.8",
+    "sdk": "26.2"
+  },
+  "binaries": {
+    "paralyn": "5910378258cdcfbedd74c4bc1549ad6d63a40e6293c8bf832187e15c213deaee",
+    "gate_b_benchmark": "db68fe9766fa714691aa6af29528c4f6ea28c28cf472f3e478eddf9c175ab8b5",
+    "runtime_smoke": "86908bc2fae3c6017423ec2b317c2df7c85acc0f6170ecf04d24956f442cab04",
+    "ir_tests": "218d3c784c337303f6f42c240af20319b1adf3dcd8479748f105102459d0337f",
+    "frontend_tests": "7efa27203f7342d7a8ef26e22a70be22126220a06182b6ceec63e1689aad4c8c"
+  }
+}
