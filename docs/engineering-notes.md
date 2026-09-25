@@ -1,5 +1,11 @@
 # Engineering evidence and design revisions
 
+## Dependency installation side effect
+
+**Problem and evidence.** Homebrew's default post-install cleanup removed old package versions and an existing optional Python 3.13 installation while installing the selected build tools. The log reported autoremoving Python 3.13.12_1. LLVM, CMake, and Ninja were installed and their versions/parser behavior verified despite a separate cleanup permission error.
+
+**Resolution.** Reinstalled the available Python 3.13 package (3.13.15) and verified its executable. Future package commands and the README disable install cleanup and autoremove. Python 3.13 is not a UniCUDA runtime dependency; tests use the discovered Python 3 interpreter and standard library only.
+
 Recorded 2026-09-25 during Gate A implementation. These notes capture integration/review evidence, not a claim that Gate A has passed. Acceptance belongs in `status.md` and retained execution artifacts.
 
 ## LLVM package checks require enabling C in CMake
