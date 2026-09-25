@@ -12,6 +12,8 @@ def main():
     parser.add_argument("--unicuda", required=True, type=Path)
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--artifacts", required=True, type=Path)
+    parser.add_argument("--require-clean", action="store_true",
+                        help="Require a clean recorded Git revision for permanent milestone capture")
     args = parser.parse_args()
     completed = subprocess.run([
         str(args.unicuda.resolve()), "run", str(args.source.resolve()),
@@ -20,6 +22,12 @@ def main():
     if completed.returncode:
         raise RuntimeError(f"complete CUDA program failed: exit {completed.returncode}")
     evidence = json.loads((args.artifacts / "execution.json").read_text())
+    if args.require_clean:
+        revision = evidence.get("unicuda_commit", "")
+        if len(revision) != 40 or any(c not in "0123456789abcdef" for c in revision):
+            raise RuntimeError("milestone capture lacks a full Git revision")
+        if evidence.get("unicuda_dirty") is not False:
+            raise RuntimeError("milestone capture requires a clean source checkout")
     if evidence["backend"] != "Metal" or evidence["cpu_fallback"] is not False:
         raise RuntimeError("missing Metal execution contract")
     if not evidence["device"] or not evidence["launches"]:

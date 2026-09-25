@@ -37,7 +37,11 @@ int main() {
     require(!dump_ir(k).empty(), "IR dump missing");
     require(!emit_cpp(k).empty(), "host serialization missing");
     auto msl = emit_msl(k, {0, 1});
-    require(msl.find("kernel void copy_values") != std::string::npos, "kernel name missing");
+    require(msl.find("kernel void uc_kernel_copy_values") != std::string::npos, "kernel name missing");
+    auto reserved_name = k;
+    reserved_name.name = "kernel";
+    require(emit_msl(reserved_name, {0, 1}).find("kernel void uc_kernel_kernel") != std::string::npos,
+            "CUDA identifier collides with MSL keyword");
     auto alias = emit_msl(k, {0, 0});
     require(alias.find("[[buffer(1)]]") == std::string::npos, "aliased allocation bound twice");
     auto broken = k;

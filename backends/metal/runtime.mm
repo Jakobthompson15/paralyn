@@ -357,7 +357,8 @@ void submit(const Kernel &kernel, Dim3 grid, Dim3 block, const std::vector<Argum
                          "Metal shader compilation failed: " + metal_error(error));
     if (error)
       std::cerr << "Metal compiler: " << metal_error(error) << '\n';
-    NSString *name = [NSString stringWithUTF8String:kernel.name.c_str()];
+    const std::string entrypoint = handwritten ? kernel.name : "uc_kernel_" + kernel.name;
+    NSString *name = [NSString stringWithUTF8String:entrypoint.c_str()];
     id<MTLFunction> function = [library newFunctionWithName:name];
     if (!function)
       throw RuntimeError(cudaErrorLaunchFailure,

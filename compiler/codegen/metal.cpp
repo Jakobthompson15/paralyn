@@ -102,7 +102,7 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
   std::ostringstream out;
   out << "#include <metal_stdlib>\nusing namespace metal;\n\n// Generated exclusively from "
          "verified UniCUDA IR.\n";
-  out << "kernel void " << k.name << "(\n";
+  out << "kernel void uc_kernel_" << k.name << "(\n";
   for (const auto &[index, s] : slots) {
     out << "  ";
     if (s.buffer)
