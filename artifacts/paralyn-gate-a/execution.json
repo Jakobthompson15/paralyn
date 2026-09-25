@@ -1,0 +1,15 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "os": "Version 26.5.1 (Build 25F80)",
+  "paralyn_commit": "c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1",
+  "paralyn_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "launches": [
+    {"kernel": "vector_add", "grid": [4,1,1], "block": [256,1,1], "command_status": "completed", "gpu_start_seconds": 3200579.2826862503, "gpu_end_seconds": 3200579.282692417, "gpu_duration_seconds": 6.166752427816391e-06, "error": ""}
+  ]
+}

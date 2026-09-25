@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-09-25. **The original Gate A passed under the working name UniCUDA.** The project is now Paralyn. Fresh verification of the renamed build and public GitHub publication are pending. No public release is qualified; Gate B was not started.
+Updated 2026-09-25. **Paralyn's Gate A passed on the physical Apple M5.** A fresh build, all four tests, device/IR inspection, and a clean-revision execution passed after the project rename. No public release is qualified; Gate B was not started.
 
 ## Original verified implementation
 
@@ -21,11 +21,11 @@ The source used 1,024 elements, grid `(4,1,1)`, and block `(256,1,1)`. Metal rep
 
 The five original files in `../artifacts/gate-a/` are retained unchanged: `source.cu`, `unicuda-ir.txt`, `generated.metal`, `execution.json`, and `verification.txt`. Their original working-name strings and `unicuda_commit` / `unicuda_dirty` metadata are historical evidence, not stale current interfaces. The captured shader comes from verified IR; the runtime's handwritten-MSL test hook is not used by the CUDA path. GPU timestamps establish execution evidence, not a performance benchmark.
 
-## Paralyn rename verification — pending
+## Paralyn rename verification — passed
 
 Current executable and commands use `build/paralyn`; the C++ namespace is `paralyn`. New runs produce `paralyn-ir.txt` and Paralyn-named execution metadata. The automated evidence verifier accepts `--paralyn`.
 
-Fresh build, CTest, device/inspect checks, and a complete GPU run from a clean renamed revision must be recorded before this section is marked passed. Reserve `../artifacts/paralyn-gate-a/` for that run; preserve `../artifacts/gate-a/` unchanged. Public GitHub publication is pending and no remote repository is claimed here.
+The fresh build and all four CTest targets passed without skips. `paralyn devices` and `paralyn inspect examples/vector_add.cu` were checked. A subsequent complete GPU run from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1` matched all 1,024 CPU-reference values, with completed Metal status, positive GPU timestamps, and zero host exit status. Its five files are preserved in `../artifacts/paralyn-gate-a/`, using the new `paralyn-ir.txt` filename and `paralyn_commit` / `paralyn_dirty` metadata. Original evidence in `../artifacts/gate-a/` remains unchanged.
 
 ## Boundaries of the original result
 

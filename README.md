@@ -2,15 +2,27 @@
 
 An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
-**The initial Gate A passed on the physical Apple M5 under the original working name UniCUDA.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. The project is now named Paralyn; fresh verification of the renamed build is pending. Gate B and public release qualification remain deferred.
+**Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. All four automated tests pass. Gate B and public release qualification remain deferred.
 
-The original [execution record](artifacts/gate-a/execution.json) and [verification transcript](artifacts/gate-a/verification.txt) are retained unchanged in [artifacts/gate-a](artifacts/gate-a/), including the historical `unicuda-ir.txt` filename and original metadata keys. That transcript reports:
+The fresh [execution record](artifacts/paralyn-gate-a/execution.json), [generated Metal](artifacts/paralyn-gate-a/generated.metal), and [verification transcript](artifacts/paralyn-gate-a/verification.txt) preserve a run from a clean Paralyn revision:
 
 ```text
+$ build/paralyn run examples/vector_add.cu
+Paralyn v0.0.1
+
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Kernel: vector_add
+Grid: 4 × 1 × 1
+Block: 256 × 1 × 1
+Compiling kernel...
+Executing on GPU...
+
 Verification: PASS (1024 independently checked elements)
 ```
 
-Fresh Paralyn evidence is reserved for `artifacts/paralyn-gate-a/`; no renamed execution result is claimed until it is recorded. See [status](docs/status.md) for the exact original revision and current verification state.
+Earlier evidence remains unchanged in [artifacts/gate-a](artifacts/gate-a/). See [status](docs/status.md) for both revisions and their provenance.
 
 ## Build and inspect
 
