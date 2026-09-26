@@ -1,0 +1,39 @@
+Test project /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7
+      Start  1: ir_and_codegen
+ 1/14 Test  #1: ir_and_codegen ...................   Passed    0.20 sec
+      Start  2: kernel_artifacts
+ 2/14 Test  #2: kernel_artifacts .................   Passed    0.24 sec
+      Start  3: frontend
+ 3/14 Test  #3: frontend .........................   Passed    2.07 sec
+      Start  4: metal_runtime
+ 4/14 Test  #4: metal_runtime ....................   Passed    0.44 sec
+      Start  5: unobserved_runtime_failure
+ 5/14 Test  #5: unobserved_runtime_failure .......   Passed    0.05 sec
+      Start  6: native_compile
+ 6/14 Test  #6: native_compile ...................   Passed    2.50 sec
+      Start  7: native_c
+ 7/14 Test  #7: native_c .........................   Passed    0.64 sec
+      Start  8: native_cpp
+ 8/14 Test  #8: native_cpp .......................   Passed    0.53 sec
+      Start  9: native_tests
+ 9/14 Test  #9: native_tests .....................   Passed    0.49 sec
+      Start 10: python_tests
+10/14 Test #10: python_tests .....................   Passed    0.24 sec
+      Start 11: python_example
+11/14 Test #11: python_example ...................   Passed    0.24 sec
+      Start 12: python_finalizer
+12/14 Test #12: python_finalizer .................   Passed    0.23 sec
+      Start 13: gate_a
+13/14 Test #13: gate_a ...........................   Passed    1.21 sec
+      Start 14: gate_b_correctness
+14/14 Test #14: gate_b_correctness ...............   Passed    6.84 sec
+
+100% tests passed out of 14
+
+Label Time Summary:
+gate-a    =   1.21 sec*proc (1 test)
+gate-b    =   6.89 sec*proc (2 tests)
+gpu       =  10.92 sec*proc (10 tests)
+native    =   2.37 sec*proc (6 tests)
+
+Total Test time (real) =  15.93 sec

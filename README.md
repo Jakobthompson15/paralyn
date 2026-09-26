@@ -46,7 +46,7 @@ Specify `--device auto` (default) or a listed index. Pass host arguments after `
 
 ## Native C/C++ and Python
 
-The native ABI now exposes devices, contexts, owned buffers, offset views, verified kernel modules, typed launches, ordered queues, events and structured errors. C++ adds move-only ownership wrappers; Python binds the same shared library with standard-library `ctypes`. Both use the shared Metal engine. See the executable examples in `examples/native/` and the [native API contract](docs/native-api.md).
+The native ABI now exposes devices, contexts, owned buffers, offset views, verified kernel modules, typed launches, ordered queues, events and structured errors. C++ adds move-only ownership wrappers; Python binds the same shared library with standard-library `ctypes`. Both use the shared Metal engine. [Clean evidence](artifacts/stage-b/README.md) records 21 native GPU events and all 14 current CTests passing, with CUDA correctness and the 880-launch benchmark preserved. See the executable examples in `examples/native/` and the [native API contract](docs/native-api.md).
 
 ```sh
 build/native_c build/native-kernels.prk artifacts/runs/native-c-new

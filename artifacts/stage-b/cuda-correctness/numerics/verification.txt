@@ -1,0 +1,22 @@
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Compiling kernel...
+Kernel: numeric_add
+Grid: 64 × 1 × 1
+Block: 128 × 1 × 1
+Executing on GPU...
+Compiling kernel...
+Kernel: numeric_mul
+Grid: 64 × 1 × 1
+Block: 128 × 1 × 1
+Executing on GPU...
+Compiling kernel...
+Kernel: numeric_separate
+Grid: 1 × 1 × 1
+Block: 32 × 1 × 1
+Executing on GPU...
+Numerics: normal_max_ulp=0 subnormal_flush_variations=4 contraction=off signed_zero=preserved exceptional_classes=matched
+Verification: PASS (FP32 add/multiply, exceptional values, subnormals and contraction)
+
+Host exit status: 0

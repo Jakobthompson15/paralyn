@@ -11,7 +11,7 @@ The versions below were obtained from the installed tools. LLVM 21.1.8 frontend 
 | LLVM/Clang/LibTooling | Homebrew LLVM 21.1.8, arm64; `/opt/homebrew/opt/llvm@21` | CUDA AST parsing and compiler libraries; not a runtime dependency | [Apache-2.0 with LLVM exceptions and component notices](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/LICENSE.TXT) |
 | CMake / CTest | 4.4.3 | Build configuration and tests | [BSD-3-Clause; additional component notices](https://cmake.org/licensing/) |
 | Ninja | 1.13.2 | Build executor | [Apache-2.0](https://github.com/ninja-build/ninja/blob/v1.13.2/COPYING) |
-| Python | 3.14.5 selected by CMake | Gate A evidence test; standard library only, not a runtime dependency | [Python Software Foundation license](https://docs.python.org/3/license.html) |
+| Python | 3.14.5 selected by CMake | Evidence tests and native Python binding via standard-library ctypes; no third-party Python packages; not required by C/C++ clients | [Python Software Foundation license](https://docs.python.org/3/license.html) |
 | Apple Clang | 17.0.0, clang-1700.6.3.2 | System C++ / Objective-C++ toolchain as selected by build | Apple toolchain notices and [LLVM licensing](https://llvm.org/docs/DeveloperPolicy.html#copyright-license-and-patents) |
 | macOS SDK | 26.2, selected by Xcode | Metal/Foundation headers and public system APIs | [Apple developer agreements](https://developer.apple.com/support/terms/); SDK not redistributed |
 | Metal and Foundation frameworks | Provided by macOS 26.5.1, build 25F80 | Device discovery, buffers, runtime shader compilation, GPU submission | Apple system components; not bundled or relicensed |

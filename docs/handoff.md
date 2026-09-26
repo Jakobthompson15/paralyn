@@ -1,6 +1,6 @@
 # Checkpoint: native C/C++ runtime and Python bindings
 
-The session started at local/remote main `0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd`. The first Stage B byte-buffer/launch slice is implemented; software remains 0.0.1. See `docs/implementation-audit.md` for exact files and targets, `docs/native-api.md` for ABI/lifetime/error rules, and `docs/status.md` for actual qualification. The original Gates A/B evidence remains unchanged. No release tag is implied.
+The session started at local/remote main `0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd`. The first Stage B byte-buffer/launch slice is implemented and qualified from clean revision `76217b7708d7b503449bf42e556e4c148bda88e6`; software remains 0.0.1. Permanent evidence in `artifacts/stage-b/` records 14 passing CTests, 21 native GPU events, repeated CUDA correctness and the complete 880-launch benchmark. See `docs/implementation-audit.md` for exact files and targets, `docs/native-api.md` for ABI/lifetime/error rules, and `docs/status.md` for actual qualification. The original Gates A/B evidence remains unchanged. No release tag is implied.
 
 ## Implemented boundary
 

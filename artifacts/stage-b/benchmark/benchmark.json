@@ -1,0 +1,23 @@
+{
+  "status": "verified",
+  "sizes": [1024, 65536, 1048576, 16777216],
+  "warmups_per_variant_per_size": 10,
+  "measured_iterations_per_variant_per_size": 100,
+  "order": "generated first on even iterations, handwritten first on odd iterations",
+  "frontend_compile_seconds": 0.25535150000000001,
+  "pipeline_compile_seconds": 0.029738583999999998,
+  "pipeline_compilations": 2,
+  "completed_gpu_launches": 880,
+  "samples": 880,
+  "runtime_owned_peak_buffer_bytes": 201326592,
+  "runtime_owned_current_buffer_bytes": 0,
+  "gpu_environment_and_launch_evidence": "execution.json",
+  "sample_file": "samples.csv",
+  "total_definition": "H2D of both inputs, launch, explicit synchronization, D2H; excludes allocation, input generation and CPU verification",
+  "copy_definition": "copy_seconds times memcpy to/from shared MTLBuffer contents; api_seconds also includes validation and synchronization",
+  "compile_definition": "frontend timed once; Metal library and pipeline compilation attributed to cold warmup launch, including any Metal driver cache behavior; per-launch IR verification and MSL emission remain in total latency; no persistent Paralyn cache",
+  "memory_definition": "requested lengths of live runtime-owned MTLBuffers; excludes host vectors, pipeline and driver allocations",
+  "verification": "every element after every warmup and measured launch compared exactly with independently computed CPU FP32 sum; varied dyadic inputs and output sentinel each run",
+  "verification_timing": "CPU comparison and sentinel initialization occur outside measured total",
+  "cpu_fallback": false
+}

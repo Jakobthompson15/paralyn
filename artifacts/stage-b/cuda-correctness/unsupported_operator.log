@@ -1,0 +1,1 @@
+ParalynError: /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/qualification/unsupported_operator.cu:1:77: ParalynError: CUDA feature "operator_-" is not currently supported.

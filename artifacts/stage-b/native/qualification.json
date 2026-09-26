@@ -1,0 +1,219 @@
+{
+  "status": "verified",
+  "started_utc": "2026-09-26T01:32:09.385947+00:00",
+  "provenance": {
+    "paralyn_commit": "76217b7708d7b503449bf42e556e4c148bda88e6",
+    "paralyn_dirty": false,
+    "paralyn_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+    "llvm_version": "21.1.8",
+    "native_abi_version": 1,
+    "repository": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+    "build": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7",
+    "python_version": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "python_executable": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "host_platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+    "build_configuration": {
+      "CMAKE_BUILD_TYPE": "Debug",
+      "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+      "CMAKE_C_COMPILER": "/usr/bin/cc",
+      "CMAKE_OBJCXX_COMPILER": "/usr/bin/clang++",
+      "CMAKE_OSX_DEPLOYMENT_TARGET": "26.0"
+    },
+    "host_compiler_versions": {
+      "CMAKE_C_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_CXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_OBJCXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+    },
+    "cmake_cache_sha256": "a6ba1070e6385734a468fe356f90a1b01b68c32bbf300721a82e39253f40928c",
+    "binary_sha256": {
+      "paralyn": "baf8cb6c361ea8826a1227d3e381ea6c49671a55b96b35463e3ecb145f562392",
+      "libparalyn_native.dylib": "6d16cb4f3a41bb6a5d206a74252e34e677354e283b4757833a420596752ca71d",
+      "native_c": "0967fb1d6c7135d5485ff5fb84c04819ac2251334cab00deeeaec5f11ba01e4a",
+      "native_cpp": "6fba81359f9f7394587be95f4e040789ecb3b6347f1312859adbca87cf9d2a87",
+      "native_tests": "c7b4cb63d9c3b167d3125e573768337ba0ca6ac45ab8ae110009ab77afb97226"
+    },
+    "source_sha256": {
+      "CMakeLists.txt": "e8769ee7ffd6876ac1be85378feba10aed553460afd84ff858c07b308adaa26c",
+      "backends/metal/engine.mm": "cb89d08806402904375cb59bcf459515d397ca6df1dfab017294d31fdb5d3f01",
+      "backends/metal/runtime.mm": "0910c7ffc70cf9729c6e570538a4e975df5a449efb791b54d0d631143c271188",
+      "bindings/python/paralyn/__init__.py": "2b68fc0f160aa12e4674e6650a75120448ab0617ebdb1aebedee176b1336e49c",
+      "cli/main.cpp": "ecb2513cf8488327d7227b62ccea67146b561c302e55052b0370b247ec69ce43",
+      "compiler/codegen/metal.cpp": "e865c468dfb66f57c03574b8eb5e9731666effe594bcb680b4d6e642507833a9",
+      "compiler/frontend/frontend.cpp": "be95426f03574215440c5947ada6e9aaa32c1e21410bf7c6c605ecef3dcd8d3e",
+      "compiler/ir/artifact.cpp": "863208c9c4ffb0d7f24c474e384e4996f7428ca84c56874c9f46cd394bbe171e",
+      "compiler/ir/ir.cpp": "e4ba0a60de30760aa644afed935e507d5a55c2136b2d6e8872697af3a3a31876",
+      "examples/native/kernels.cu": "d1f6c234945f0b5da4dbb20696a3610664eb7ba810bb9bd6438b7a20e14547dc",
+      "examples/native/vector_add.c": "d03b0f96e30e2baca774130499695b8fc7e664d2279b5c46ff3fccfa55652749",
+      "examples/native/vector_add.cpp": "1db3ec553941fd66058705b6f5e94a598a109893a0e8e937f777126c8d9dbbfb",
+      "examples/native/vector_add.py": "aca68d86886bbcf763ffccff07107433346aeaccc38aea24d16b4b33bcebd631",
+      "include/cuda_runtime.h": "433940f25472200bd82a488ebdf5eec7f016c9ecd7667ba1ceea8b3c48636a5a",
+      "include/paralyn/artifact.hpp": "da9f549acb3973e4b43214e336cfd76a7fe53d98266b29fe05096255ede6e843",
+      "include/paralyn/cuda_parse.hpp": "1106361e086e25ad347dbb3b7c00419c444df7c940fd7ef1b08d287022c5d35c",
+      "include/paralyn/detail/backend.hpp": "3175619b69a559293aa4b2574c2527f2b412bb066944ddbba63a204c7ce22e45",
+      "include/paralyn/frontend.hpp": "029da381df237b29699cc2c7c62182bbd17d9ff7b3795b547ed60712c4288f3c",
+      "include/paralyn/ir.hpp": "705ff88cdd2ee2297ae1b7f723738c894859c46bbeb50b6a4db1c1c66c9dafed",
+      "include/paralyn/native.h": "f8b2b88fa1238cf2ce22b429ea1676d024cc7e226f120f4744784267ed488e96",
+      "include/paralyn/native.hpp": "5cf231728fc5aefa31c2daa23157a1fd3df90e5137fd64d55c888ec6d26414fb",
+      "include/paralyn/runtime.hpp": "b56a022b45dc1dbaa1d54800d96a355970cd6c85f23e808e2ae8ffb9ebe17c53",
+      "include/unicuda/cuda_parse.hpp": "50511e85666d997c8ad91e6c8ce95dc653f81e01622425d49cb1f902d810e681",
+      "include/unicuda/frontend.hpp": "8d845e77aff676842c9143fdb31db991d6257594550cc4f6469618ac55e571fc",
+      "include/unicuda/ir.hpp": "bb68fe72e764c44976061b14bec238b8af791f53c2313a015f47a9ca082d230a",
+      "include/unicuda/namespace.hpp": "315303525e96fee23e70fed407de4d0b363fb53dfeaacfaf50b12a39a4ea1fb8",
+      "include/unicuda/runtime.hpp": "f014939c7b1ab3fcb324c33a14262e39ae817619c842108ac874d14a14459550",
+      "runtime/native.cpp": "63da791e667fefb137280db15a5b564e610ed9d89eb946ecd633f9ac4452741f",
+      "scripts/qualify_native.py": "0ea33b0edfbb55101dd6ede71d94a663e42f7459459113419315992f88f631de",
+      "tests/native/native_tests.cpp": "bc0b32c8bfdc7da37fe5c9e3a080ae45c14e7ce9089ec9a669baefa82a464448",
+      "tests/native/run_example.py": "1673201cfb6426af625d034159a224f55bae39b22f72ecfe8ca09dea5553d1b0",
+      "tests/native/test_python.py": "538df61c51f0a90a56fb47633880710a444b77b774acbadd7e414fe4724d8064"
+    }
+  },
+  "cases": [
+    {
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7/native_c",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-c/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-c/process.log",
+      "kind": "native-c",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 2,
+      "verified_gpu_events": 2,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-c/evidence"
+    },
+    {
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7/native_cpp",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-cpp/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-cpp/process.log",
+      "kind": "native-cpp",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 1,
+      "verified_gpu_events": 1,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-cpp/evidence"
+    },
+    {
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7/native_tests",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-tests/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-tests/process.log",
+      "kind": "native-tests",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 8,
+      "verified_gpu_events": 8,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/native-tests/evidence"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/native/test_python.py",
+        "--module",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-tests/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-tests/process.log",
+      "kind": "python-tests",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 8,
+      "verified_gpu_events": 9,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-tests/evidence"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/examples/native/vector_add.py",
+        "--module",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-example/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-example/process.log",
+      "kind": "python-example",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 1,
+      "verified_gpu_events": 1,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-example/evidence"
+    }
+  ],
+  "cpu_fallback": false,
+  "module_sha256": "52a31e2054e10966f040c0bcb2f07cff9dd65512e908770f58c675173cf398ef",
+  "kernel_source_sha256": "d1f6c234945f0b5da4dbb20696a3610664eb7ba810bb9bd6438b7a20e14547dc",
+  "compile": {
+    "command": [
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7/paralyn",
+      "compile",
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/examples/native/kernels.cu",
+      "--output",
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/kernels.prk"
+    ],
+    "exit_status": 0,
+    "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/compile.log"
+  },
+  "inspect": {
+    "command": [
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/stage-b-76217b7/paralyn",
+      "inspect",
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/examples/native/kernels.cu"
+    ],
+    "exit_status": 0,
+    "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/inspect.txt"
+  },
+  "host_failure_policy": {
+    "kind": "python-finalizer",
+    "status": "verified",
+    "gpu_launches": 0,
+    "scope": "host exit/error policy through real C ABI invalid-handle failures; no GPU fault injection",
+    "unobserved": {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-c",
+        "import paralyn as p; context=p.Context(); buffer=context.buffer(4); buffer._lib.check(buffer._lib.api.pr_release(buffer.handle)); del buffer; print('UNREACHABLE_SUCCESS')"
+      ],
+      "exit_status": 1,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-finalizer/unobserved.log"
+    },
+    "observed": {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-c",
+        "import paralyn as p\ncontext=p.Context()\nbuffer=context.buffer(4)\nbuffer._lib.check(buffer._lib.api.pr_release(buffer.handle))\ntry:\n buffer.close()\nexcept p.Error as error:\n assert error.code==p.Status.INVALID_HANDLE\nelse:\n raise RuntimeError('explicit close did not report its error')\ncontext.close()\nprint('Explicit close error recovered')\n"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/stage-b-clean-76217b7/native/python-finalizer/observed.log"
+    }
+  },
+  "finished_utc": "2026-09-26T01:32:10.241654+00:00",
+  "native_command_records": 20,
+  "verified_gpu_events": 21,
+  "observation": "Python ownership case intentionally releases the context handle before its ninth launch; its pr_event_wait timestamps are audited separately from eight source-linked native records"
+}

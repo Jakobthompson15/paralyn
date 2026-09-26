@@ -2,7 +2,7 @@
 
 Mandate v1.1 requires **all 17 frontend/input families and all three named interoperability clients** below. They remain required when implementation or hardware qualification is unavailable. This is an obligation/evidence ledger, not a support advertisement. The machine-readable source is [portfolio-ledger.json](portfolio-ledger.json).
 
-Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documented current subset on Apple M5 at clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb`. [Gate B evidence](../artifacts/gate-b/build-validation.json) includes six passing CTest targets, 75 correctness GPU launches, and the complete 880-launch generated/handwritten-Metal benchmark. These measurements do not establish universal portability or performance. Research, a CLI registry entry, a printed IR, and a command wrapper do not complete a track.
+Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documented current subset on Apple M5 at clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb`. [Gate B evidence](../artifacts/gate-b/build-validation.json) includes six passing CTest targets, 75 correctness GPU launches, and the complete 880-launch generated/handwritten-Metal benchmark. These measurements do not establish universal portability or performance. The [native checkpoint](../artifacts/stage-b/README.md) at clean revision `76217b7708d7b503449bf42e556e4c148bda88e6` additionally qualifies the C/C++/Python byte-buffer/launch subset with 21 GPU events and 14 passing CTests. Research, a CLI registry entry, a printed IR, and a command wrapper do not complete a track.
 
 ## Required frontend/input families
 

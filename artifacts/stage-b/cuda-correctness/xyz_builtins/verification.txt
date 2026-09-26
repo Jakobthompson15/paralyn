@@ -1,0 +1,21 @@
+Device: Apple M5
+Backend: Metal
+Selection: auto; first device in stable registry-ID order
+Compiling kernel...
+Kernel: record_coordinates
+Grid: 2 × 3 × 2
+Block: 3 × 2 × 2
+Executing on GPU...
+Reusing kernel pipeline...
+Kernel: record_coordinates
+Grid: 3 × 2 × 4
+Block: 5 × 3 × 2
+Executing on GPU...
+Reusing kernel pipeline...
+Kernel: record_coordinates
+Grid: 1 × 1 × 1
+Block: 2 × 3 × 5
+Executing on GPU...
+Verification: PASS xyz_builtins cases=3 launches=3 compared=10824
+
+Host exit status: 0

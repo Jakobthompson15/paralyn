@@ -1,0 +1,25 @@
+Detected kernels:
+  vector_add(const f32* a, const f32* b, f32* out, i32 n)
+  affine(const f32* a, const f32* b, f32* out, i32 n, f32 scale)
+
+Launches (expressions; runtime values are not evaluated):
+
+Required backend capabilities: typed buffers, i32/u32/f32, index builtins
+
+Paralyn IR:
+paralyn.ir v0
+kernel vector_add(a: read buffer<f32>, b: read buffer<f32>, out: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store out[i] = (load a[i] + load b[i])
+  }
+}
+
+paralyn.ir v0
+kernel affine(a: read buffer<f32>, b: read buffer<f32>, out: read_write buffer<f32>, n: i32, scale: f32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store out[i] = ((load a[i] * scale) + load b[i])
+  }
+}
+

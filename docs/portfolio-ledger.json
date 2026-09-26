@@ -109,6 +109,18 @@
       "remote_main": "0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd",
       "newer_local_implementation": false,
       "audit": "docs/implementation-audit.md"
+    },
+    "native_evidence_record": {
+      "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+      "source_dirty": false,
+      "capture": "artifacts/stage-b/build-validation.json",
+      "fresh_configure_build": true,
+      "ctest_passed": 14,
+      "native_gpu_events": 21,
+      "native_source_linked_command_records": 20,
+      "cuda_correctness_gpu_launches": 75,
+      "benchmark_gpu_launches": 880,
+      "cpu_fallback": false
     }
   },
   "frontend_tracks": [
@@ -268,7 +280,7 @@
       "workloads": {
         "reference": "bounds_checked_vector_add",
         "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
-        "useful_status": "physical_metal_development_tests_passed_clean_capture_pending"
+        "useful_status": "verified_initial_metal_byte_buffer_subset"
       },
       "dependencies": {
         "compiler_provider_versions": [
@@ -290,8 +302,46 @@
           "backend": "metal",
           "required": true,
           "qualification": "verified",
-          "reason": "Actual development GPU execution and independent output checks passed; permanent clean capture pending. No device-loss/timeout fault injection qualification.",
-          "verified_subsets": [],
+          "reason": "Clean hardware qualification passed for the explicit ABI 1 byte-buffer/launch subset; later operators and other vendor cells remain unqualified.",
+          "verified_subsets": [
+            {
+              "backend": "metal",
+              "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+              "operations": [
+                "bounds_checked_fp32_vector_add",
+                "fp32_affine_transform",
+                "ordered_dependent_launches",
+                "same_type_offset_alias_views"
+              ],
+              "artifacts": [
+                "artifacts/stage-b/build-validation.json",
+                "artifacts/stage-b/ctest.log",
+                "artifacts/stage-b/native/qualification.json",
+                "artifacts/stage-b/native/verification.txt",
+                "artifacts/stage-b/SHA256SUMS.json"
+              ],
+              "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+              "scope": "native_c_cpp_abi1_byte_buffer_launch_metal",
+              "frontend": "native_c_cpp",
+              "validation": {
+                "gpu_events": 11,
+                "source_linked_command_records": 11,
+                "ctest_passed_total": 14,
+                "cpu_fallback": false,
+                "native_c_api_structured_negative_checks": 35,
+                "python_version": null,
+                "hardware_fault_injection": "unqualified"
+              }
+            }
+          ],
           "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
         },
         {
@@ -345,14 +395,14 @@
       "workloads": {
         "reference": "bounds_checked_vector_add",
         "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
-        "useful_status": "physical_metal_development_tests_passed_clean_capture_pending"
+        "useful_status": "verified_initial_metal_byte_buffer_subset"
       },
       "dependencies": {
         "compiler_provider_versions": [
           "LLVM/Clang 21.1.8 (artifact compiler only)",
           "Apple Clang 17.0.0",
           "macOS SDK 26.2",
-          "Python stdlib ctypes (exact interpreter recorded by capture)"
+          "CPython 3.14.5 / standard-library ctypes"
         ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
         "provenance": "Independent implementation; no new third-party runtime package; shared Metal engine."
@@ -368,8 +418,47 @@
           "backend": "metal",
           "required": true,
           "qualification": "verified",
-          "reason": "Actual development GPU execution and independent output checks passed; permanent clean capture pending. No device-loss/timeout fault injection qualification.",
-          "verified_subsets": [],
+          "reason": "Clean hardware qualification passed for the explicit ABI 1 byte-buffer/launch subset; later operators and other vendor cells remain unqualified.",
+          "verified_subsets": [
+            {
+              "backend": "metal",
+              "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+              "operations": [
+                "bounds_checked_fp32_vector_add",
+                "fp32_affine_transform",
+                "ordered_dependent_launches",
+                "same_type_offset_alias_views"
+              ],
+              "artifacts": [
+                "artifacts/stage-b/build-validation.json",
+                "artifacts/stage-b/ctest.log",
+                "artifacts/stage-b/native/qualification.json",
+                "artifacts/stage-b/native/verification.txt",
+                "artifacts/stage-b/SHA256SUMS.json"
+              ],
+              "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+              "scope": "native_python_abi1_byte_buffer_launch_metal",
+              "frontend": "native_python",
+              "validation": {
+                "gpu_events": 10,
+                "source_linked_command_records": 9,
+                "ctest_passed_total": 14,
+                "cpu_fallback": false,
+                "native_c_api_structured_negative_checks": 35,
+                "python_version": "3.14.5",
+                "hardware_fault_injection": "unqualified"
+              },
+              "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
+            }
+          ],
           "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
         },
         {
@@ -1783,7 +1872,7 @@
       "required": true,
       "implementation": "implemented",
       "qualification": "verified",
-      "qualification_scope": "Documented CUDA Gate A/B subset and handwritten runtime smoke on Apple M5, not all frontend/operator cells.",
+      "qualification_scope": "Documented CUDA Gates A/B, native C ABI 1/C++/Python byte-buffer launch subsets, and runtime smoke on Apple M5; not all frontend/operator cells.",
       "hardware_availability": "available_Apple_M5",
       "verified_subsets": [
         {
@@ -1858,6 +1947,81 @@
             "artifacts/gate-b/benchmark/samples.csv"
           ],
           "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+          "operations": [
+            "bounds_checked_fp32_vector_add",
+            "fp32_affine_transform",
+            "ordered_dependent_launches",
+            "same_type_offset_alias_views"
+          ],
+          "artifacts": [
+            "artifacts/stage-b/build-validation.json",
+            "artifacts/stage-b/ctest.log",
+            "artifacts/stage-b/native/qualification.json",
+            "artifacts/stage-b/native/verification.txt",
+            "artifacts/stage-b/SHA256SUMS.json"
+          ],
+          "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+          "scope": "native_c_cpp_abi1_byte_buffer_launch_metal",
+          "frontend": "native_c_cpp",
+          "validation": {
+            "gpu_events": 11,
+            "source_linked_command_records": 11,
+            "ctest_passed_total": 14,
+            "cpu_fallback": false,
+            "native_c_api_structured_negative_checks": 35,
+            "python_version": null,
+            "hardware_fault_injection": "unqualified"
+          }
+        },
+        {
+          "backend": "metal",
+          "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+          "operations": [
+            "bounds_checked_fp32_vector_add",
+            "fp32_affine_transform",
+            "ordered_dependent_launches",
+            "same_type_offset_alias_views"
+          ],
+          "artifacts": [
+            "artifacts/stage-b/build-validation.json",
+            "artifacts/stage-b/ctest.log",
+            "artifacts/stage-b/native/qualification.json",
+            "artifacts/stage-b/native/verification.txt",
+            "artifacts/stage-b/SHA256SUMS.json"
+          ],
+          "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+          "scope": "native_python_abi1_byte_buffer_launch_metal",
+          "frontend": "native_python",
+          "validation": {
+            "gpu_events": 10,
+            "source_linked_command_records": 9,
+            "ctest_passed_total": 14,
+            "cpu_fallback": false,
+            "native_c_api_structured_negative_checks": 35,
+            "python_version": "3.14.5",
+            "hardware_fault_injection": "unqualified"
+          },
+          "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
         }
       ],
       "full_portfolio_qualification": "unavailable",
@@ -1975,6 +2139,81 @@
         "artifacts/gate-b/benchmark/samples.csv"
       ],
       "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+      "operations": [
+        "bounds_checked_fp32_vector_add",
+        "fp32_affine_transform",
+        "ordered_dependent_launches",
+        "same_type_offset_alias_views"
+      ],
+      "artifacts": [
+        "artifacts/stage-b/build-validation.json",
+        "artifacts/stage-b/ctest.log",
+        "artifacts/stage-b/native/qualification.json",
+        "artifacts/stage-b/native/verification.txt",
+        "artifacts/stage-b/SHA256SUMS.json"
+      ],
+      "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+      "scope": "native_c_cpp_abi1_byte_buffer_launch_metal",
+      "frontend": "native_c_cpp",
+      "validation": {
+        "gpu_events": 11,
+        "source_linked_command_records": 11,
+        "ctest_passed_total": 14,
+        "cpu_fallback": false,
+        "native_c_api_structured_negative_checks": 35,
+        "python_version": null,
+        "hardware_fault_injection": "unqualified"
+      }
+    },
+    {
+      "backend": "metal",
+      "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "input_contract": "Paralyn native C ABI 1, verified scalar IR artifact format 1/numerical policy 1",
+      "operations": [
+        "bounds_checked_fp32_vector_add",
+        "fp32_affine_transform",
+        "ordered_dependent_launches",
+        "same_type_offset_alias_views"
+      ],
+      "artifacts": [
+        "artifacts/stage-b/build-validation.json",
+        "artifacts/stage-b/ctest.log",
+        "artifacts/stage-b/native/qualification.json",
+        "artifacts/stage-b/native/verification.txt",
+        "artifacts/stage-b/SHA256SUMS.json"
+      ],
+      "limits": "First explicit byte-buffer/module/launch subset on Metal only. No native arrays/operators, other frontend, cross-vendor, actual device-loss/timeout or allocator-exhaustion fault-injection claim.",
+      "scope": "native_python_abi1_byte_buffer_launch_metal",
+      "frontend": "native_python",
+      "validation": {
+        "gpu_events": 10,
+        "source_linked_command_records": 9,
+        "ctest_passed_total": 14,
+        "cpu_fallback": false,
+        "native_c_api_structured_negative_checks": 35,
+        "python_version": "3.14.5",
+        "hardware_fault_injection": "unqualified"
+      },
+      "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
     }
   ],
   "deferred_systems": [

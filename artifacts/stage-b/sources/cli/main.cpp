@@ -1,0 +1,273 @@
+#include "paralyn/artifact.hpp"
+#include "paralyn/frontend.hpp"
+#include "paralyn/runtime.hpp"
+#include <cerrno>
+#include <chrono>
+#include <cstring>
+#include <fcntl.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <vector>
+
+namespace fs = std::filesystem;
+namespace {
+struct Process {
+  int status;
+  std::string output;
+};
+Process execute(const std::vector<std::string> &args, bool echo = false,
+                const std::vector<std::pair<std::string, std::string>> &env = {}) {
+  int pipes[2];
+  if (pipe(pipes))
+    throw std::runtime_error(std::strerror(errno));
+  auto pid = fork();
+  if (pid < 0) {
+    close(pipes[0]);
+    close(pipes[1]);
+    throw std::runtime_error("could not fork compiler/program");
+  }
+  if (pid == 0) {
+    close(pipes[0]);
+    dup2(pipes[1], STDOUT_FILENO);
+    dup2(pipes[1], STDERR_FILENO);
+    close(pipes[1]);
+    for (const auto &[key, value] : env)
+      setenv(key.c_str(), value.c_str(), 1);
+    std::vector<char *> argv;
+    for (const auto &a : args)
+      argv.push_back(const_cast<char *>(a.c_str()));
+    argv.push_back(nullptr);
+    execvp(argv[0], argv.data());
+    std::cerr << "ParalynError: cannot execute " << args[0] << ": " << std::strerror(errno) << "\n";
+    _exit(127);
+  }
+  close(pipes[1]);
+  Process result{};
+  char buffer[4096];
+  while (true) {
+    ssize_t n = read(pipes[0], buffer, sizeof(buffer));
+    if (n == 0)
+      break;
+    if (n < 0) {
+      if (errno == EINTR)
+        continue;
+      break;
+    }
+    result.output.append(buffer, static_cast<std::size_t>(n));
+    if (echo) {
+      std::cout.write(buffer, n);
+      std::cout.flush();
+    }
+  }
+  close(pipes[0]);
+  int status = 0;
+  while (waitpid(pid, &status, 0) < 0)
+    if (errno != EINTR)
+      throw std::runtime_error("waitpid failed");
+  result.status = WIFEXITED(status) ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
+  return result;
+}
+void write(const fs::path &p, const std::string &s) {
+  std::ofstream out(p);
+  if (!out)
+    throw std::runtime_error("cannot write " + p.string());
+  out << s;
+  if (!out)
+    throw std::runtime_error("write failed: " + p.string());
+}
+void write_module(const fs::path &path, const std::vector<unsigned char> &bytes) {
+  int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0644);
+  if (fd < 0)
+    throw std::runtime_error("cannot create module " + path.string() + ": " + std::strerror(errno) +
+                             "; existing files are never overwritten");
+  std::size_t position = 0;
+  while (position < bytes.size()) {
+    auto count = ::write(fd, bytes.data() + position, bytes.size() - position);
+    if (count < 0 && errno == EINTR)
+      continue;
+    if (count <= 0) {
+      auto detail = std::string(std::strerror(errno));
+      close(fd);
+      unlink(path.c_str());
+      throw std::runtime_error("module write failed: " + detail);
+    }
+    position += static_cast<std::size_t>(count);
+  }
+  if (close(fd)) {
+    auto detail = std::string(std::strerror(errno));
+    unlink(path.c_str());
+    throw std::runtime_error("module close failed: " + detail);
+  }
+}
+std::string trim(std::string s) {
+  while (!s.empty() && (s.back() == '\n' || s.back() == '\r'))
+    s.pop_back();
+  return s;
+}
+std::string ir_text(const paralyn::FrontendResult &r) {
+  std::string s;
+  for (const auto &k : r.kernels)
+    s += paralyn::dump_ir(k) + "\n";
+  return s;
+}
+void usage() {
+  std::cout << "Paralyn v0.0.1\nUsage:\n  paralyn devices\n  paralyn inspect program.cu\n  paralyn "
+               "compile program.cu --output module.prk\n  paralyn "
+               "run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]\n";
+}
+} // namespace
+int main(int argc, char **argv) {
+  try {
+    if (argc < 2) {
+      usage();
+      return 2;
+    }
+    std::string command = argv[1];
+    if (command == "--version") {
+      std::cout << "Paralyn v0.0.1 (LLVM " << PARALYN_LLVM_VERSION << ")\n";
+      return 0;
+    }
+    if (command == "devices") {
+      if (argc != 2)
+        throw std::runtime_error("devices accepts no arguments");
+      std::cout << paralyn::devices_text();
+      return 0;
+    }
+    if ((command != "run" && command != "inspect" && command != "compile") || argc < 3) {
+      usage();
+      return 2;
+    }
+    auto source = fs::absolute(argv[2]);
+    std::string device = "auto";
+    fs::path artifact;
+    fs::path module_output;
+    std::vector<std::string> program_args;
+    for (int i = 3; i < argc; ++i) {
+      std::string a = argv[i];
+      if (command == "inspect")
+        throw std::runtime_error("inspect accepts one source file");
+      if (command == "compile") {
+        if (a != "--output" || i + 1 == argc || !module_output.empty())
+          throw std::runtime_error("compile requires exactly one --output FILE option");
+        module_output = fs::absolute(argv[++i]);
+        continue;
+      }
+      if (a == "--") {
+        for (++i; i < argc; ++i)
+          program_args.emplace_back(argv[i]);
+        break;
+      }
+      if ((a == "--device" || a == "--artifacts") && i + 1 < argc) {
+        if (a == "--device")
+          device = argv[++i];
+        else
+          artifact = fs::absolute(argv[++i]);
+      } else
+        throw std::runtime_error("unknown/incomplete option: " + a);
+    }
+    if (command == "compile" && module_output.empty())
+      throw std::runtime_error("compile requires --output FILE");
+    auto frontend = paralyn::compile_source(source.string());
+    if (command == "compile") {
+      auto bytes = paralyn::serialize_module(frontend.kernels);
+      write_module(module_output, bytes);
+      std::cout << "Compiled " << frontend.kernels.size() << " verified kernel(s) to "
+                << module_output.string() << "\n";
+      return 0;
+    }
+    if (command == "inspect") {
+      std::cout << "Detected kernels:\n";
+      for (const auto &k : frontend.kernels) {
+        std::cout << "  " << k.name << "(";
+        for (std::size_t i = 0; i < k.parameters.size(); ++i) {
+          const auto &p = k.parameters[i];
+          if (i)
+            std::cout << ", ";
+          if (p.read_only)
+            std::cout << "const ";
+          std::cout << paralyn::type_name(p.type) << (p.buffer ? "* " : " ") << p.name;
+        }
+        std::cout << ")\n";
+      }
+      std::cout << "\nLaunches (expressions; runtime values are not evaluated):\n";
+      for (const auto &l : frontend.launches)
+        std::cout << "  " << l.kernel << " at line " << l.line << ": grid=" << l.grid_expression
+                  << ", block=" << l.block_expression << "\n";
+      std::cout << "\nRequired backend capabilities: typed buffers, i32/u32/f32, index "
+                   "builtins\n\nParalyn IR:\n"
+                << ir_text(frontend);
+      return 0;
+    }
+    auto stamp = std::chrono::duration_cast<std::chrono::microseconds>(
+                     std::chrono::system_clock::now().time_since_epoch())
+                     .count();
+    auto id = std::to_string(stamp) + "-" + std::to_string(getpid());
+    fs::path work = fs::path(PARALYN_BINARY_DIR) / "runs" / id;
+    fs::create_directories(work);
+    if (artifact.empty())
+      artifact = fs::path(PARALYN_SOURCE_DIR) / "artifacts" / "runs" / id;
+    if (fs::exists(artifact) && !fs::is_empty(artifact))
+      throw std::runtime_error(
+          "artifact directory is not empty; refusing to overwrite execution evidence");
+    fs::create_directories(artifact);
+    fs::copy_file(source, artifact / "source.cu");
+    write(artifact / "paralyn-ir.txt", ir_text(frontend));
+    auto host = work / "host.cpp";
+    write(host, frontend.rewritten_host);
+    write(artifact / "host.cpp", frontend.rewritten_host);
+    auto executable = work / "program";
+    std::vector<std::string> compile = {PARALYN_HOST_CXX,
+                                        "-std=c++17",
+                                        "-O0",
+                                        "-g",
+                                        "-fno-fast-math",
+                                        "-ffp-contract=off",
+                                        "-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
+                                        "-I",
+                                        PARALYN_INCLUDE_DIR,
+                                        "-iquote",
+                                        source.parent_path().string(),
+                                        host.string(),
+                                        PARALYN_RUNTIME_ARCHIVE,
+                                        PARALYN_IR_ARCHIVE,
+                                        "-framework",
+                                        "Metal",
+                                        "-framework",
+                                        "Foundation",
+                                        "-o",
+                                        executable.string()};
+    auto compiled = execute(compile);
+    if (compiled.status) {
+      std::cerr << compiled.output;
+      write(artifact / "verification.txt", "Host compilation failed\n" + compiled.output);
+      return compiled.status;
+    }
+    auto commit = execute({"git", "-C", PARALYN_SOURCE_DIR, "rev-parse", "HEAD"});
+    auto dirty = execute(
+        {"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=normal"});
+    std::vector<std::string> run = {executable.string()};
+    run.insert(run.end(), program_args.begin(), program_args.end());
+    std::cout << "Paralyn v0.0.1\n\n" << std::flush;
+    auto result = execute(run, true,
+                          {{"PARALYN_DEVICE", device},
+                           {"PARALYN_ARTIFACT_DIR", artifact.string()},
+                           {"PARALYN_COMMIT", commit.status ? "uncommitted" : trim(commit.output)},
+                           {"PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION},
+                           {"PARALYN_SOURCE_DIRTY",
+                            dirty.status ? "unknown" : (dirty.output.empty() ? "false" : "true")}});
+    write(artifact / "verification.txt",
+          result.output + "\nHost exit status: " + std::to_string(result.status) + "\n");
+    if (result.status)
+      std::cerr << "ParalynError: program exited with status " << result.status << "\n";
+    return result.status;
+  } catch (const std::exception &e) {
+    std::cerr << "ParalynError: " << e.what() << "\n";
+    return 1;
+  }
+}
