@@ -1,6 +1,6 @@
 # Paralyn
 
-An independent experimental runtime for a small, explicit CUDA source subset, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
+An independent experimental GPU runtime with a small CUDA source subset and native C/C++ and Python interfaces, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
 **Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. **Gate B also passed on Apple M5:** all six tests, 75 correctness launches and 880 benchmark launches have [clean-revision evidence](artifacts/gate-b/README.md). No tagged release has been published.
 
@@ -44,11 +44,26 @@ build/paralyn run examples/vector_add.cu
 
 Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
 
+## Native C/C++ and Python
+
+The native ABI now exposes devices, contexts, owned buffers, offset views, verified kernel modules, typed launches, ordered queues, events and structured errors. C++ adds move-only ownership wrappers; Python binds the same shared library with standard-library `ctypes`. Both use the shared Metal engine. See the executable examples in `examples/native/` and the [native API contract](docs/native-api.md).
+
+```sh
+build/native_c build/native-kernels.prk artifacts/runs/native-c-new
+build/native_cpp build/native-kernels.prk artifacts/runs/native-cpp-new
+PYTHONPATH=bindings/python PARALYN_LIBRARY="$PWD/build/libparalyn_native.dylib" \
+  python3 examples/native/vector_add.py --module build/native-kernels.prk \
+  --artifacts artifacts/runs/native-python-new
+python3 scripts/qualify_native.py --build build --output artifacts/runs/native-suite-new
+```
+
+The examples independently verify GPU vector addition and/or an affine transform. `paralyn compile SOURCE.cu --output NEW.prk` produces a reusable verified kernel module without executing host code. Native clients need the runtime library, not LLVM at execution time. This is an explicit byte-buffer interface; `paralyn.asarray`, tensor operators and arbitrary Python kernel compilation are not implemented.
+
 ## Current boundaries
 
 - Single-file ordinary C++17 host programs using the documented CUDA subset.
 - Supported kernel expression/statement nodes are deliberately narrow; unknown behavior fails explicitly.
-- Device pointers are opaque base tokens. Host pointer arithmetic or dereference is unsupported.
+- CUDA compatibility pointers are opaque base tokens. Native views separately support checked allocation offsets and retained ownership.
 - Metal only. No NVIDIA/AMD backend, binary/PTX compatibility, framework integration, or distributed execution.
 - No persistent cache or cross-vendor/performance claim. See the qualification and benchmark evidence for the tested Metal subset.
 
@@ -56,7 +71,7 @@ Read [CUDA compatibility](docs/cuda-compatibility.md), [architecture](docs/archi
 
 ## Qualification
 
-`ctest` runs compiler/runtime negatives, Gate A, and the Gate B correctness suite on actual Metal hardware. Hardware absence fails qualification. Run the benchmark separately with an otherwise idle GPU:
+`ctest` runs compiler/runtime negatives, artifact/compile tests, native C/C++/Python tests, Gate A, and the Gate B correctness suite on actual Metal hardware. Hardware absence fails qualification. Run the benchmark separately with an otherwise idle GPU:
 
 ```sh
 python3 scripts/qualify_gate_b.py --paralyn build/paralyn --artifacts artifacts/runs/correctness-new

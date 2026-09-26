@@ -103,6 +103,12 @@
         "artifacts/gate-b/benchmark/samples.csv"
       ],
       "limits": "Current documented CUDA scalar subset on one Apple M5 with exact recorded toolchain. Numerical policy is docs/numerics.md. No NVIDIA/AMD qualification, arbitrary CUDA, native API/frontend, full portfolio completion, or universal performance claim."
+    },
+    "native_implementation_start": {
+      "local_head": "0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd",
+      "remote_main": "0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd",
+      "newer_local_implementation": false,
+      "audit": "docs/implementation-audit.md"
     }
   },
   "frontend_tracks": [
@@ -249,39 +255,44 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "B",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
-      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "qualification_scope": "Full native track including later operator surface and independent Metal/CUDA/ROCm qualification; implemented byte-buffer/launch slice is verified separately.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
-        "version": null,
-        "subset": "Native allocation, owned buffers/views, typed launch, completion and structured errors without CUDA allocation APIs.",
-        "subset_status": "design_target_not_yet_pinned"
+        "version": "Paralyn C ABI 1 / C11 and C++17",
+        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors; no array API yet.",
+        "subset_status": "implemented_first_byte_buffer_launch_slice"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
-        "useful": "Vector AXPY through native C and C++ wrappers",
-        "useful_status": "proposed_not_qualified"
+        "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
+        "useful_status": "physical_metal_development_tests_passed_clean_capture_pending"
       },
       "dependencies": {
-        "compiler_provider_versions": [],
+        "compiler_provider_versions": [
+          "LLVM/Clang 21.1.8 (artifact compiler only)",
+          "Apple Clang 17.0.0",
+          "macOS SDK 26.2"
+        ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
-        "provenance": "Not yet established for this track."
+        "provenance": "Independent implementation; no new third-party runtime package; shared Metal engine."
       },
-      "execution_path": null,
+      "execution_path": "C ABI 1 / C++ RAII -> verified artifact IR -> shared Metal engine -> physical GPU",
       "tests": {
-        "positive_negative_integration": "not_started",
-        "numerical_contract": null,
-        "reproduction": null
+        "positive_negative_integration": "tests/native/native_tests.cpp; examples/native/vector_add.c; examples/native/vector_add.cpp; CTests native_c/native_cpp/native_tests",
+        "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
+        "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
       },
       "backend_results": [
         {
           "backend": "metal",
           "required": true,
-          "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
-          "verified_subsets": []
+          "qualification": "verified",
+          "reason": "Actual development GPU execution and independent output checks passed; permanent clean capture pending. No device-loss/timeout fault injection qualification.",
+          "verified_subsets": [],
+          "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
         },
         {
           "backend": "cuda",
@@ -299,7 +310,21 @@
         }
       ],
       "blockers": [],
-      "next_task": "Next ready milestone: implement the smallest shared-runtime C/C++ ownership and launch slice described in docs/native-api.md, then qualify it independently."
+      "next_task": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required.",
+      "implementation_files": [
+        "include/paralyn/native.h",
+        "include/paralyn/native.hpp",
+        "runtime/native.cpp",
+        "backends/metal/engine.mm",
+        "include/paralyn/detail/backend.hpp"
+      ],
+      "build_targets": [
+        "paralyn_native",
+        "native_c",
+        "native_cpp",
+        "native_tests",
+        "native_kernels"
+      ]
     },
     {
       "id": "native_python",
@@ -307,39 +332,45 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "B",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
-      "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
+      "qualification_scope": "Full native track including later operator surface and independent Metal/CUDA/ROCm qualification; implemented byte-buffer/launch slice is verified separately.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
-        "version": null,
-        "subset": "Real bindings to the shared runtime, then an agreed small array/operator surface.",
-        "subset_status": "design_target_not_yet_pinned"
+        "version": "Paralyn C ABI 1 / Python stdlib ctypes",
+        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors; no array API yet.",
+        "subset_status": "implemented_first_byte_buffer_launch_slice"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
-        "useful": "Batched vector transform from Python buffers",
-        "useful_status": "proposed_not_qualified"
+        "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
+        "useful_status": "physical_metal_development_tests_passed_clean_capture_pending"
       },
       "dependencies": {
-        "compiler_provider_versions": [],
+        "compiler_provider_versions": [
+          "LLVM/Clang 21.1.8 (artifact compiler only)",
+          "Apple Clang 17.0.0",
+          "macOS SDK 26.2",
+          "Python stdlib ctypes (exact interpreter recorded by capture)"
+        ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
-        "provenance": "Not yet established for this track."
+        "provenance": "Independent implementation; no new third-party runtime package; shared Metal engine."
       },
-      "execution_path": null,
+      "execution_path": "Python ctypes -> C ABI 1 -> verified artifact IR -> shared Metal engine -> physical GPU",
       "tests": {
-        "positive_negative_integration": "not_started",
-        "numerical_contract": null,
-        "reproduction": null
+        "positive_negative_integration": "tests/native/test_python.py; tests/native/run_example.py (python-tests, python-example, python-finalizer)",
+        "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
+        "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
       },
       "backend_results": [
         {
           "backend": "metal",
           "required": true,
-          "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
-          "verified_subsets": []
+          "qualification": "verified",
+          "reason": "Actual development GPU execution and independent output checks passed; permanent clean capture pending. No device-loss/timeout fault injection qualification.",
+          "verified_subsets": [],
+          "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
         },
         {
           "backend": "cuda",
@@ -357,7 +388,14 @@
         }
       ],
       "blockers": [],
-      "next_task": "Implement and qualify native C/C++ first, pin Python/binding versions, then bind that runtime and test explicit copies/launch/completion."
+      "next_task": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required.",
+      "implementation_files": [
+        "bindings/python/paralyn/__init__.py"
+      ],
+      "build_targets": [
+        "paralyn_native",
+        "native_kernels"
+      ]
     },
     {
       "id": "hip_cpp",
@@ -1823,7 +1861,7 @@
         }
       ],
       "full_portfolio_qualification": "unavailable",
-      "next_task": "Expose the shared native C/C++ runtime boundary and qualify each newly implemented frontend/operator separately."
+      "next_task": "Preserve CUDA/native Metal regression gates while adding the bounded native array/operator surface, then qualify each required additional frontend/operator separately."
     },
     {
       "id": "cuda",
@@ -1948,5 +1986,5 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Implement and independently qualify the native C/C++ shared-runtime slice in docs/native-api.md; then bind the same runtime into Python. Preserve verified CUDA/Metal Gate B and every later required portfolio/backend obligation."
+  "next_acceptance_gap": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required."
 }

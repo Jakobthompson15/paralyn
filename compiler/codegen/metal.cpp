@@ -75,9 +75,15 @@ void body(std::ostream &out, const std::vector<Statement> &statements, Names nam
 }
 } // namespace
 std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
+  return emit_msl(k, layout, std::vector<std::size_t>(k.parameters.size(), 0));
+}
+std::string emit_msl(const Kernel &k, const BindingLayout &layout,
+                     const std::vector<std::size_t> &offsets) {
   verify(k);
   if (layout.size() != k.parameters.size())
     throw std::runtime_error("ParalynError: MSL binding layout length mismatch");
+  if (offsets.size() != k.parameters.size())
+    throw std::runtime_error("ParalynError: MSL offset layout length mismatch");
   struct Slot {
     ScalarType type;
     bool buffer;
@@ -86,6 +92,8 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
   std::map<unsigned, Slot> slots;
   for (std::size_t i = 0; i < layout.size(); ++i) {
     const auto &p = k.parameters[i];
+    if ((!p.buffer && offsets[i]) || offsets[i] % 4 || offsets[i] / 4 > UINT32_MAX)
+      throw std::runtime_error("ParalynError: buffer offsets must be aligned 32-bit element offsets");
     auto pos = slots.find(layout[i]);
     if (pos == slots.end())
       slots.emplace(layout[i], Slot{p.type, p.buffer, !p.read_only});
@@ -126,7 +134,10 @@ std::string emit_msl(const Kernel &k, const BindingLayout &layout) {
       out << (p.read_only ? "const device " : "device ") << msl_type(p.type) << "* ";
     else
       out << msl_type(p.type) << " ";
-    out << name << " = uc_slot_" << layout[i] << ";\n";
+    out << name << " = uc_slot_" << layout[i];
+    if (offsets[i])
+      out << " + " << offsets[i] / 4 << "u";
+    out << ";\n";
   }
   unsigned locals = 0;
   body(out, k.body, names, 2, locals);

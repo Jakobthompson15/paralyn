@@ -9,8 +9,8 @@ Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documente
 | Track | Stage | Implementation | Full-track qualification | Proven narrower scope |
 |---|---|---|---|---|
 | CUDA C++ | A | `implementing` | `unavailable` | Documented CUDA/Metal subset, Gates A and B; other vendors unqualified |
-| Native C/C++ | B | `not_started` | `unavailable` | None |
-| Native Python | B | `not_started` | `unavailable` | None |
+| Native C/C++ | B | `implementing` | `unavailable` | ABI 1 byte buffers/views/modules/launch; real Metal vector-add/affine tests |
+| Native Python | B | `implementing` | `unavailable` | ctypes binding to ABI 1; real Metal vector-add/affine tests |
 | HIP C++ | E | `not_started` | `unavailable` | None |
 | Triton | E | `not_started` | `unavailable` | None |
 | OpenCL C | E | `not_started` | `unavailable` | None |
@@ -46,11 +46,11 @@ A separate Stage F requirement selects **one first useful PyTorch, JAX, or ONNX 
 
 | Backend | Implementation | Actual verified evidence | Full portfolio |
 |---|---|---|---|
-| Metal / Apple | `implemented` | CUDA Gates A/B and handwritten runtime smoke on Apple M5 | `unavailable` |
+| Metal / Apple | `implemented` | CUDA Gates A/B, native C/C++/Python and runtime smoke on Apple M5 | `unavailable` |
 | CUDA / NVIDIA | `not_started` | None; hardware not observed in this environment | `unavailable` |
 | HIP/ROCm / AMD | `not_started` | None; hardware not observed in this environment | `unavailable` |
 
-The native MSL smoke hook exercises backend submission, but lacks the public module/import contract required for the Metal-source frontend. Internal C++ launch helpers still rely on CUDA allocation APIs and therefore do not complete the native C/C++ interface. There are no Python bindings or tensor/operator providers.
+The native MSL smoke hook exercises backend submission, but lacks the public module/import contract required for the Metal-source frontend. The public native C ABI now allocates without CUDA APIs and Python binds that shared runtime. Explicit source/build/test files are audited in [implementation-audit.md](implementation-audit.md). There are still no tensor/operator providers or array APIs.
 
 ## Evidence and status rules
 
@@ -60,4 +60,4 @@ The preserved clean Paralyn Gate A revision is `c823dfcdc4c3d37d8ed1648b4b0d9382
 
 For each claimed frontend × operation × backend × version, require actual input, validated compilation/import, resources and arguments, synchronization/errors, physical execution, and independent results. At minimum vary inputs/dimensions, repeat work, reject unsupported input, and verify a reference example plus a second meaningful operation/useful workload. Binary tracks need real executable reference artifacts.
 
-Next: implement the smallest native C/C++ runtime slice, then bind the same runtime into Python. Gate B does not implement those interfaces or remove any later obligation. The [roadmap](../ROADMAP.md) preserves every later required track.
+Next: implement the small contiguous FP32 array/operator surface over the now-working native runtime, while establishing authorized hardware prerequisites for Stage C. The new byte-buffer interfaces do not remove any later obligation. The [roadmap](../ROADMAP.md) preserves every later required track.

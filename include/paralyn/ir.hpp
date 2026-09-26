@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -41,4 +42,7 @@ void verify(const Kernel &kernel);
 std::string dump_ir(const Kernel &kernel);
 std::string emit_cpp(const Kernel &kernel);
 std::string emit_msl(const Kernel &kernel, const BindingLayout &layout);
+// Byte offsets belong to buffer views; aliased views still share one Metal binding.
+std::string emit_msl(const Kernel &kernel, const BindingLayout &layout,
+                     const std::vector<std::size_t> &offsets);
 } // namespace paralyn

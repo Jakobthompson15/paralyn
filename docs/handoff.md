@@ -1,25 +1,30 @@
-# Checkpoint after CUDA/Metal Gate B
+# Checkpoint: native C/C++ runtime and Python bindings
 
-Implementation revision: `8af773c9b8925a27041fcca1ab4cc58c82c56edb`. Evidence is archived under `artifacts/gate-b/`; software remains 0.0.1 and no release tag was created. Historical first-execution files remain unchanged.
+The session started at local/remote main `0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd`. The first Stage B byte-buffer/launch slice is implemented; software remains 0.0.1. See `docs/implementation-audit.md` for exact files and targets, `docs/native-api.md` for ABI/lifetime/error rules, and `docs/status.md` for actual qualification. The original Gates A/B evidence remains unchanged. No release tag is implied.
 
-## Completed
+## Implemented boundary
 
-Gate B correctness, numerical policy, negative paths, host semantics and benchmark are implemented and verified on the physical Apple M5. The fresh build passed all six CTest targets without skips; permanent qualification includes 75 correctness GPU launches and 880 benchmark launches. See `docs/status.md` for exact scope and `artifacts/gate-b/build-validation.json` for every command/toolchain/time/binary hash.
+C ABI 1 provides real device/context ownership, buffers/views with explicit offsets and access, bounded verified kernel modules, reflection, typed arguments, one ordered queue/context, retained events and structured errors. C++ adds move-only wrappers; Python ctypes uses the same library. The shared Metal engine still serves CUDA. `paralyn compile` creates versioned modules without executing source host code. Native tests independently compare vector-add/affine output, aliases/canaries, copied scalars, queued dependencies and retained lifetimes; invalid input fails explicitly. No CPU kernel fallback exists.
 
-## Resume
+## Exact next implementation task
 
-Read `AGENTS.md`, `docs/master-mandate-v1.1.md`, `docs/portfolio-ledger.json`, and the native API design. Implement Stage B: a small C-compatible context/device/owned-buffer/view/module/kernel/queue/event/error boundary that reuses the actual Metal runtime and keeps CUDA-specific tokens in its compatibility adapter; then bind that same runtime from Python. Choose one concrete real-GPU native workload and implement its ownership/error tests before expanding the operator surface. Current native API documentation is a design, not an implemented API.
+Complete the next part of Stage B: add a **contiguous one-dimensional FP32 Array** layer in `bindings/python/paralyn/array.py`, backed exclusively by the existing `Buffer`/`View`/`Queue` API. Start with explicit-context `asarray`, `to_host`, elementwise `add` and `affine(scale)` using the already verified kernel module contract. Own/retain context and buffer resources; define copied host input, zero length, explicit binary32 conversion, equal-length/same-context requirements, output ownership and exception behavior before coding. Do not imply arbitrary Python compilation, NumPy protocol support, broadcasting, strides, autograd, DLPack or a CPU fallback.
 
-All other required frontend families and clients remain incomplete; finishing Gate B does not shrink the mandate. NVIDIA/AMD hardware was not available in this local session, so no CUDA/ROCm or cross-vendor claim exists. Keep PTX and SASS distinct and honor their provenance/reference-hardware gates. No unreviewed dependency installation, cloud spending, or background execution is implied by this checkpoint.
+Add packaged/generated kernel-module handling that works outside the source checkout, then CTest examples/tests for empty, partial and odd lengths, changed inputs/scalars, mismatched length/context, lifetime and failure cases. Capture actual Metal events and independently verify all outputs. Preserve all existing native and CUDA tests, and pin the tested Python version in the evidence. This is an implementation task, not another roadmap-only checkpoint.
+
+In parallel with dependency-ready work, Stage C must establish an **already available and authorized** NVIDIA or AMD machine/public toolchain before a second-backend hardware claim. Only Apple M5 is observed locally. Do not invent a passing vendor cell or provision/access remote resources without authorization. Implement and qualify the other backend when those prerequisites exist; hardware absence does not remove it. Continue the independent required source/frontend/operator campaign when a hardware gate is blocked.
+
+All 17 input families and three named interoperability clients remain required. Fourteen other input families have no implementation yet. Preserve the separate PTX/SASS provenance and reference-hardware gates and the first useful PyTorch/JAX/ONNX requirement. Later work is not optional because this session reaches a checkpoint.
 
 ## Reproduce
 
 ```sh
 cmake --build build -j 4
 ctest --test-dir build --output-on-failure
-python3 scripts/qualify_gate_b.py --paralyn build/paralyn --artifacts artifacts/runs/new-correctness --require-clean
+python3 scripts/qualify_native.py --build build --output artifacts/runs/native-new --require-clean
+python3 scripts/qualify_gate_b.py --paralyn build/paralyn --artifacts artifacts/runs/cuda-new --require-clean
 python3 scripts/verify_benchmark.py --benchmark build/gate_b_benchmark --paralyn build/paralyn \
-  --source examples/vector_add.cu --artifacts artifacts/runs/new-benchmark --require-clean
+  --source examples/vector_add.cu --artifacts artifacts/runs/benchmark-new --require-clean
 ```
 
-Use new output directories. For permanent captures, finish/commit source changes, run from a clean checkout into ignored or external paths, then archive the unchanged evidence in a later commit. Run the benchmark without other intentionally concurrent GPU workloads; the protocol does not claim complete system isolation.
+Use fresh paths and run GPU captures sequentially. Permanent evidence must be generated from a clean implementation revision under ignored `artifacts/runs/`, then archived unchanged in a later evidence commit. Source, loaded library/module/binary hashes, device/OS/toolchain, command states, timings, shaders and CPU verification logs must agree. A hardware fault injection campaign remains unqualified; ordinary validation failures do not establish device-loss behavior.

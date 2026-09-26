@@ -2,10 +2,28 @@
 #include <iostream>
 #include <functional>
 #include <limits>
+#include <streambuf>
 #include <stdexcept>
 #include <vector>
 
 namespace {
+class ThrowingSubmissionLog : public std::streambuf {
+  std::streambuf *original;
+public:
+  explicit ThrowingSubmissionLog(std::streambuf *out) : original(out) {}
+  std::streamsize xsputn(const char *text, std::streamsize count) override {
+    if (std::string(text, static_cast<std::size_t>(count)).find("Executing on GPU") !=
+        std::string::npos)
+      throw std::runtime_error("Deliberate host log failure");
+    return original->sputn(text, count);
+  }
+  int overflow(int value) override {
+    return traits_type::eq_int_type(value, traits_type::eof())
+               ? traits_type::not_eof(value)
+               : original->sputc(traits_type::to_char_type(value));
+  }
+  int sync() override { return original->pubsync(); }
+};
 void require(cudaError_t error) {
   if (error != cudaSuccess)
     throw std::runtime_error(cudaGetErrorString(error));
@@ -29,6 +47,35 @@ void rejects(const std::function<void()> &action, const char *detail) {
 } // namespace
 int main(int argc, char **argv) {
   try {
+    if (argc == 2 && std::string(argv[1]) == "--throwing-log") {
+      paralyn::Kernel kernel{"logging_failure", {}, {}};
+      auto *original = std::cout.rdbuf();
+      const auto exceptions = std::cout.exceptions();
+      ThrowingSubmissionLog failing(original);
+      std::cout.rdbuf(&failing);
+      std::cout.exceptions(std::ios::badbit | std::ios::failbit);
+      bool rejected = false;
+      try {
+        paralyn::launch(kernel, {1, 1, 1}, {1, 1, 1}, {});
+      } catch (const std::exception &) {
+        rejected = true;
+      }
+      std::cout.exceptions(std::ios::goodbit);
+      std::cout.clear();
+      std::cout.rdbuf(original);
+      std::cout.exceptions(exceptions);
+      if (!rejected || paralyn::runtime_statistics().completed_launches != 0)
+        throw std::runtime_error("Throwing log unexpectedly submitted or completed GPU work");
+      // A retained uncommitted command would make this synchronization hang/fail.
+      paralyn::synchronize();
+      paralyn::launch(kernel, {1, 1, 1}, {1, 1, 1}, {});
+      paralyn::synchronize();
+      if (paralyn::runtime_statistics().completed_launches != 1)
+        throw std::runtime_error("Runtime did not recover after host log exception");
+      paralyn::shutdown();
+      std::cout << "Throwing host log: submission remained atomic and GPU recovery passed\n";
+      return 0;
+    }
     if (argc == 2 && std::string(argv[1]) == "--unobserved-error") {
       // Returning zero must not hide a compatibility-runtime error ignored by the host.
       cudaFree(reinterpret_cast<void *>(1));

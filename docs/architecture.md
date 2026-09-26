@@ -1,4 +1,4 @@
-# Architecture: Gate A
+# Architecture: CUDA and native runtime
 
 Updated 2026-09-25 after implementation review. This describes the current source interfaces and their limits. Code being present is not hardware acceptance: actual test results belong in `status.md`. The first accepted execution under the original working name UniCUDA is preserved unchanged in `../artifacts/gate-a/`; the separately verified renamed run from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1` is preserved in `../artifacts/paralyn-gate-a/`. The adopted [mandate v1.1](master-mandate-v1.1.md) expands future architecture; its [delta](mandate-v1.1-delta.md) and [portfolio](frontend-matrix.md) preserve all required tracks without asserting they exist.
 
@@ -20,7 +20,7 @@ complete CUDA source
                                                          physical Apple GPU
 ```
 
-There is one compiled-in Metal implementation. Portable public types contain no Metal objects, but there is no implemented backend registry, polymorphic device interface, plugin ABI, capability-negotiation protocol, or buffer-offset abstraction. Add those only when a second backend or a tested feature needs them.
+There is one compiled-in Metal implementation. `include/paralyn/detail/backend.hpp` now defines the internal context/buffer/event boundary consumed by both the CUDA adapter and native C ABI. `backends/metal/engine.mm` implements it; `backends/metal/runtime.mm` retains the CUDA token adapter. Native offset views are implemented. There is no backend registry, plugin ABI, or negotiated multi-backend protocol; adding an abstract interface does not implement NVIDIA/AMD execution.
 
 ## Toolchain and commands
 
@@ -33,6 +33,7 @@ The current build deployment target is **macOS 26.0**, tested on macOS 26.5.1 wi
 ```text
 paralyn devices
 paralyn inspect program.cu
+paralyn compile program.cu --output program.prk
 paralyn run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]
 ```
 
@@ -74,11 +75,11 @@ Custom structured IR keeps the initial MSL backend small and CUDA-level indexing
 
 The portable runtime header exposes `Dim3`, typed `Argument` values, selection/enumeration, launch, synchronization, and shutdown. A Metal-private context owns the device, one queue, allocation registry, pipeline map, and pending commands. Core kernel/argument types contain no Objective-C objects. A test-only entrypoint submits independently written MSL through the same backend execution path.
 
-`cudaMalloc` returns a compatibility-owned allocation token. It is not a Metal mapping or GPU address. Each token object is retained for the process context's lifetime, even after `cudaFree` removes its live allocation, preventing stale token identities from being reused. Tokens support storage, copying, passing, and null checks only. Host dereference, arithmetic, interior pointers, ordering, subtraction, and integer conversion are unsupported. An internal allocation-plus-offset view remains a future design possibility; it is not implemented.
+`cudaMalloc` returns a compatibility-owned allocation token. It is not a Metal mapping or GPU address. Each token object is retained for the process context's lifetime, even after `cudaFree` removes its live allocation, preventing stale token identities from being reused. Tokens support storage, copying, passing, and null checks only. Host dereference, arithmetic, interior pointers, ordering, subtraction, and integer conversion are unsupported. Native allocation-plus-offset views are implemented through a separate API; CUDA base-token semantics remain unchanged.
 
 The compatibility API implements the needed `dim3`, allocation/free, explicit H2D/D2H copy, synchronization, last-error, and error-string operations. It validates live base tokens, allocation size, copy byte count, nonnull nonempty copy endpoints, and mistaken device tokens passed as host pointers. Shared Metal buffers hold data, and checked copies access their mappings privately. Host memory validity and arbitrary kernel bounds are not proved by these API checks.
 
-At launch, the runtime groups same-allocation arguments. `BindingLayout` assigns one Metal slot per unique allocation or scalar. The MSL emitter derives each same-type pointer parameter from that shared slot, preserving const qualification; mixed-pointee-type alias groups are rejected. This avoids relying on independent entrypoint buffer arguments for overlapping memory. See the [MSL specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf). Gate B checks four layouts, layout reuse and const/mutable aliases on the physical Apple M5; it does not claim interior-view or mixed-pointee support.
+At launch, the runtime groups same-allocation arguments. `BindingLayout` assigns one Metal slot per unique allocation or scalar. The MSL emitter derives each same-type pointer parameter from that shared slot, preserving const qualification; mixed-pointee-type alias groups are rejected. This avoids relying on independent entrypoint buffer arguments for overlapping memory. See the [MSL specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf). Gate B checks four layouts, layout reuse and const/mutable aliases on the physical Apple M5; native tests additionally cover same-type offset views. Mixed-pointee alias groups remain unsupported; CUDA host interior pointers remain unsupported.
 
 MSL compilation requests language version 3.1, safe math, and precise floating-point functions through public runtime APIs; generated MSL explicitly disables contraction with `#pragma STDC FP_CONTRACT OFF`. See `numerics.md` for the actual qualification limits. Shader/pipeline errors retain Metal details. Pipelines are reused by entrypoint plus emitted MSL source in a map scoped to one device/context with fixed compilation options. Source includes the alias layout. The entrypoint is part of identity so a multi-entrypoint library cannot reuse the wrong pipeline. There is no persistent cache.
 
@@ -96,6 +97,14 @@ IR/codegen, frontend, handwritten-Metal and shutdown-failure tests accompany the
 
 A future persistent cache key must cover source/dependency contents, compiler/runtime/IR versions, options, SDK, backend target, and applicable alias layout. Atomic writes, malformed-entry handling, invalidation, and bypass behavior need tests before claiming that cache exists.
 
-The next native API stage introduces the owned context/buffer boundary; additional backends should introduce a registry when required. Distributed work is deferred entirely: placement must be explicit, control and data planes separate, aggregate node memory never described as one GPU allocation, and scheduling explanations must account for compatibility, capacity, locality, transfer cost, and expected duration.
+The native API now consumes the shared owned context/buffer boundary; additional backends should introduce a registry when required. Distributed work is deferred entirely: placement must be explicit, control and data planes separate, aggregate node memory never described as one GPU allocation, and scheduling explanations must account for compatibility, capacity, locality, transfer cost, and expected duration.
 
 When assumptions fail, record the problem, root cause, evidence, alternatives, and chosen revision in `engineering-notes.md`; update the implementation and documented boundary rather than special-case the example.
+
+## Implemented native boundary
+
+`include/paralyn/native.h` defines C ABI 1; `runtime/native.cpp` validates numeric handle identities, reference ownership, byte ranges, view access, typed arguments and contexts before submission. `include/paralyn/native.hpp` adds move-only C++ wrappers. `bindings/python/paralyn/__init__.py` binds that exact shared library with ctypes. Kernel execution is never dispatched through Python or a CPU reference.
+
+`compiler/ir/artifact.cpp` serializes bounded versioned verified IR. `paralyn compile` writes modules without executing input host code. The runtime deserializer/verifier/codegen has no LLVM dependency. A module retains typed entrypoints and numerical policy; source/build provenance is captured by the qualification harness, not embedded as a signed manifest. This new input boundary serves native clients but does not qualify the future public Metal-source frontend.
+
+The native runtime uses one ordered queue per independently created context. Views and child objects retain their owners; commands retain allocations and copied scalars. Same-allocation views lower to a shared binding plus element offsets, including subviews at four-byte offsets. Native and CUDA code use identical backend compilation, execution, timing and completion handling. No second execution engine is introduced. See [native-api.md](native-api.md) for the exact lifetime/error contract and [status.md](status.md) for measured qualification.

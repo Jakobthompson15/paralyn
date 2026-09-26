@@ -1,6 +1,6 @@
 # Execution policy
 
-Current policy at mandate adoption, 2026-09-25. Future design targets are identified separately; this document does not claim that the all-frontends portfolio or Gate B is complete.
+Current policy after the native-runtime implementation, 2026-09-25. CUDA/Metal Gate B passed; the all-frontends portfolio remains incomplete.
 
 ## Current CUDA/Metal path
 
@@ -22,7 +22,7 @@ The same rule applies to future framework/operator providers. Framework-level pa
 
 The current pipeline cache is in-process and scoped to one device/context, keyed by entrypoint plus emitted source with fixed numerical options and alias layout. Including the entrypoint prevents reusing a different kernel from the same source module. Persistent caching is not implemented. See [numerics](numerics.md) for what safe/precise compilation currently demonstrates.
 
-`inspect` reuses parsing/verification but does not run the host program. Launch displays are source expressions, not invented runtime dimensions. Current working commands are `devices`, `inspect`, and `run`; `doctor`, `devices --json`, `--explain`, and backend-prefixed device selectors in the mandate remain design targets until code and tests establish them. The legacy `build/unicuda` executable and `unicuda/*` include/namespace aliases have been restored; development checks verified the version command and a C++ include/namespace compile-link path. They resolve to the same implementation and types, not a separate legacy runtime. Final baseline qualification remains recorded separately.
+`inspect` reuses parsing/verification but does not run the host program. Launch displays are source expressions, not invented runtime dimensions. Current working commands are `devices`, `inspect`, `compile`, and `run`; `doctor`, `devices --json`, `--explain`, and backend-prefixed device selectors in the mandate remain design targets until code and tests establish them. The legacy `build/unicuda` executable and `unicuda/*` include/namespace aliases have been restored; development checks verified the version command and a C++ include/namespace compile-link path. They resolve to the same implementation and types, not a separate legacy runtime. Final baseline qualification remains recorded separately.
 
 New runs use unique artifact directories, with explicit `--artifacts DIR` permitted only for an empty directory. Preserve original source, typed IR, generated backend source, actual execution metadata, and the independent-verification transcript. New captures now include transformed `host.cpp`, as required by mandate v1.1, and each recorded launch identifies its `source-N.metal` artifact; `generated.metal` remains the latest shader for compatibility. Preserve old five-file directories `artifacts/gate-a/` and `artifacts/paralyn-gate-a/` unchanged; do not retroactively add generated files or rewrite their provenance.
 
@@ -35,3 +35,11 @@ Inputs are trusted local native programs. Running host C++ has the caller's proc
 Future frontend adapters import a language/artifact; framework adapters integrate a framework boundary; operator providers implement operations; backends own device submission. They share explicit memory/argument/completion/capability and numerical contracts. Do not claim support because a dependency loads, a registry has an entry, or an IR is printable.
 
 The all-frontends mandate authorizes phased implementation, not side-effect publication, paid resources, new machine enrollment, or remote access. Repository/package/release publication must have separate applicable authorization and the required qualification. Historical publication does not waive gates for future releases.
+
+## Native C/C++ and Python execution
+
+Native clients load versioned verified `.prk` modules, use explicit byte copies and retained offset views, and submit typed arguments through C ABI 1. C++, C and Python use the same Metal engine as CUDA. Each context owns one ordered queue; other contexts do not share handles. Native host transfers synchronize before accessing shared mappings. Zero-byte buffers are valid but zero-work clients skip dispatch. Native view bounds/alignment/access are validated, while dynamic kernel memory safety remains the caller's responsibility.
+
+Completion failures preserve backend detail and fail waits, reads and synchronization. Valid handle release consumes ownership even if completion fails; once observed, that terminal failure is not repeated by cleanup. Unobserved failures cannot become a successful normal native shutdown. Use explicit waits/close for catchable C++/Python errors; their destructors fail the process on unhandled release errors. Real hardware fault injection remains unqualified.
+
+Native evidence comes from `pr_context_write_evidence` and the qualification runner. The shared engine records actual device, command status and GPU timestamps. The runner supplies observed revision/dirty/toolchain metadata, hashes the loaded module/library/binaries, snapshots source, and preserves independent CPU comparison logs. Arbitrary native callers without provenance environment variables correctly report unknown revision rather than inventing a clean commit.

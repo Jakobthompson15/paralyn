@@ -1,8 +1,10 @@
+#include "paralyn/artifact.hpp"
 #include "paralyn/frontend.hpp"
 #include "paralyn/runtime.hpp"
 #include <cerrno>
 #include <chrono>
 #include <cstring>
+#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -79,6 +81,30 @@ void write(const fs::path &p, const std::string &s) {
   if (!out)
     throw std::runtime_error("write failed: " + p.string());
 }
+void write_module(const fs::path &path, const std::vector<unsigned char> &bytes) {
+  int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0644);
+  if (fd < 0)
+    throw std::runtime_error("cannot create module " + path.string() + ": " + std::strerror(errno) +
+                             "; existing files are never overwritten");
+  std::size_t position = 0;
+  while (position < bytes.size()) {
+    auto count = ::write(fd, bytes.data() + position, bytes.size() - position);
+    if (count < 0 && errno == EINTR)
+      continue;
+    if (count <= 0) {
+      auto detail = std::string(std::strerror(errno));
+      close(fd);
+      unlink(path.c_str());
+      throw std::runtime_error("module write failed: " + detail);
+    }
+    position += static_cast<std::size_t>(count);
+  }
+  if (close(fd)) {
+    auto detail = std::string(std::strerror(errno));
+    unlink(path.c_str());
+    throw std::runtime_error("module close failed: " + detail);
+  }
+}
 std::string trim(std::string s) {
   while (!s.empty() && (s.back() == '\n' || s.back() == '\r'))
     s.pop_back();
@@ -92,6 +118,7 @@ std::string ir_text(const paralyn::FrontendResult &r) {
 }
 void usage() {
   std::cout << "Paralyn v0.0.1\nUsage:\n  paralyn devices\n  paralyn inspect program.cu\n  paralyn "
+               "compile program.cu --output module.prk\n  paralyn "
                "run program.cu [--device auto|INDEX] [--artifacts DIR] [-- program arguments]\n";
 }
 } // namespace
@@ -112,18 +139,25 @@ int main(int argc, char **argv) {
       std::cout << paralyn::devices_text();
       return 0;
     }
-    if ((command != "run" && command != "inspect") || argc < 3) {
+    if ((command != "run" && command != "inspect" && command != "compile") || argc < 3) {
       usage();
       return 2;
     }
     auto source = fs::absolute(argv[2]);
     std::string device = "auto";
     fs::path artifact;
+    fs::path module_output;
     std::vector<std::string> program_args;
     for (int i = 3; i < argc; ++i) {
       std::string a = argv[i];
       if (command == "inspect")
         throw std::runtime_error("inspect accepts one source file");
+      if (command == "compile") {
+        if (a != "--output" || i + 1 == argc || !module_output.empty())
+          throw std::runtime_error("compile requires exactly one --output FILE option");
+        module_output = fs::absolute(argv[++i]);
+        continue;
+      }
       if (a == "--") {
         for (++i; i < argc; ++i)
           program_args.emplace_back(argv[i]);
@@ -137,7 +171,16 @@ int main(int argc, char **argv) {
       } else
         throw std::runtime_error("unknown/incomplete option: " + a);
     }
+    if (command == "compile" && module_output.empty())
+      throw std::runtime_error("compile requires --output FILE");
     auto frontend = paralyn::compile_source(source.string());
+    if (command == "compile") {
+      auto bytes = paralyn::serialize_module(frontend.kernels);
+      write_module(module_output, bytes);
+      std::cout << "Compiled " << frontend.kernels.size() << " verified kernel(s) to "
+                << module_output.string() << "\n";
+      return 0;
+    }
     if (command == "inspect") {
       std::cout << "Detected kernels:\n";
       for (const auto &k : frontend.kernels) {
@@ -206,8 +249,8 @@ int main(int argc, char **argv) {
       return compiled.status;
     }
     auto commit = execute({"git", "-C", PARALYN_SOURCE_DIR, "rev-parse", "HEAD"});
-    auto dirty =
-        execute({"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=normal"});
+    auto dirty = execute(
+        {"git", "-C", PARALYN_SOURCE_DIR, "status", "--porcelain", "--untracked-files=normal"});
     std::vector<std::string> run = {executable.string()};
     run.insert(run.end(), program_args.begin(), program_args.end());
     std::cout << "Paralyn v0.0.1\n\n" << std::flush;
@@ -216,8 +259,8 @@ int main(int argc, char **argv) {
                            {"PARALYN_ARTIFACT_DIR", artifact.string()},
                            {"PARALYN_COMMIT", commit.status ? "uncommitted" : trim(commit.output)},
                            {"PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION},
-                           {"PARALYN_SOURCE_DIRTY", dirty.status ? "unknown" :
-                             (dirty.output.empty() ? "false" : "true")}});
+                           {"PARALYN_SOURCE_DIRTY",
+                            dirty.status ? "unknown" : (dirty.output.empty() ? "false" : "true")}});
     write(artifact / "verification.txt",
           result.output + "\nHost exit status: " + std::to_string(result.status) + "\n");
     if (result.status)

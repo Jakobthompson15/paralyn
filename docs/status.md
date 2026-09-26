@@ -13,7 +13,7 @@ Evidence: [artifacts/gate-b](../artifacts/gate-b/README.md), including [build/te
 - The four-size benchmark completed 880 launches: ten warmups and one hundred measured iterations per variant/size, alternating order. Every output was independently checked. Full samples separate compilation, transfers, GPU duration and total latency. Counted runtime-owned buffers peaked at 201,326,592 bytes and returned to zero. No speedup threshold was used.
 - A fresh build directory using already-installed dependencies reached its first verified GPU result in 6.698 seconds on this machine; dependency installation and a fresh OS were not measured.
 
-The next implementation gap is the native C/C++ owned-buffer/context API, followed by Python bindings on that same runtime. All 17 required frontend/input families and three clients remain tracked in the [portfolio ledger](portfolio-ledger.json). NVIDIA/AMD execution remains unavailable and unqualified.
+The native C/C++ byte-buffer/context/module API and Python bindings now exist and pass physical-M5 development tests. The next bounded gap is the small contiguous FP32 array/operator surface over that runtime; clean checkpoint evidence is described below. All 17 required frontend/input families and three clients remain tracked in the [portfolio ledger](portfolio-ledger.json). NVIDIA/AMD execution remains unavailable and unqualified.
 
 The sections below preserve the history of Gate A.
 
@@ -54,4 +54,12 @@ The fresh build and all four CTest targets passed without skips. `paralyn device
 
 The source is written in ordinary CUDA style but has not been compiled/run with `nvcc` here. No NVIDIA hardware/toolkit test is claimed. Source-context macros and certain host preprocessing are explicitly rejected as documented in `cuda-compatibility.md`.
 
-Metal is the only implemented backend. CUDA/ROCm backends, the native API/Python, distributed execution and persistent caching remain unimplemented. Gate B correctness and its benchmark are qualified only for the documented current Metal subset.
+Metal is the only implemented backend. Native C/C++ and Python byte-buffer/launch interfaces are now implemented. CUDA/ROCm backends, native arrays/operators, distributed execution and persistent caching remain unimplemented. Gate B correctness and its benchmark are qualified only for the documented current Metal subset.
+
+## Native runtime checkpoint
+
+Starting local HEAD and remote main were both `0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd`; no newer implementation existed. The [implementation audit](implementation-audit.md) identifies exact new files, targets and tests rather than treating portfolio metadata as code.
+
+C ABI 1, move-only C++ wrappers and standard-library Python ctypes bindings now use the same real Metal engine as the preserved CUDA path. Versioned verified kernel artifacts are produced by `paralyn compile` without running source host code. Native clients do not link LLVM. Tests independently verify vector-add and affine transforms, offset/canary/alias cases, copied scalars, ordered dependent launches, retained resources, handle/context/range/access/schema failures and error detail. The native C API suite exercises eight GPU events and 35 structured negative checks; Python exercises nine GPU events, including work after releasing its original context handle.
+
+The first byte-buffer/launch slice is implemented; the full native frontend tracks remain incomplete until their further operator and cross-vendor obligations are met. All other 14 input families, three interoperability clients, framework integration, NVIDIA/AMD execution and matmul remain required. Real device-loss/timeouts and allocation-exhaustion fault injection remain unqualified. Permanent clean-capture results will be appended after the implementation commit.

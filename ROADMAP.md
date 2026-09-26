@@ -16,7 +16,7 @@ Future evidence also preserves transformed host source, per-launch backend artif
 
 ## Stages B–D — native interfaces, another backend, useful operators
 
-**B: Native C/C++ and Python — next ready milestone.** Expose actual device/context ownership, buffers/views, supported module/kernel launch, queue completion and structured errors through a native runtime boundary without CUDA allocation APIs. Add C++ wrappers and bind the same runtime to Python, then the agreed small array/operator surface. `docs/native-api.md` is a design target; the current internal launch/test helpers do not qualify it.
+**B: Native C/C++ and Python — first runtime slice implemented.** C ABI 1, C++ ownership wrappers and Python ctypes bindings now use the same Metal engine as CUDA. Actual vector-add/affine tests cover device/context ownership, offset buffers/views, verified modules, typed launch, queue/events and structured errors without CUDA allocation APIs. See `docs/native-api.md` and `docs/implementation-audit.md`. The next bounded implementation is the deliberately small contiguous FP32 array/operator surface over this runtime; the full native tracks and cross-vendor qualification remain incomplete.
 
 **C: A second hardware backend.** Implement and prove NVIDIA CUDA or AMD HIP/ROCm against available hardware, keeping native-API and CUDA-source evidence separate. The other vendor remains required; lack of hardware is an explicit unavailable cell, not a canceled obligation. Interleave independent ready work when a hardware prerequisite blocks execution, recording the reason.
 

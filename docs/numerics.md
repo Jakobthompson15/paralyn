@@ -39,3 +39,7 @@ Unqualified numerical cases are not automatically rejected by the runtime, becau
 Each operator/provider contract must specify element and accumulation dtype, layout, rounding, FMA/contraction, reduced-precision modes, overflow, special values, subnormals, and determinism. A future FP32 matmul must state accumulation precision and tolerance before comparison; the elementwise 1-ULP policy does not automatically apply to reductions or matrix products. Provider names and precision choices must be visible in evidence.
 
 No general tensor/operator layer, provider, alternative dtype, or alternate rounding mode is implied by this policy. Expanding the contract requires positive/negative tests and actual backend execution. A CPU reference remains an oracle, never a fallback kernel implementation.
+
+## Native ABI 1
+
+Native C/C++ and Python modules use the same IR verifier, code generator and safe/precise, contraction-off Metal engine. Artifact numerical-policy identifier 1 rejects incompatible policies on load. Native launch scalars are explicitly i32/u32/f32; Python f32 converts explicitly to binary32 and rejects finite overflow instead of silently producing infinity. Native vector-add/affine qualification uses varied exactly representable inputs and independent per-element CPU comparisons with canary checks. This adds native-interface evidence; it does not expand the Gate B numerical guarantee or qualify reductions/matmul. Native C/C++ test targets disable host fast math and contraction.
