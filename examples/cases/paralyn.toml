@@ -1,0 +1,36 @@
+# Declarative Paralyn project (schema version 1). Every path is resolved
+# relative to this file. With several targets and no project.default, a run
+# must select one explicitly: paralyn run --project paralyn.toml --case vector-add
+schema = "paralyn.project"
+schema_version = 1
+
+[project]
+name = "metal-kernel-examples"
+
+[modules.kernels]
+source = "../metal/kernels.metal"
+manifest = "../metal/kernels.json"
+
+[cases.vector-add]
+module = "kernels"
+file = "vector_add.toml"
+
+[cases.vector-add-inline]
+module = "kernels"
+file = "vector_add_builtin.toml"
+
+[cases.block-reduce]
+module = "kernels"
+file = "block_reduce.toml"
+
+[cases.transpose]
+module = "kernels"
+file = "transpose.toml"
+
+[cases.transpose-builtin]
+module = "kernels"
+file = "transpose_builtin.toml"
+
+# A single-file program target: run exactly as `paralyn run ../vector_add.cu`.
+[programs.cuda-vector-add]
+source = "../vector_add.cu"

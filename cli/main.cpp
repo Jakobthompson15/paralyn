@@ -4,14 +4,18 @@
 #if PARALYN_HAS_COMPILER
 #include "paralyn/frontend.hpp"
 #endif
+#include "kernel_case.hpp"
+#include "paralyn_build_info.h" // Generated at build time by cmake/build_info.cmake.
 #include "process.hpp"
 #include <chrono>
 #include <cli11/CLI11.hpp>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <set>
 #include <sstream>
@@ -30,19 +34,31 @@ namespace fs = std::filesystem;
 using Json = nlohmann::ordered_json;
 using paralyn::cli::execute;
 namespace {
-struct Diagnostic : std::runtime_error {
-  std::string id, stage;
-  Diagnostic(std::string identifier, std::string where, std::string text)
-      : std::runtime_error(std::move(text)), id(std::move(identifier)), stage(std::move(where)) {}
-};
+using paralyn::cli::Diagnostic;
 struct Options {
   std::string command, target, device = "auto", output, artifacts, manifest, report,
                                requires,
                                color = "auto";
   bool json = false, verbose = false;
   std::vector<std::string> arguments;
+  // Kernel cases and projects (docs/projects-and-cases.md).
+  std::string kase, entry, project, program;
 };
 fs::path prefix;
+Json project_record; // Selected paralyn.toml target, recorded in execution reports.
+Json build_dirty() {
+  const std::string dirty = PARALYN_EMBEDDED_DIRTY;
+  return dirty == "true" ? Json(true) : dirty == "false" ? Json(false) : Json(nullptr);
+}
+// Identity of this binary, embedded when it was built (not when CMake configured).
+Json build_record() {
+  return Json{{"revision", PARALYN_EMBEDDED_REVISION},
+              {"dirty", build_dirty()},
+              {"changes_sha256", *PARALYN_EMBEDDED_CHANGES_SHA256
+                                     ? Json(PARALYN_EMBEDDED_CHANGES_SHA256)
+                                     : Json(nullptr)},
+              {"captured", "build"}};
+}
 std::string read(const fs::path &path, std::size_t limit = 16 * 1024 * 1024) {
   std::ifstream file(path, std::ios::binary);
   if (!file)
@@ -224,6 +240,11 @@ int doctor(const Options &options) {
   auto result = report(options.command);
   result["compiler"] = {{"available", bool(PARALYN_HAS_COMPILER)},
                         {"llvm_version", PARALYN_LLVM_VERSION}};
+  result["source_revision"] = PARALYN_EMBEDDED_REVISION;
+  result["build_dirty"] = build_dirty();
+  result["build"] = build_record();
+  if (!std::getenv("PARALYN_LLVM_VERSION")) // Identify this CLI's toolchain in execution.json.
+    set_environment("PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION);
   result["devices"] = devices(options);
   auto context = paralyn::native::Context(options.device);
   result["device"] = context_info(context, options.device);
@@ -325,7 +346,7 @@ paralyn::ExecutableModule msl_module(const fs::path &source, const Options &opti
   module.numerical_policy = static_cast<uint32_t>(
       integer(descriptor.at("numerical_policy"), UINT32_MAX, "numerical_policy"));
   module.producer = "paralyn";
-  module.producer_version = "0.0.1+" PARALYN_BUILD_COMMIT ".dirty=" PARALYN_BUILD_DIRTY;
+  module.producer_version = "0.0.1+" PARALYN_EMBEDDED_REVISION ".dirty=" PARALYN_EMBEDDED_DIRTY;
   module.source_name = source.filename().string();
   module.source = read(source);
   module.source_sha256 = paralyn::source_sha256(module.source);
@@ -412,19 +433,369 @@ Json describe(const paralyn::FrontendResult &frontend) {
   return result;
 }
 #endif
-std::string revision() { return PARALYN_BUILD_COMMIT; }
+std::string revision() { return PARALYN_EMBEDDED_REVISION; }
+std::string bytes_file(const std::vector<std::uint32_t> &words) {
+  std::string out(words.size() * 4, '\0');
+  for (std::size_t i = 0; i < words.size(); ++i)
+    for (unsigned b = 0; b < 4; ++b)
+      out[i * 4 + b] = static_cast<char>((words[i] >> (8 * b)) & 0xff);
+  return out;
+}
+int kernel_case_execute(const Options &options, const fs::path &source,
+                        const std::vector<unsigned char> &module_bytes, Json &result,
+                        const paralyn::cli::KernelCase &kc, const std::string &entry,
+                        const fs::path &artifact);
+// Kernel-only execution: every input, size, geometry and reference comes from
+// the declared case. The GPU executes the kernel; host code only uploads,
+// downloads and (for verify) compares against the declared independent reference.
+int kernel_case_command(const Options &options, const fs::path &source,
+                        const std::vector<unsigned char> &module_bytes, Json result) {
+  using namespace paralyn::cli;
+  const bool verifying = options.command == "verify", checking = options.command == "check";
+  if (!options.arguments.empty())
+    throw Diagnostic("P-CASE-ARGUMENTS", "input",
+                     "Kernel cases take no program arguments after --; declare scalars in the "
+                     "case file");
+  auto kc = load_case(options.kase);
+  std::string entry = kc.entry;
+  if (!options.entry.empty()) {
+    if (!entry.empty() && entry != options.entry)
+      throw Diagnostic("P-CASE-ENTRY-MISMATCH", "input",
+                       "--entry " + options.entry + " contradicts case.entry = \"" + entry +
+                           "\" in " + kc.path.string());
+    entry = options.entry;
+  }
+  std::string declared;
+  bool known = false;
+  for (const auto &e : result["entries"]) {
+    declared += (declared.empty() ? "" : ", ") + e["name"].get<std::string>();
+    known |= e["name"].get<std::string>() == entry;
+  }
+  if (entry.empty())
+    throw Diagnostic("P-CASE-ENTRY-REQUIRED", "input",
+                     "Select the kernel with --entry NAME or case.entry; entries: " + declared);
+  if (!known)
+    throw Diagnostic("P-CASE-ENTRY-UNKNOWN", "input",
+                     "Module declares no entry " + entry + "; entries: " + declared);
+  if (verifying && kc.checks.empty())
+    throw Diagnostic("P-REFERENCE-REQUIRED", "verification",
+                     kc.path.string() + " declares no [[verify]] contract. verify requires an "
+                     "independent reference (file, inline values or a registered builtin) with an "
+                     "explicit tolerance; use run to execute without verification");
+  result["frontend_module"] = result["frontend"];
+  result["frontend"] = "kernel_case";
+  result["case"] = {{"path", kc.path.string()},
+                    {"sha256", kc.sha256},
+                    {"name", kc.name},
+                    {"entry", entry},
+                    {"description", kc.description}};
+  if (!project_record.is_null())
+    result["project"] = project_record;
+  result["launch"] = {{"grid", kc.grid}, {"block", kc.block}};
+  result["source_revision"] = revision();
+  result["build_dirty"] = build_dirty();
+  result["build"] = build_record();
+  result["cpu_fallback"] = false;
+
+  fs::path artifact;
+  bool created_artifact = false;
+  std::vector<fs::path> created_parents;
+  if (!checking) {
+    auto id = run_id();
+    artifact = options.artifacts.empty() ? fs::current_path() / ".paralyn/runs" / id
+                                         : fs::absolute(options.artifacts);
+    if (fs::exists(artifact) && !fs::is_empty(artifact))
+      throw Diagnostic("P-OUTPUT-EXISTS", "report",
+                       "Artifact directory is not empty; refusing to overwrite execution evidence");
+    result["run_id"] = id;
+    created_artifact = !fs::exists(artifact);
+    for (auto parent = artifact.parent_path(); !parent.empty() && !fs::exists(parent);
+         parent = parent.parent_path())
+      created_parents.push_back(parent); // Innermost first; removed only while empty.
+    fs::create_directories(artifact / "outputs");
+    result["artifacts"] = artifact.string();
+    // The CLI's own in-process runtime work gets the same sidecars as child programs.
+    set_environment("PARALYN_RUNTIME_LOG", (artifact / "runtime.log").string());
+    set_environment("PARALYN_EVENT_LOG", (artifact / "runtime-events.ndjson").string());
+    set_environment("PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION);
+    result["runtime_log"] = (artifact / "runtime.log").string();
+    result["runtime_events_path"] = (artifact / "runtime-events.ndjson").string();
+  }
+  try {
+    return kernel_case_execute(options, source, module_bytes, result, kc, entry, artifact);
+  } catch (const std::exception &error) {
+    if (artifact.empty())
+      throw;
+    auto d = dynamic_cast<const Diagnostic *>(&error);
+    if (d && d->stage == "input" && !fs::exists(artifact / "runtime")) {
+      // Case/module binding was rejected before any GPU submission: leave no
+      // evidence directory behind (only files this command created are removed).
+      std::error_code ignored;
+      if (created_artifact)
+        fs::remove_all(artifact, ignored);
+      else
+        for (const auto &entry : fs::directory_iterator(artifact, ignored))
+          fs::remove_all(entry.path(), ignored);
+      for (const auto &parent : created_parents)
+        fs::remove(parent, ignored); // Fails harmlessly when another run shares it.
+      throw;
+    }
+    // Retain a partial report beside whatever evidence was already written.
+    auto partial = result;
+    partial["status"] = "failed";
+    partial["partial"] = true;
+    partial["exit_code"] = 1;
+    partial["failure_origin"] = d ? "paralyn" : "runtime";
+    partial["diagnostic"] = {{"id", d ? d->id : "P-RUNTIME"},
+                             {"stage", d ? d->stage : "execution"},
+                             {"message", error.what()}};
+    try {
+      write(artifact / "report.json", partial.dump(2) + "\n");
+    } catch (...) {
+    }
+    throw;
+  }
+}
+int kernel_case_execute(const Options &options, const fs::path &source,
+                        const std::vector<unsigned char> &module_bytes, Json &result,
+                        const paralyn::cli::KernelCase &kc, const std::string &entry,
+                        const fs::path &artifact) {
+  using namespace paralyn::cli;
+  const bool verifying = options.command == "verify", checking = options.command == "check";
+  auto context = paralyn::native::Context(options.device);
+  result["device_selector"] = options.device;
+  result["device"] = context_info(context, options.device);
+  pr_module handle = 0;
+  paralyn::native::check(
+      pr_module_load(context.get(), module_bytes.data(), module_bytes.size(), &handle));
+  paralyn::native::Module module(handle);
+  auto kernel = module.kernel(entry);
+
+  // Bind declared arguments to reflected parameters by name; nothing is defaulted.
+  auto pr_dtype = [](DType t) { return t == DType::F32 ? PR_F32 : t == DType::I32 ? PR_I32 : PR_U32; };
+  std::set<std::string> used;
+  struct Binding {
+    const CaseBuffer *buffer = nullptr;
+    const CaseScalar *scalar = nullptr;
+    pr_access access = PR_READ;
+  };
+  std::vector<Binding> bindings;
+  Json arguments = Json::array();
+  for (const auto &p : kernel.parameters()) {
+    const std::string name = p.name;
+    Binding b;
+    for (const auto &buffer : kc.buffers)
+      if (buffer.name == name)
+        b.buffer = &buffer;
+    for (const auto &scalar : kc.scalars)
+      if (scalar.name == name)
+        b.scalar = &scalar;
+    const char *kind = p.is_buffer ? "buffer" : "scalar";
+    if (p.is_buffer ? !b.buffer : !b.scalar)
+      throw Diagnostic("P-CASE-ARGUMENT-MISSING", "input",
+                       "Entry " + entry + " parameter " + name + " requires a declared " + kind +
+                           (p.is_buffer ? " [buffers." : " [scalars.") + name + "] in " +
+                           kc.path.string());
+    DType type = p.is_buffer ? b.buffer->type : b.scalar->type;
+    if (pr_dtype(type) != p.type)
+      throw Diagnostic("P-CASE-ARGUMENT-TYPE", "input",
+                       "Parameter " + name + " has kernel type " +
+                           (p.type == PR_F32 ? "f32" : p.type == PR_I32 ? "i32" : "u32") +
+                           " but the case declares " + dtype_name(type));
+    if (p.is_buffer) {
+      b.access = p.access;
+      if (b.buffer->output && p.access == PR_READ)
+        throw Diagnostic("P-CASE-OUTPUT-ACCESS", "input",
+                         "Buffer " + name + " is declared output but entry " + entry +
+                             " only reads it");
+    }
+    used.insert(name);
+    bindings.push_back(b);
+    Json record = {{"name", name}, {"kind", kind}, {"dtype", dtype_name(type)}};
+    if (p.is_buffer)
+      record.update({{"length", b.buffer->length},
+                     {"access", p.access == PR_READ ? "read" : p.access == PR_WRITE ? "write" : "read_write"},
+                     {"origin", b.buffer->origin},
+                     {"initial_sha256", sha256_bytes(bytes_file(b.buffer->initial).data(),
+                                                     b.buffer->length * 4)},
+                     {"output", b.buffer->output}});
+    else
+      record["bits"] = b.scalar->bits;
+    arguments.push_back(record);
+  }
+  for (const auto &s : kc.scalars)
+    if (!used.count(s.name))
+      throw Diagnostic("P-CASE-ARGUMENT-UNKNOWN", "input",
+                       "scalars." + s.name + " matches no parameter of entry " + entry);
+  for (const auto &b : kc.buffers)
+    if (!used.count(b.name))
+      throw Diagnostic("P-CASE-ARGUMENT-UNKNOWN", "input",
+                       "buffers." + b.name + " matches no parameter of entry " + entry);
+  result["arguments"] = arguments;
+  result["backend_compilation"] = "passed";
+  if (checking) {
+    result["status"] = "checked";
+    result["host_code_executed"] = false;
+    result["gpu_work_submitted"] = false;
+    result["verification"] = {{"status", "not_requested"},
+                              {"contract_declared", !kc.checks.empty()}};
+    output(options, result,
+           "Case " + kc.name + " binds entry " + entry +
+               "; backend compilation checked. No GPU work was submitted.\n");
+    return 0;
+  }
+
+  write(artifact / "case.toml", read(kc.path));
+  write(artifact / ("module" + source.extension().string() + (source.extension() == ".metal" ? ".prx" : "")),
+        std::string(module_bytes.begin(), module_bytes.end()));
+  std::vector<paralyn::native::Buffer> buffers;
+  std::vector<paralyn::native::View> views;
+  std::vector<paralyn::native::Argument> launch_arguments;
+  buffers.reserve(bindings.size());
+  views.reserve(bindings.size());
+  for (const auto &b : bindings) {
+    if (b.buffer) {
+      buffers.push_back(context.buffer(b.buffer->length * 4));
+      auto data = bytes_file(b.buffer->initial);
+      buffers.back().write(data.data(), data.size());
+      views.push_back(buffers.back().view(0, data.size(), b.access));
+      launch_arguments.push_back(paralyn::native::Argument::buffer(views.back()));
+    } else {
+      buffers.emplace_back(0);
+      float f;
+      std::int32_t i;
+      std::memcpy(&f, &b.scalar->bits, 4);
+      std::memcpy(&i, &b.scalar->bits, 4);
+      launch_arguments.push_back(b.scalar->type == DType::F32 ? paralyn::native::Argument::f32(f)
+                                 : b.scalar->type == DType::I32
+                                     ? paralyn::native::Argument::i32(i)
+                                     : paralyn::native::Argument::u32(b.scalar->bits));
+    }
+  }
+  auto queue = context.queue();
+  if (!options.json)
+    std::cerr << "Paralyn: launching " << entry << " (case " << kc.name << ")\n";
+  auto event = queue.launch(kernel, {kc.grid[0], kc.grid[1], kc.grid[2]},
+                            {kc.block[0], kc.block[1], kc.block[2]}, launch_arguments);
+  result["timing"] = timing(event); // Waits and propagates command failure.
+  if (!result["timing"]["completed"].get<bool>())
+    throw Diagnostic("P-RUN", "execution", "GPU command did not report completion");
+  context.evidence((artifact / "runtime").string());
+  result["runtime_evidence_path"] = (artifact / "runtime" / "execution.json").string();
+  if (fs::exists(artifact / "runtime" / "execution.json"))
+    result["runtime_evidence"] = Json::parse(read(artifact / "runtime" / "execution.json"));
+  Json outputs = Json::array();
+  std::map<std::string, std::vector<std::uint32_t>> actual;
+  for (std::size_t i = 0; i < bindings.size(); ++i) {
+    const auto *b = bindings[i].buffer;
+    if (!b || !b->output)
+      continue;
+    std::vector<std::uint32_t> words(b->length);
+    buffers[i].read(words.data(), b->length * 4);
+    auto data = bytes_file(words);
+    auto path = artifact / "outputs" / (b->name + ".bin");
+    write(path, data);
+    outputs.push_back({{"name", b->name},
+                       {"dtype", dtype_name(b->type)},
+                       {"elements", b->length},
+                       {"encoding", "little-endian 32-bit"},
+                       {"path", path.string()},
+                       {"sha256", sha256_bytes(data.data(), data.size())}});
+    actual[b->name] = std::move(words);
+  }
+  result["outputs"] = outputs;
+  std::ostringstream human;
+  human << "Paralyn\nKernel       " << entry << " (case " << kc.name << ")\nDevice       "
+        << context.device().name << " / Metal\nGPU          completed";
+  if (result["timing"]["duration_valid"].get<bool>())
+    human << " (" << result["timing"]["duration_seconds"].get<double>() << " s GPU duration)";
+  human << "\n";
+  for (const auto &o : outputs)
+    human << "Output       " << o["name"].get<std::string>() << ": " << o["elements"] << " "
+          << o["dtype"].get<std::string>() << " -> " << o["path"].get<std::string>() << "\n";
+  int status = 0;
+  if (!verifying) {
+    result["status"] = "completed";
+    result["verification"] = {{"status", "not_requested"},
+                              {"contract_declared", !kc.checks.empty()}};
+    human << "Verification not requested"
+          << (kc.checks.empty() ? "" : " (the case declares a contract; use paralyn verify)") << "\n";
+  } else {
+    Json checks = Json::array();
+    bool passed = true;
+    std::uint64_t compared = 0;
+    for (const auto &check : kc.checks) {
+      auto outcome = evaluate_check(kc, check, actual.at(check.buffer));
+      passed &= outcome.passed;
+      compared += outcome.compared;
+      checks.push_back(outcome.record);
+    }
+    result["verification"] = {{"status", passed ? "passed" : "failed"},
+                              {"compared", compared},
+                              {"checks", checks},
+                              {"comparison", "host comparison of GPU output against the declared "
+                                             "independent reference"}};
+    result["status"] = passed ? "passed" : "failed";
+    if (!passed) {
+      status = 1;
+      result["exit_code"] = 1;
+      result["failure_origin"] = "verification";
+      result["diagnostic"] = {{"id", "P-VERIFY-MISMATCH"},
+                              {"stage", "verification"},
+                              {"message", "GPU output differs from the declared reference beyond "
+                                          "the declared tolerance"}};
+    }
+    for (const auto &c : checks)
+      human << "  " << c["buffer"].get<std::string>() << ": " << c["compared"] << " compared, "
+            << c["mismatches"] << " mismatches (" << c["tolerance"]["kind"].get<std::string>()
+            << " vs " << c["reference"]["kind"].get<std::string>() << " reference)\n";
+    // Printed only after the comparisons above actually ran.
+    human << "Verification: " << (passed ? "PASS" : "FAIL") << " (" << compared
+          << " values compared across " << checks.size() << " declared check(s))\n";
+  }
+  human << "Report       " << (artifact / "report.json").string() << "\n";
+  write(artifact / "report.json", result.dump(2) + "\n");
+  output(options, result, human.str());
+  return status;
+}
 int source_command(const Options &options) {
   auto source = fs::absolute(options.target);
   auto extension = source.extension().string();
   auto result = report(options.command);
   result["source"] = source.string();
   result["source_sha256"] = paralyn::source_sha256(read(source));
+  if (!project_record.is_null())
+    result["project"] = project_record;
   const bool msl = extension == ".metal", container = extension == ".prx",
              native = extension == ".py" || extension == ".cpp" || extension == ".cc" ||
-                      extension == ".c";
+                      extension == ".c",
+             ir_module = extension == ".prk";
   std::vector<unsigned char> module_bytes;
   std::string host_source, ir;
-  if (msl || container) {
+  if (!options.kase.empty() && !(msl || container || ir_module))
+    throw Diagnostic("P-CASE-NOT-APPLICABLE", "input",
+                     "--case applies to kernel modules (.metal with --manifest, .prx, .prk); " +
+                         source.filename().string() + " is a complete program. Run it without --case");
+  if (ir_module) {
+    // Existing verified-IR .prk v1 modules: read-only use, never rewritten.
+    auto bytes = read(source);
+    auto kernels = paralyn::deserialize_module(bytes.data(), bytes.size());
+    if (options.command == "compile")
+      throw Diagnostic("P-FRONTEND-UNIMPLEMENTED", "input",
+                       ".prk is already a compiled verified-IR module; nothing to compile");
+    result["frontend"] = "verified_ir";
+    result["entries"] = Json::array();
+    for (const auto &k : kernels) {
+      Json params = Json::array();
+      for (const auto &p : k.parameters)
+        params.push_back({{"name", p.name},
+                          {"type", paralyn::type_name(p.type)},
+                          {"buffer", p.buffer},
+                          {"read_only", p.read_only}});
+      result["entries"].push_back({{"name", k.name}, {"parameters", params}});
+    }
+    module_bytes.assign(bytes.begin(), bytes.end());
+  } else if (msl || container) {
     auto module = msl ? msl_module(source, options) : [&] {
       auto b = read(source);
       return paralyn::deserialize_executable(b.data(), b.size());
@@ -444,10 +815,21 @@ int source_command(const Options &options) {
           {{"name", e.name}, {"parameters", params}, {"required_block", e.required_block}});
     }
     module_bytes = paralyn::serialize_executable(module);
-    if (options.command == "run")
+  }
+  if (msl || container || ir_module) {
+    if (!options.kase.empty() && (options.command == "run" || options.command == "verify" ||
+                                  options.command == "check"))
+      return kernel_case_command(options, source, module_bytes, result);
+    if (options.command == "run" || options.command == "verify")
       throw Diagnostic("P-KERNEL-CASE-REQUIRED", "input",
-                       "This is a kernel module, not a complete program. Load it using the native "
-                       "C/C++/Python module API; CLI kernel cases are not implemented yet.");
+                       source.filename().string() +
+                           " is a kernel module, not a complete program, so it has no inputs, "
+                           "sizes, launch geometry or reference of its own. Declare them in a "
+                           "kernel case and run: paralyn " + options.command + " " +
+                           source.filename().string() +
+                           (msl ? " --manifest MANIFEST.json" : "") +
+                           " --entry NAME --case CASE.toml (see docs/projects-and-cases.md), or "
+                           "load the module through the native C/C++/Python API.");
   } else if (!native) {
     if (extension != ".cu")
       throw Diagnostic("P-FRONTEND-UNIMPLEMENTED", "input",
@@ -509,6 +891,9 @@ int source_command(const Options &options) {
       for (const auto &e : result["entries"])
         text << "  " << e["name"].get<std::string>()
              << " (Metal source, reflected resources checked on module load)\n";
+    else if (ir_module)
+      for (const auto &e : result["entries"])
+        text << "  " << e["name"].get<std::string>() << " (verified IR module entry)\n";
     else {
       for (const auto &k : result["inspection"]["kernels"]) {
         text << "  " << k["name"].get<std::string>() << "(";
@@ -548,7 +933,8 @@ int source_command(const Options &options) {
   result["artifacts"] = artifact.string();
   result["device_selector"] = options.device;
   result["source_revision"] = revision();
-  result["build_dirty"] = std::string(PARALYN_BUILD_DIRTY) == "true";
+  result["build_dirty"] = build_dirty();
+  result["build"] = build_record();
   result["llvm_version"] = PARALYN_LLVM_VERSION;
   result["verification"] = {{"status", "not_requested"}};
   result["application"] = {{"arguments", options.arguments},
@@ -642,7 +1028,7 @@ int source_command(const Options &options) {
         {"PARALYN_EVENT_LOG", (artifact / "runtime-events.ndjson").string()},
         {"PARALYN_COMMIT", result["source_revision"].get<std::string>()},
         {"PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION},
-        {"PARALYN_SOURCE_DIRTY", PARALYN_BUILD_DIRTY}};
+        {"PARALYN_SOURCE_DIRTY", PARALYN_EMBEDDED_DIRTY}};
     auto installed_python = prefix / "share/paralyn/python";
     if (!fs::exists(installed_python / "paralyn"))
       installed_python = fs::path(PARALYN_SOURCE_DIR) / "bindings/python";
@@ -743,6 +1129,64 @@ Json support() {
                 {"rocm", "not_implemented"}}},
               {"complete_portfolio", false}};
 }
+// Single-file TARGETs keep working without any manifest. A project is used only
+// when named (--project, or a TARGET whose file name is paralyn.toml) or, with no
+// TARGET at all, when ./paralyn.toml exists. Mixed or ambiguous selection fails.
+void resolve_project(Options &options) {
+  using namespace paralyn::cli;
+  if (!options.target.empty() && fs::path(options.target).filename() == "paralyn.toml") {
+    if (!options.project.empty())
+      throw Diagnostic("P-TARGET-AMBIGUOUS", "input",
+                       "Give the project either as TARGET or with --project, not both");
+    options.project = options.target;
+    options.target.clear();
+  }
+  if (!options.project.empty() && !options.target.empty())
+    throw Diagnostic("P-TARGET-AMBIGUOUS", "input",
+                     "Both TARGET " + options.target + " and --project " + options.project +
+                         " were given; select one target source");
+  if (options.target.empty() && options.project.empty()) {
+    if (!fs::exists("paralyn.toml"))
+      throw Diagnostic("P-TARGET-REQUIRED", "input",
+                       "No TARGET was given and ./paralyn.toml does not exist. Pass a program or "
+                       "kernel module, or --project FILE");
+    options.project = "paralyn.toml";
+  }
+  if (options.project.empty()) {
+    if (!options.program.empty())
+      throw Diagnostic("P-PROJECT-REQUIRED", "input",
+                       "--program selects a target inside a project; add --project FILE");
+    return;
+  }
+  if (!options.manifest.empty())
+    throw Diagnostic("P-TARGET-AMBIGUOUS", "input",
+                     "--manifest conflicts with the project's declared module manifest");
+  auto project = load_project(options.project);
+  auto selected = select_target(project, options.kase, options.program);
+  project_record = {{"path", project.path.string()},
+                    {"sha256", project.sha256},
+                    {"name", project.name}};
+  if (selected.kernel_case) {
+    project_record["case"] = selected.kernel_case->name;
+    project_record["module"] = selected.module->name;
+    options.target = selected.module->source.string();
+    options.manifest = selected.module->manifest.string();
+    options.kase = selected.kernel_case->file.string();
+  } else {
+    if (options.command == "verify")
+      throw Diagnostic("P-REFERENCE-REQUIRED", "verification",
+                       "Program " + selected.program->name +
+                           " has no declared reference; verify applies to kernel cases");
+    project_record["program"] = selected.program->name;
+    if (!selected.program->arguments.empty() && !options.arguments.empty())
+      throw Diagnostic("P-PROJECT-ARGUMENTS-AMBIGUOUS", "input",
+                       "Program " + selected.program->name +
+                           " declares arguments; do not also pass arguments after --");
+    if (options.arguments.empty())
+      options.arguments = selected.program->arguments;
+    options.target = selected.program->source.string();
+  }
+}
 } // namespace
 int main(int argc, char **argv) {
   Options options;
@@ -773,10 +1217,22 @@ int main(int argc, char **argv) {
     }
     if (command == "compile")
       sub->add_option("--output", options.output, "New module artifact file")->required();
-    if (command == "compile" || command == "inspect" || command == "check" || command == "explain")
+    if (command == "compile" || command == "inspect" || command == "check" || command == "explain" ||
+        command == "run" || command == "verify")
       sub->add_option("--manifest", options.manifest, "Typed Metal resource manifest (JSON)");
-    if (command == "run" || command == "compile" || command == "inspect" || command == "check" ||
-        command == "explain" || command == "verify" || command == "report")
+    if (command == "run" || command == "verify" || command == "check") {
+      sub->add_option("--case", options.kase,
+                      "Kernel case file (CASE.toml), or a case name within a project");
+      sub->add_option("--entry", options.entry, "Kernel entry to execute from the module");
+      sub->add_option("--project", options.project, "paralyn.toml project file");
+      if (command != "verify")
+        sub->add_option("--program", options.program, "Program target name within a project");
+    }
+    // run/verify/check may instead select a target from a paralyn.toml project.
+    if (command == "run" || command == "verify" || command == "check")
+      sub->add_option("TARGET", options.target);
+    else if (command == "compile" || command == "inspect" || command == "explain" ||
+             command == "report")
       sub->add_option("TARGET", options.target)->required();
   }
   // The separator belongs to the complete application, including flags and unicode.
@@ -827,12 +1283,18 @@ int main(int argc, char **argv) {
     }
     if (options.command == "doctor")
       return doctor(options);
+    if (options.command == "run" || options.command == "verify" || options.command == "check")
+      resolve_project(options);
     if (options.command == "verify") {
-      if (options.target != "builtin:vector-add")
+      if (options.target == "builtin:vector-add" && options.kase.empty())
+        return doctor(options);
+      const auto kind = fs::path(options.target).extension();
+      const bool kernel_module = kind == ".metal" || kind == ".prx" || kind == ".prk";
+      if (options.kase.empty() && !kernel_module) // Modules get P-KERNEL-CASE-REQUIRED.
         throw Diagnostic("P-REFERENCE-REQUIRED", "verification",
-                         "This version verifies builtin:vector-add only. Arbitrary targets need a "
-                         "declared independent reference protocol, which is not implemented yet.");
-      return doctor(options);
+                         "verify needs a declared independent reference: use builtin:vector-add, "
+                         "or a kernel module with --entry NAME --case CASE.toml whose case "
+                         "declares a [[verify]] contract (see docs/projects-and-cases.md)");
     }
     if (options.command == "report") {
       auto result = Json::parse(read(options.target));
