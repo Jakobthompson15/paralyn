@@ -644,3 +644,14 @@ pr_status pr_event_cancel(pr_event h) {
   });
 }
 } // extern C
+
+// Library-internal hook (runtime/native_internal.hpp, not a public header). In-library
+// operator providers are ordinary clients of the public C ABI; they report their own
+// validation failures through the same structured error and runtime-event path.
+pr_status paralyn_native_report_error(pr_status code, const char *operation,
+                                      const char *message) noexcept {
+  return api(operation ? operation : "operator", [&] {
+    throw Failure(code == PR_SUCCESS ? PR_INTERNAL_ERROR : code,
+                  message ? message : "Operator failure");
+  });
+}
