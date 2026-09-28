@@ -9,6 +9,7 @@ import argparse
 import ctypes
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -78,12 +79,73 @@ def native_abi(library):
         require(text in error.message, f"{selector!r}: {error.message!r}")
 
 
+PLANTED = ("libcuda.dylib", "libnvrtc.dylib", "libcuda.so.1", "libcuda.so", "libnvrtc.so.13",
+           "libnvrtc.so.12", "libnvrtc.so", "nvcuda.dll", "nvrtc64_130_0.dll", "nvrtc64_120_0.dll")
+MARKER = "PARALYN_CWD_PROBE_LOADED"
+
+
+def current_directory_not_searched(paralyn, library, probe):
+    """Regression: device queries must not load CUDA libraries from the CWD.
+
+    A harmless probe library is planted under every CUDA library name in the
+    working directory with the PARALYN_* overrides unset (the default search).
+    Loading it would create MARKER; a positive control proves the probe works.
+    """
+    environment = {k: v for k, v in os.environ.items() if k not in FORCED}
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        for name in PLANTED:
+            shutil.copyfile(probe, work / name)
+        commands = (["devices", "--json"], ["devices"], ["support", "--json"],
+                    ["doctor", "--device", "cuda:0", "--json"])
+        for arguments in commands:
+            completed = subprocess.run([str(paralyn), *arguments], capture_output=True, text=True,
+                                       env=environment, cwd=work, timeout=60)
+            output = completed.stdout + completed.stderr
+            require(not (work / MARKER).exists(),
+                    f"{arguments}: a library was loaded from the current working directory")
+            require("lacks required symbols" not in output and str(work) not in output,
+                    f"{arguments}: a planted library was opened:\n{output}")
+            require("Verification: PASS" not in output, "no verification may pass here")
+        # Native ABI and Python devices() in a process whose CWD is the planted directory.
+        script = ("import ctypes, sys\n"
+                  "lib = ctypes.CDLL(sys.argv[1])\n"
+                  "n = ctypes.c_uint32()\n"
+                  "assert lib.pr_device_count(ctypes.byref(n)) == 0\n"
+                  "sys.path.insert(0, sys.argv[2])\n"
+                  "import paralyn\n"
+                  "paralyn.devices(sys.argv[1])\n")
+        bindings = Path(__file__).resolve().parents[2] / "bindings" / "python"
+        completed = subprocess.run([sys.executable, "-c", script, str(library), str(bindings)],
+                                   capture_output=True, text=True, env=environment, cwd=work, timeout=60)
+        require(completed.returncode == 0, f"native device query failed:\n{completed.stderr}")
+        require(not (work / MARKER).exists(), "native ABI/Python loaded a library from the CWD")
+        # Positive control: the probe does signal when loaded by absolute path.
+        control = dict(environment, PARALYN_CUDA_DRIVER_LIBRARY=str(work / "libcuda.dylib"),
+                       PARALYN_NVRTC_LIBRARY=str(work / "libnvrtc.dylib"))
+        completed = subprocess.run([str(paralyn), "devices", "--json"], capture_output=True, text=True,
+                                   env=control, cwd=work, timeout=60)
+        require((work / MARKER).exists() and "lacks required symbols" in completed.stdout,
+                "probe positive control failed; the CWD regression check would be meaningless")
+        # A relative explicit override is refused, never resolved against the CWD.
+        (work / MARKER).unlink()
+        relative = dict(environment, PARALYN_CUDA_DRIVER_LIBRARY="libcuda.dylib",
+                        PARALYN_NVRTC_LIBRARY="libnvrtc.dylib")
+        completed = subprocess.run([str(paralyn), "devices", "--json"], capture_output=True, text=True,
+                                   env=relative, cwd=work, timeout=60)
+        require(not (work / MARKER).exists(), "relative override loaded a library from the CWD")
+        cuda = json.loads(completed.stdout)["backends"]["cuda"]
+        require(cuda["available"] is False and "not found" in cuda["reason"], f"relative override: {cuda}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--paralyn", type=Path, required=True)
     parser.add_argument("--library", type=Path, required=True)
+    parser.add_argument("--probe", type=Path, required=True)
     args = parser.parse_args()
     args.paralyn, args.library = args.paralyn.resolve(), args.library.resolve()
+    current_directory_not_searched(args.paralyn, args.library, args.probe.resolve())
 
     support = json.loads(run(args.paralyn, "support", "--json").stdout)["support"]
     require(support["backends"]["cuda"] == "implemented_unqualified", "support backend state")
@@ -112,7 +174,8 @@ def main():
         require(hip["diagnostic"]["id"] == "P-BACKEND-UNIMPLEMENTED", "HIP selector diagnostic")
 
     native_abi(args.library)
-    print("CUDA unavailable reporting (CLI support/devices/doctor, native ABI selectors; no GPU work): PASS")
+    print("CUDA unavailable reporting (CLI support/devices/doctor, native ABI selectors, current directory "
+          "never searched for CUDA libraries; no GPU work): PASS")
 
 
 if __name__ == "__main__":

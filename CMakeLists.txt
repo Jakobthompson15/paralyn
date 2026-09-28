@@ -209,10 +209,15 @@ if(BUILD_TESTING)
   add_executable(cuda_backend_tests tests/cuda/backend_tests.cpp tests/cuda/fake_driver.cpp)
   target_link_libraries(cuda_backend_tests PRIVATE paralyn_runtime)
   target_include_directories(cuda_backend_tests PRIVATE backends/cuda)
-  add_test(NAME cuda_backend_host COMMAND cuda_backend_tests $<TARGET_FILE:paralyn_native>)
+  # Harmless probe planted in a scratch working directory under CUDA library
+  # names; the loader must never load it (current directory is not searched).
+  add_library(cuda_cwd_probe MODULE tests/cuda/cwd_probe.cpp)
+  add_test(NAME cuda_backend_host COMMAND cuda_backend_tests $<TARGET_FILE:paralyn_native>
+    $<TARGET_FILE:cuda_cwd_probe>)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_test(NAME cuda_unavailable_cli COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/cuda/cli_unavailable.py
-    --paralyn $<TARGET_FILE:paralyn> --library $<TARGET_FILE:paralyn_native>)
+    --paralyn $<TARGET_FILE:paralyn> --library $<TARGET_FILE:paralyn_native>
+    --probe $<TARGET_FILE:cuda_cwd_probe>)
   set_tests_properties(cuda_unavailable_cli PROPERTIES LABELS "cuda;cli" TIMEOUT 60)
   if(PARALYN_BUILD_COMPILER)
     add_test(NAME cuda_codegen_frontend COMMAND cuda_codegen_tests ${PROJECT_SOURCE_DIR}/tests/cuda/golden

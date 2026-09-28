@@ -9,6 +9,11 @@ thread_local std::vector<CUcontext> stack;
 int injected(const char *name) {
   auto it = global.fail_next.find(name);
   if (it == global.fail_next.end()) return CUDA_SUCCESS;
+  auto skip = global.fail_after.find(name);
+  if (skip != global.fail_after.end() && skip->second > 0) {
+    --skip->second; // let this call succeed; fail a later one
+    return CUDA_SUCCESS;
+  }
   const int code = it->second;
   global.fail_next.erase(it);
   return code;
@@ -142,7 +147,12 @@ CUresult get_function(CUfunction *f, CUmodule, const char *name) {
   functions[*f] = name;
   return CUDA_SUCCESS;
 }
-CUresult func_attribute(int *value, int, CUfunction) { *value = 1024; return CUDA_SUCCESS; }
+CUresult func_attribute(int *value, int, CUfunction) {
+  FAKE_CURRENT("cuFuncGetAttribute");
+  FAKE_INJECT("cuFuncGetAttribute");
+  *value = 1024;
+  return CUDA_SUCCESS;
+}
 CUresult launch(CUfunction f, unsigned gx, unsigned gy, unsigned gz, unsigned bx, unsigned by, unsigned bz,
                 unsigned shared, CUstream, void **params, void **extra) {
   FAKE_CURRENT("cuLaunchKernel");
@@ -159,6 +169,7 @@ CUresult launch(CUfunction f, unsigned gx, unsigned gy, unsigned gz, unsigned bx
 }
 CUresult stream_create(CUstream *s, unsigned) {
   FAKE_CURRENT("cuStreamCreate");
+  FAKE_INJECT("cuStreamCreate");
   *s = reinterpret_cast<CUstream>(std::uintptr_t(0x5000 + ++global.streams));
   return CUDA_SUCCESS;
 }
@@ -166,11 +177,16 @@ CUresult stream_destroy(CUstream) { FAKE_CURRENT("cuStreamDestroy"); --global.st
 CUresult stream_sync(CUstream) { FAKE_CURRENT("cuStreamSynchronize"); return CUDA_SUCCESS; }
 CUresult event_create(CUevent *e, unsigned) {
   FAKE_CURRENT("cuEventCreate");
+  FAKE_INJECT("cuEventCreate");
   *e = reinterpret_cast<CUevent>(std::uintptr_t(0x6000 + ++global.events));
   return CUDA_SUCCESS;
 }
 CUresult event_destroy(CUevent) { FAKE_CURRENT("cuEventDestroy"); --global.events; return CUDA_SUCCESS; }
-CUresult event_record(CUevent, CUstream) { FAKE_CURRENT("cuEventRecord"); return CUDA_SUCCESS; }
+CUresult event_record(CUevent, CUstream) {
+  FAKE_CURRENT("cuEventRecord");
+  FAKE_INJECT("cuEventRecord");
+  return CUDA_SUCCESS;
+}
 CUresult event_sync(CUevent) { FAKE_CURRENT("cuEventSynchronize"); FAKE_INJECT("cuEventSynchronize"); return CUDA_SUCCESS; }
 CUresult elapsed(float *ms, CUevent, CUevent) { FAKE_CURRENT("cuEventElapsedTime"); *ms = global.elapsed_ms; return CUDA_SUCCESS; }
 

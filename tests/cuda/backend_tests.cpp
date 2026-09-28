@@ -111,12 +111,30 @@ void loader_tests(const std::string &unsuitable_library) {
   require(!wrong.available() && !wrong.driver_loaded && !wrong.nvrtc_loaded, "library without symbols accepted");
   require(contains(wrong.reason, "lacks required symbols: cuInit") && contains(wrong.reason, "nvrtcVersion"),
           "missing-symbol reason incomplete: " + wrong.reason);
-  require(!cu::default_driver_candidates().empty() && !cu::default_nvrtc_candidates().empty(),
-          "no default platform candidates");
 #ifdef _WIN32
-  require(cu::default_driver_candidates()[0] == "nvcuda.dll", "Windows driver name");
-#elif !defined(__APPLE__)
-  require(cu::default_driver_candidates()[0] == "libcuda.so.1", "Linux driver soname");
+  require(cu::default_driver_candidates() == std::vector<std::string>{"nvcuda.dll"}, "Windows driver name");
+  for (const auto &candidate : cu::default_nvrtc_candidates())
+    require(cu::is_absolute_library_path(candidate), "bare Windows NVRTC candidate " + candidate);
+#elif defined(__APPLE__)
+  // No CUDA driver exists for macOS: nothing may be loaded by default.
+  require(cu::default_driver_candidates().empty() && cu::default_nvrtc_candidates().empty(),
+          "macOS must have no default CUDA library candidates");
+#else
+  require(!cu::default_driver_candidates().empty() && cu::default_driver_candidates()[0] == "libcuda.so.1",
+          "Linux driver soname");
+  for (const auto &candidate : cu::default_nvrtc_candidates())
+    require(candidate.rfind("libnvrtc.so", 0) == 0 || cu::is_absolute_library_path(candidate),
+            "unexpected Linux NVRTC candidate " + candidate);
+#endif
+#ifndef _WIN32
+  require(cu::is_absolute_library_path("/usr/lib/libcuda.so.1"), "absolute POSIX path");
+  for (const char *relative : {"", "libcuda.dylib", "./libcuda.dylib", "lib/libcuda.so", "../libnvrtc.so"})
+    require(!cu::is_absolute_library_path(relative), std::string("relative path accepted: ") + relative);
+#else
+  for (const char *absolute : {"C:\\Windows\\System32\\x.dll", "C:/CUDA/bin/x.dll", "\\\\server\\share\\x.dll"})
+    require(cu::is_absolute_library_path(absolute), std::string("absolute Windows path: ") + absolute);
+  for (const char *relative : {"", "x.dll", ".\\x.dll", "bin\\x.dll", "C:x.dll", "\\x.dll", "\\\\?\\C:\\x.dll"})
+    require(!cu::is_absolute_library_path(relative), std::string("relative Windows path accepted: ") + relative);
 #endif
 
   // Production status/selection with the driver forced absent (set before first use).
@@ -130,6 +148,56 @@ void loader_tests(const std::string &unsuitable_library) {
                "no CPU fallback", "unavailable registry cuda:0");
   const auto listed = be::registry_devices();
   for (const auto &d : listed) require(d.backend != "CUDA", "unavailable CUDA device listed");
+}
+
+// Regression: the loader must never load a library from the current working
+// directory (macOS dyld and the default Windows search order both search it for
+// bare names). A probe library is planted under every CUDA library name in a
+// scratch directory that becomes the working directory.
+void cwd_tests(const std::string &probe) {
+  namespace fs = std::filesystem;
+  const auto directory = fs::temp_directory_path() /
+                         ("paralyn-cuda-cwd-" + std::to_string(reinterpret_cast<std::uintptr_t>(&probe)));
+  fs::remove_all(directory);
+  fs::create_directories(directory);
+  for (const char *name : {"libcuda.dylib", "libnvrtc.dylib", "libcuda.so.1", "libcuda.so", "libnvrtc.so.13",
+                           "libnvrtc.so.12", "libnvrtc.so", "nvcuda.dll", "nvrtc64_130_0.dll", "nvrtc64_120_0.dll"})
+    fs::copy_file(probe, directory / name, fs::copy_options::overwrite_existing);
+  const auto marker = directory / "PARALYN_CWD_PROBE_LOADED";
+  const auto previous = fs::current_path();
+  fs::current_path(directory);
+  try {
+    auto defaults = cu::load({});
+    require(!fs::exists(marker), "default candidates loaded a library from the current directory");
+    require(!contains(defaults.driver_path, directory.string()) && !contains(defaults.nvrtc_path, directory.string()),
+            "default load chose a planted library");
+#ifdef __APPLE__
+    require(!defaults.driver_loaded && !defaults.nvrtc_loaded && defaults.attempts.empty() &&
+                contains(defaults.reason, "PARALYN_CUDA_DRIVER_LIBRARY to an absolute path"),
+            "macOS default load must attempt nothing: " + defaults.reason);
+#endif
+    // Relative explicit paths are refused before reaching the platform loader.
+    for (const char *relative : {"libcuda.dylib", "./libcuda.so.1", "nvrtc64_120_0.dll"}) {
+      auto refused = cu::load({relative, relative});
+      require(!fs::exists(marker), std::string("relative explicit path loaded from the current directory: ") + relative);
+      require(!refused.driver_loaded && !refused.nvrtc_loaded && refused.attempts.size() == 2 &&
+                  contains(refused.attempts[0], "refused") && contains(refused.attempts[1], "refused"),
+              std::string("relative explicit path not refused: ") + relative);
+    }
+    // Positive control: the same probe loaded by absolute path does run, so
+    // the marker's absence above is meaningful.
+    const auto absolute = (directory / "libcuda.dylib").string();
+    auto control = cu::load({absolute, absolute});
+    require(fs::exists(marker), "probe library did not signal when loaded by absolute path");
+    require(!control.available() && contains(control.reason, "lacks required symbols"),
+            "probe without CUDA symbols accepted: " + control.reason);
+  } catch (...) {
+    fs::current_path(previous);
+    fs::remove_all(directory);
+    throw;
+  }
+  fs::current_path(previous);
+  fs::remove_all(directory);
 }
 
 void selector_tests() {
@@ -162,12 +230,16 @@ void mapping_tests() {
       {cu::CUDA_ERROR_INVALID_HANDLE, E::internal}, {cu::CUDA_ERROR_INVALID_CONTEXT, E::internal},
       {cu::CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES, E::invalid_value}, {cu::CUDA_ERROR_NOT_SUPPORTED, E::unsupported},
       {cu::CUDA_ERROR_ILLEGAL_ADDRESS, E::execution}, {cu::CUDA_ERROR_LAUNCH_FAILED, E::execution},
-      {cu::CUDA_ERROR_LAUNCH_TIMEOUT, E::execution}, {cu::CUDA_ERROR_UNKNOWN, E::execution}};
+      {cu::CUDA_ERROR_LAUNCH_TIMEOUT, E::execution}, {cu::CUDA_ERROR_UNKNOWN, E::execution},
+      {cu::CUDA_ERROR_ASSERT, E::execution}, {cu::CUDA_ERROR_CONTEXT_IS_DESTROYED, E::execution},
+      {cu::CUDA_ERROR_TENSOR_MEMORY_LEAK, E::execution}, {cu::CUDA_ERROR_CONTAINED, E::execution},
+      {cu::CUDA_ERROR_MPS_CLIENT_TERMINATED, E::execution}, {cu::CUDA_ERROR_EXTERNAL_DEVICE, E::execution}};
   for (const auto &[code, expected] : table)
     require(cu::map_result(code) == expected, "error mapping for CUresult " + std::to_string(code));
-  for (int sticky : {700, 702, 714, 715, 716, 717, 718, 719, 214, 999})
+  // Every code NVIDIA documents as leaving the context/process unusable.
+  for (int sticky : {214, 226, 700, 702, 709, 710, 714, 715, 716, 717, 718, 719, 721, 810, 911, 999})
     require(cu::is_sticky(sticky), "sticky " + std::to_string(sticky));
-  for (int recoverable : {1, 2, 200, 218, 222, 400, 701, 801})
+  for (int recoverable : {1, 2, 200, 218, 222, 400, 701, 711, 720, 801})
     require(!cu::is_sticky(recoverable), "non-sticky " + std::to_string(recoverable));
 }
 
@@ -190,6 +262,14 @@ void engine_tests() {
   auto api = fake_api();
   require(cu::devices(*api).size() == 1 && cu::devices(*api)[0].backend == "CUDA", "fake device enumeration");
   require(cu::devices(*api)[0].stable_id == "cuda:uuid:a0a1a2a3-a4a5-a6a7-a8a9-aaabacadaeaf", "UUID stable id");
+  // registry_id: nonzero (0 means "no physical device" to existing consumers),
+  // backend-tagged, and distinct per ordinal.
+  fake.device_count = 2;
+  const auto two = cu::devices(*api);
+  require(two.size() == 2 && two[0].registry_id == 0x4355444100000001ULL &&
+              two[1].registry_id == 0x4355444100000002ULL && cu::cuda_registry_id(0) == two[0].registry_id,
+          "CUDA registry_id must be nonzero, tagged and distinct");
+  fake.device_count = 1;
   expect_error([&] { cu::create_context(api, 1); }, be::ErrorCode::invalid_device, "out of range", "ordinal range");
   {
     auto context = cu::create_context(api, 0);
@@ -345,19 +425,150 @@ void engine_tests() {
   require(fake.modules == 0 && fake.streams == 0 && fake.events == 0, "modules/streams/events leaked");
   require(fake.primary_retained == 0 && fake.primary_retains == fake.primary_releases, "primary context retain/release imbalance");
 }
+
+// Every driver resource returned exactly once and the caller's context intact.
+void balanced(const char *where) {
+  const auto &fake = fake_cuda::state();
+  caller_restored(where);
+  require(fake.memory.empty(), std::string("device allocations leaked: ") + where);
+  require(fake.modules == 0 && fake.streams == 0 && fake.events == 0 && fake.programs == 0,
+          std::string("modules/streams/events/programs leaked: ") + where);
+  require(fake.primary_retained == 0 && fake.primary_retains == fake.primary_releases,
+          std::string("primary context retain/release imbalance: ") + where);
+}
+void fresh() {
+  fake_cuda::reset();
+  fake_cuda::context_stack().push_back(caller);
+  fake_cuda::state().parameter_sizes = {8, 8, 8, 4};
+}
+
+// Negative paths of the engine through the labelled test double: injected
+// driver failures map to precise error codes and leak nothing.
+void failure_path_tests() {
+  auto &fake = fake_cuda::state();
+  const auto kernel = vector_add();
+  auto args = [](const std::shared_ptr<be::Buffer> &a, const std::shared_ptr<be::Buffer> &b,
+                 const std::shared_ptr<be::Buffer> &c) {
+    return std::vector<be::BoundArgument>{view(a, 0, 64), view(b, 0, 64), view(c, 0, 64), u32(16)};
+  };
+
+  // Constructor failures: before, at and after the primary-context retain.
+  fresh();
+  fake.fail_next["cuDevicePrimaryCtxRetain"] = cu::CUDA_ERROR_INVALID_DEVICE;
+  expect_error([&] { cu::create_context(fake_api(), 0); }, be::ErrorCode::invalid_device,
+               "cuDevicePrimaryCtxRetain", "primary retain failure");
+  require(fake.primary_retains == 0 && fake.primary_releases == 0, "failed retain must not be released");
+  balanced("primary retain failure");
+
+  fresh();
+  fake.cc_major = 3;
+  fake.cc_minor = 5; // older than every NVRTC architecture: choose_architecture throws after retain
+  expect_error([&] { cu::create_context(fake_api(), 0); }, be::ErrorCode::unsupported, "no virtual architecture",
+               "constructor failure after retain");
+  require(fake.primary_retains == 1 && fake.primary_releases == 1, "primary context not released exactly once");
+  balanced("architecture failure after retain");
+
+  fresh();
+  fake.fail_next["cuStreamCreate"] = cu::CUDA_ERROR_OUT_OF_MEMORY;
+  expect_error([&] { cu::create_context(fake_api(), 0); }, be::ErrorCode::out_of_memory, "cuStreamCreate",
+               "stream creation failure");
+  require(fake.primary_retains == 1 && fake.primary_releases == 1, "primary context not released after stream failure");
+  balanced("stream creation failure");
+
+  // Module/function failures unload the module; the context stays usable.
+  fresh();
+  {
+    auto context = cu::create_context(fake_api(), 0);
+    fake.fail_next["cuModuleGetFunction"] = cu::CUDA_ERROR_NOT_FOUND;
+    expect_error([&] { context->prepare(kernel); }, be::ErrorCode::compilation, "cuModuleGetFunction",
+                 "function lookup failure");
+    require(fake.modules == 0 && fake.programs == 0, "module leaked after cuModuleGetFunction failure");
+    caller_restored("function lookup failure");
+    fake.fail_next["cuFuncGetAttribute"] = cu::CUDA_ERROR_INVALID_VALUE;
+    expect_error([&] { context->prepare(kernel); }, be::ErrorCode::invalid_value, "cuFuncGetAttribute",
+                 "function attribute failure");
+    require(fake.modules == 0, "module leaked after cuFuncGetAttribute failure");
+    caller_restored("function attribute failure");
+    context->prepare(kernel); // nothing was cached by the failures
+    require(fake.modules == 1, "context unusable after recoverable module failures");
+
+    // Copy failures map precisely and are recoverable.
+    auto a = context->allocate(64), b = context->allocate(64), out = context->allocate(64);
+    std::vector<float> host(16, 1.0f);
+    fake.fail_next["cuMemcpyHtoD"] = cu::CUDA_ERROR_INVALID_VALUE;
+    expect_error([&] { context->write(a, 0, host.data(), 64); }, be::ErrorCode::invalid_value, "cuMemcpyHtoD",
+                 "host-to-device failure");
+    caller_restored("host-to-device failure");
+    fake.fail_next["cuMemcpyDtoH"] = cu::CUDA_ERROR_INVALID_VALUE;
+    expect_error([&] { context->read(a, 0, host.data(), 64); }, be::ErrorCode::invalid_value, "cuMemcpyDtoH",
+                 "device-to-host failure");
+    caller_restored("device-to-host failure");
+    context->write(a, 0, host.data(), 64);
+
+    // Event creation and start-record failures: nothing enqueued, nothing leaked.
+    fake.fail_after["cuEventCreate"] = 1; // the end event
+    fake.fail_next["cuEventCreate"] = cu::CUDA_ERROR_OUT_OF_MEMORY;
+    expect_error([&] { context->submit(kernel, {2, 1, 1}, {8, 1, 1}, args(a, b, out)); },
+                 be::ErrorCode::out_of_memory, "cuEventCreate", "end event creation failure");
+    require(fake.events == 0 && fake.launches.empty(), "event leaked or launch enqueued after cuEventCreate failure");
+    caller_restored("event creation failure");
+    fake.fail_next["cuEventRecord"] = cu::CUDA_ERROR_INVALID_VALUE;
+    expect_error([&] { context->submit(kernel, {2, 1, 1}, {8, 1, 1}, args(a, b, out)); },
+                 be::ErrorCode::invalid_value, "cuEventRecord", "start record failure");
+    require(fake.events == 0 && fake.launches.empty(), "event leaked or launch enqueued after start record failure");
+    caller_restored("start record failure");
+    context->synchronize(); // still healthy
+
+    // End-record failure after the launch is enqueued: the command cannot be
+    // observed individually, so the context fails terminally, and the events
+    // are destroyed with the primary context current.
+    fake.fail_after["cuEventRecord"] = 1; // start succeeds, end fails
+    fake.fail_next["cuEventRecord"] = cu::CUDA_ERROR_INVALID_VALUE;
+    expect_error([&] { context->submit(kernel, {2, 1, 1}, {8, 1, 1}, args(a, b, out)); },
+                 be::ErrorCode::invalid_value, "cuEventRecord after launch", "end record failure");
+    require(fake.launches.size() == 1, "launch before end-record failure not recorded");
+    caller_restored("end record failure");
+    expect_error([&] { context->synchronize(); }, be::ErrorCode::execution, "cuEventRecord after launch",
+                 "synchronize after end record failure");
+    require(fake.events == 0, "events leaked after end-record failure");
+    caller_restored("synchronize after end record failure"); // includes: no call without the primary current
+    expect_error([&] { context->allocate(4); }, be::ErrorCode::execution, "cuEventRecord after launch",
+                 "context stays failed after end-record failure");
+  }
+  balanced("module, copy and event failures");
+
+  // CUDA_ERROR_ASSERT (710) returned directly by a copy call is sticky.
+  fresh();
+  {
+    auto context = cu::create_context(fake_api(), 0);
+    auto a = context->allocate(64);
+    std::vector<float> host(16, 0.0f);
+    fake.fail_next["cuMemcpyDtoH"] = cu::CUDA_ERROR_ASSERT;
+    expect_error([&] { context->read(a, 0, host.data(), 64); }, be::ErrorCode::execution, "(710)",
+                 "device assert on copy");
+    expect_error([&] { context->allocate(4); }, be::ErrorCode::execution, "(710)",
+                 "context stays failed after device assert");
+    expect_error([&] { context->write(a, 0, host.data(), 64); }, be::ErrorCode::execution, "(710)",
+                 "write after device assert");
+    caller_restored("device assert");
+  }
+  balanced("device assert");
+}
 } // namespace
 
 int main(int argc, char **argv) {
   try {
-    if (argc < 2) throw std::runtime_error("usage: cuda_backend_tests UNSUITABLE_SHARED_LIBRARY");
+    if (argc < 3) throw std::runtime_error("usage: cuda_backend_tests UNSUITABLE_SHARED_LIBRARY CWD_PROBE_LIBRARY");
     // Force deterministic absence for the production loader in this process.
     set_env("PARALYN_CUDA_DRIVER_LIBRARY", "/nonexistent/paralyn-test/libcuda-forced-absent");
     set_env("PARALYN_NVRTC_LIBRARY", "/nonexistent/paralyn-test/libnvrtc-forced-absent");
     loader_tests(argv[1]);
+    cwd_tests(std::filesystem::absolute(argv[2]).string());
     selector_tests();
     mapping_tests();
     architecture_tests();
     engine_tests();
+    failure_path_tests();
     std::cout << "CUDA backend host logic (loader, selectors, error mapping; engine via labelled "
                  "test double, no GPU execution): "
               << checks << " checks PASS\n";

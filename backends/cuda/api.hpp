@@ -48,6 +48,7 @@ enum : CUresult {
   CUDA_ERROR_INVALID_PTX = 218,
   CUDA_ERROR_JIT_COMPILER_NOT_FOUND = 221,
   CUDA_ERROR_UNSUPPORTED_PTX_VERSION = 222,
+  CUDA_ERROR_CONTAINED = 226,
   CUDA_ERROR_INVALID_SOURCE = 300,
   CUDA_ERROR_INVALID_HANDLE = 400,
   CUDA_ERROR_NOT_FOUND = 500,
@@ -55,17 +56,23 @@ enum : CUresult {
   CUDA_ERROR_ILLEGAL_ADDRESS = 700,
   CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES = 701,
   CUDA_ERROR_LAUNCH_TIMEOUT = 702,
+  CUDA_ERROR_CONTEXT_IS_DESTROYED = 709,
+  CUDA_ERROR_ASSERT = 710,
   CUDA_ERROR_HARDWARE_STACK_ERROR = 714,
   CUDA_ERROR_ILLEGAL_INSTRUCTION = 715,
   CUDA_ERROR_MISALIGNED_ADDRESS = 716,
   CUDA_ERROR_INVALID_ADDRESS_SPACE = 717,
   CUDA_ERROR_INVALID_PC = 718,
   CUDA_ERROR_LAUNCH_FAILED = 719,
+  CUDA_ERROR_COOPERATIVE_LAUNCH_TOO_LARGE = 720,
+  CUDA_ERROR_TENSOR_MEMORY_LEAK = 721,
   CUDA_ERROR_NOT_PERMITTED = 800,
   CUDA_ERROR_NOT_SUPPORTED = 801,
   CUDA_ERROR_SYSTEM_NOT_READY = 802,
   CUDA_ERROR_SYSTEM_DRIVER_MISMATCH = 803,
   CUDA_ERROR_COMPAT_NOT_SUPPORTED_ON_DEVICE = 804,
+  CUDA_ERROR_MPS_CLIENT_TERMINATED = 810,
+  CUDA_ERROR_EXTERNAL_DEVICE = 911,
   CUDA_ERROR_UNKNOWN = 999
 };
 enum : int {
@@ -178,8 +185,15 @@ struct LoadRequest {
 LoadResult load(const LoadRequest &request);
 // Process-wide, loaded once from the environment/default platform names.
 const LoadResult &cached_load();
+// Default candidates are fully qualified paths, or names the platform loader
+// resolves without searching the current working directory (Windows
+// nvcuda.dll from System32 only; Linux built-in sonames). macOS has none.
 std::vector<std::string> default_driver_candidates();
 std::vector<std::string> default_nvrtc_candidates();
+// True for a fully qualified path on this host platform. Explicit and default
+// candidates that are neither absolute nor one of the documented system names
+// are refused before reaching dlopen/LoadLibraryExW.
+bool is_absolute_library_path(const std::string &path);
 // Complete a load result from an already populated table (production and tests).
 void initialize(LoadResult &result);
 std::string result_text(const DriverApi &api, CUresult code);

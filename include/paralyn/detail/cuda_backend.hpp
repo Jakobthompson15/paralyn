@@ -22,6 +22,12 @@ struct Status {
 Status status();
 // Empty unless status().available. Never fabricates a device.
 std::vector<DeviceInfo> devices();
+// DeviceInfo::registry_id reported for CUDA ordinal N: 0x43554441'00000000
+// ("CUDA") | (N + 1). Nonzero and backend-tagged; not a hardware identity.
+constexpr std::uint64_t registry_id_tag = 0x4355444100000000ULL;
+constexpr std::uint64_t cuda_registry_id(std::uint32_t ordinal) {
+  return registry_id_tag | (std::uint64_t(ordinal) + 1);
+}
 // selector must be "cuda:INDEX"; throws Error(invalid_device) when unavailable.
 std::shared_ptr<Context> create_context(const std::string &selector);
 } // namespace cuda

@@ -1,5 +1,8 @@
 #include "api.hpp"
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <filesystem>
 #include <mutex>
 #include <sstream>
 #include <utility>
@@ -61,34 +64,62 @@ std::string last_error_text() {
   }
   return text;
 }
-bool absolute_path(const std::string &path) {
-  return path.find('\\') != std::string::npos || path.find('/') != std::string::npos;
+#endif
+
+#ifndef _WIN32
+// Linux default sonames: glibc's dlopen resolves a name without '/' through
+// LD_LIBRARY_PATH, DT_RUNPATH, ld.so.cache and the trusted system directories,
+// never the current working directory (unlike macOS dyld, which does search it
+// for bare names). Only this fixed set of built-in names is accepted bare, and
+// only on Linux.
+bool system_soname(const std::string &path) {
+#if defined(__APPLE__)
+  (void)path;
+  return false;
+#else
+  for (const char *name : {"libcuda.so.1", "libcuda.so", "libnvrtc.so.13", "libnvrtc.so.12",
+                           "libnvrtc.so.11.2", "libnvrtc.so"})
+    if (path == name) return true;
+  return false;
+#endif
 }
 #endif
 
+// Only fully qualified paths are handed to the platform loader. A bare or
+// relative name would let dyld (macOS) or the default Windows search order pick
+// a same-named library from the current working directory, i.e. run untrusted
+// code from whatever directory Paralyn is started in. The only exceptions are
+// the system-directory-only loads documented below.
 std::shared_ptr<Library> open(const std::string &path, std::string &error) {
-  auto library = std::make_shared<Library>();
 #ifdef _WIN32
+  DWORD flags = 0;
+  if (path == "nvcuda.dll")
+    flags = LOAD_LIBRARY_SEARCH_SYSTEM32; // the display driver's DLL lives in System32 only
+  else if (is_absolute_library_path(path))
+    // Dependencies (e.g. nvrtc-builtins) resolve beside the DLL, then in the
+    // application directory and System32. Never the current directory or PATH.
+    flags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+  else {
+    error = "refused: not a fully qualified path (the current directory is never searched)";
+    return nullptr;
+  }
   const auto name = wide(path);
   if (name.empty()) {
     error = "library path is not valid UTF-8";
     return nullptr;
   }
-  // The display driver's nvcuda.dll is loaded from System32 only. Explicit
-  // paths (including %CUDA_PATH% candidates) also resolve dependencies such as
-  // nvrtc-builtins beside the DLL. Other bare names use the standard Windows
-  // search order, which includes PATH as configured by the CUDA installer.
-  DWORD flags = 0;
-  if (path == "nvcuda.dll")
-    flags = LOAD_LIBRARY_SEARCH_SYSTEM32;
-  else if (absolute_path(path))
-    flags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+  auto library = std::make_shared<Library>();
   library->handle = LoadLibraryExW(name.c_str(), nullptr, flags);
   if (!library->handle) {
     error = last_error_text();
     return nullptr;
   }
 #else
+  if (!is_absolute_library_path(path) && !system_soname(path)) {
+    error = "refused: not an absolute path (the current directory is never searched)";
+    return nullptr;
+  }
+  auto library = std::make_shared<Library>();
   library->handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
   if (!library->handle) {
     const char *detail = dlerror();
@@ -194,13 +225,29 @@ std::string result_text(const DriverApi &api, CUresult code) {
   return out.str();
 }
 
+bool is_absolute_library_path(const std::string &path) {
+#ifdef _WIN32
+  // Drive-absolute ("C:\..." or "C:/...") or UNC ("\\server\share\..."). Drive-
+  // relative ("C:foo"), rooted-without-drive ("\foo") and device ("\\?\",
+  // "\\.\") forms are refused.
+  if (path.size() >= 3 && std::isalpha(static_cast<unsigned char>(path[0])) && path[1] == ':' &&
+      (path[2] == '\\' || path[2] == '/'))
+    return true;
+  return path.size() >= 3 && (path[0] == '\\' || path[0] == '/') && (path[1] == '\\' || path[1] == '/') &&
+         path[2] != '\\' && path[2] != '/' && path[2] != '?' && path[2] != '.';
+#else
+  return !path.empty() && path[0] == '/';
+#endif
+}
+
 std::vector<std::string> default_driver_candidates() {
 #ifdef _WIN32
-  return {"nvcuda.dll"};
+  return {"nvcuda.dll"}; // loaded with LOAD_LIBRARY_SEARCH_SYSTEM32 only
 #elif defined(__APPLE__)
-  // NVIDIA has not shipped a macOS CUDA driver since CUDA 10.2; the attempt is
-  // recorded so that "unavailable" states exactly what was tried.
-  return {"libcuda.dylib", "/usr/local/cuda/lib/libcuda.dylib"};
+  // NVIDIA has shipped no macOS CUDA driver since CUDA 10.2, so nothing is
+  // loaded by default: a bare name would make dyld search the current working
+  // directory. An explicit absolute PARALYN_CUDA_DRIVER_LIBRARY still works.
+  return {};
 #else
   return {"libcuda.so.1", "libcuda.so"};
 #endif
@@ -208,19 +255,42 @@ std::vector<std::string> default_driver_candidates() {
 std::vector<std::string> default_nvrtc_candidates() {
   std::vector<std::string> names;
 #ifdef _WIN32
+  // Fully qualified candidates only: %CUDA_PATH% (set by the CUDA Toolkit
+  // installer) and absolute PATH directories that actually contain the DLL.
+  // Relative PATH entries and the current directory are never searched.
   const std::vector<std::string> dlls = {"nvrtc64_130_0.dll", "nvrtc64_120_0.dll",
                                          "nvrtc64_112_0.dll"};
+  auto join = [](std::string directory, const std::string &file) {
+    while (!directory.empty() && (directory.back() == '\\' || directory.back() == '/')) directory.pop_back();
+    return directory + "\\" + file;
+  };
   const auto root = environment("CUDA_PATH");
-  if (!root.empty())
-    for (const char *sub : {"\\bin\\x64\\", "\\bin\\"})
-      for (const auto &dll : dlls) names.push_back(root + sub + dll);
-  names.insert(names.end(), dlls.begin(), dlls.end());
+  if (is_absolute_library_path(root))
+    for (const char *sub : {"\\bin\\x64", "\\bin"})
+      for (const auto &dll : dlls) names.push_back(join(root + sub, dll));
+  const auto search = environment("PATH");
+  std::size_t begin = 0;
+  while (begin <= search.size()) {
+    auto end = search.find(';', begin);
+    if (end == std::string::npos) end = search.size();
+    std::string entry = search.substr(begin, end - begin);
+    if (entry.size() >= 2 && entry.front() == '"' && entry.back() == '"') entry = entry.substr(1, entry.size() - 2);
+    if (is_absolute_library_path(entry))
+      for (const auto &dll : dlls) {
+        const auto candidate = join(entry, dll);
+        std::error_code ignored;
+        if (std::find(names.begin(), names.end(), candidate) == names.end() &&
+            std::filesystem::is_regular_file(std::filesystem::path(wide(candidate)), ignored))
+          names.push_back(candidate);
+      }
+    begin = end + 1;
+  }
 #elif defined(__APPLE__)
-  names = {"libnvrtc.dylib", "/usr/local/cuda/lib/libnvrtc.dylib"};
+  // No default on macOS; see default_driver_candidates().
 #else
   names = {"libnvrtc.so.13", "libnvrtc.so.12", "libnvrtc.so.11.2", "libnvrtc.so"};
   const auto root = environment("CUDA_HOME");
-  if (!root.empty())
+  if (is_absolute_library_path(root))
     for (const char *name : {"/lib64/libnvrtc.so", "/lib/libnvrtc.so"}) names.push_back(root + name);
 #endif
   return names;
@@ -260,7 +330,10 @@ LoadResult load(const LoadRequest &request) {
       request.nvrtc_path.empty() ? default_nvrtc_candidates() : std::vector<std::string>{request.nvrtc_path};
   std::string reasons;
   auto driver = first(driver_candidates, result.attempts, result.driver_path);
-  if (!driver)
+  if (!driver && driver_candidates.empty())
+    reasons = "CUDA driver library not found (NVIDIA ships no CUDA driver for this platform, so no "
+              "library is loaded by default; set PARALYN_CUDA_DRIVER_LIBRARY to an absolute path)";
+  else if (!driver)
     reasons = "CUDA driver library not found (NVIDIA driver not installed or not on the loader path)";
   else {
     std::string missing;
@@ -273,7 +346,10 @@ LoadResult load(const LoadRequest &request) {
   auto nvrtc = first(nvrtc_candidates, result.attempts, result.nvrtc_path);
   if (!nvrtc) {
     if (!reasons.empty()) reasons += "; ";
-    reasons += "NVRTC library not found (CUDA Toolkit runtime compiler is required to build kernels)";
+    reasons += nvrtc_candidates.empty()
+                   ? "NVRTC library not found (no default NVRTC location on this platform; set "
+                     "PARALYN_NVRTC_LIBRARY to an absolute path)"
+                   : "NVRTC library not found (CUDA Toolkit runtime compiler is required to build kernels)";
   } else {
     std::string missing;
     if (bind_nvrtc(*nvrtc, api->nvrtc, missing)) {

@@ -64,11 +64,22 @@ ErrorCode map_result(CUresult code) {
     return ErrorCode::execution;
   }
 }
+// Codes NVIDIA documents as leaving the context unusable ("the context cannot be
+// used anymore, and must be destroyed") or the process in an inconsistent state
+// ("any further CUDA work will return the same error"), plus a destroyed
+// current context, uncorrectable ECC and the conservative CUDA_ERROR_UNKNOWN.
+// Reviewed against the CUresult reference (cuda-python driver bindings, CUDA 13).
 bool is_sticky(CUresult code) {
   switch (code) {
   case CUDA_ERROR_ECC_UNCORRECTABLE:
+  case CUDA_ERROR_CONTAINED:
   case CUDA_ERROR_ILLEGAL_ADDRESS:
   case CUDA_ERROR_LAUNCH_TIMEOUT:
+  case CUDA_ERROR_CONTEXT_IS_DESTROYED:
+  case CUDA_ERROR_ASSERT:
+  case CUDA_ERROR_TENSOR_MEMORY_LEAK:
+  case CUDA_ERROR_MPS_CLIENT_TERMINATED:
+  case CUDA_ERROR_EXTERNAL_DEVICE:
   case CUDA_ERROR_HARDWARE_STACK_ERROR:
   case CUDA_ERROR_ILLEGAL_INSTRUCTION:
   case CUDA_ERROR_MISALIGNED_ADDRESS:
@@ -168,8 +179,11 @@ Properties describe(const Api &api, std::uint32_t ordinal) {
   p.info.name = name;
   p.info.backend = "CUDA";
   p.info.os = os_description();
-  // Legacy ABI field: CUDA reports its driver ordinal here, not a Metal registry ID.
-  p.info.registry_id = ordinal;
+  // Legacy ABI field (Metal registry ID on Metal). CUDA has no registry ID, and
+  // consumers treat 0 as "no physical device", so CUDA reports a nonzero,
+  // backend-tagged enumeration value: 0x43554441'00000000 ("CUDA") | (ordinal + 1).
+  // It is not a hardware identity; stable_id (UUID or PCI location) is.
+  p.info.registry_id = cuda_registry_id(ordinal);
   // Total device memory: an upper bound, not free memory or a guaranteed single allocation.
   p.info.max_buffer_bytes = memory;
   p.info.unified_memory = attribute(d, device, CU_DEVICE_ATTRIBUTE_INTEGRATED) != 0;
@@ -725,8 +739,17 @@ struct CudaContext final : Context, std::enable_shared_from_this<CudaContext> {
       }
       release_events(*work);
       current.restore();
-    } else
-      release_events(*work);
+    } else if (work->start || work->end) {
+      // Submission already failed (end-event record after launch). The events
+      // still belong to the primary context, so destroy them with it current.
+      // Best effort: the command's failure is already recorded and reported.
+      try {
+        Current current(*state);
+        release_events(*work);
+        current.restore();
+      } catch (...) {
+      }
+    }
     work->info = {};
     work->info.completed = completed;
     if (completed && failure.empty()) {

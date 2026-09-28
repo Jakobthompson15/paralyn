@@ -31,6 +31,7 @@ struct State {
   std::vector<std::size_t> parameter_sizes; // set by the test for the next launch
   float elapsed_ms = 0.25f;
   std::map<std::string, int> fail_next;     // function name -> injected result
+  std::map<std::string, int> fail_after;    // function name -> successful calls before fail_next applies
   std::vector<std::string> context_violations; // driver calls made without the primary current
 };
 State &state();
