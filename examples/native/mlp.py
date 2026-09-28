@@ -131,6 +131,7 @@ def main():
             "tolerance": "componentwise a-priori bound, docs/tensors-matmul.md",
             "max_abs_error": max_error, "worst_error_to_bound_hidden": worst_h,
             "worst_error_to_bound_output": worst_y, "cpu_fallback": False,
+            "hidden_sha256": hashlib.sha256(gpu_h.tobytes()).hexdigest(),
             "output_sha256": hashlib.sha256(gpu_y.tobytes()).hexdigest(),
         }
         Path(args.artifacts, "mlp-report.json").write_text(json.dumps(report, indent=2) + "\n")

@@ -13,7 +13,7 @@ import sys
 import tempfile
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--kind", choices=["cpp", "python", "mlp-cpp", "mlp-python"], required=True)
+parser.add_argument("--kind", choices=["cpp", "python", "mlp-cpp", "mlp-python", "mlp-match"], required=True)
 parser.add_argument("--build", type=Path, required=True)
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[2]
@@ -21,13 +21,14 @@ build = args.build.resolve()
 env = dict(os.environ, PARALYN_LIBRARY=str(build / "libparalyn_native.dylib"),
            PYTHONPATH=str(root / "bindings" / "python"))
 env.pop("PARALYN_ARTIFACT_DIR", None)
-with tempfile.TemporaryDirectory(prefix="paralyn-tensors-") as temporary:
-    evidence = Path(temporary) / "proof"
-    if args.kind == "cpp":
+
+
+def run(kind, evidence):
+    if kind == "cpp":
         command = [str(build / "tensor_tests"), str(evidence)]
-    elif args.kind == "python":
+    elif kind == "python":
         command = [sys.executable, str(root / "tests/native/test_tensors.py"), "--artifacts", str(evidence)]
-    elif args.kind == "mlp-cpp":
+    elif kind == "mlp-cpp":
         command = [str(build / "native_mlp"), "--artifacts", str(evidence)]
     else:
         command = [sys.executable, str(root / "examples/native/mlp.py"), "--artifacts", str(evidence)]
@@ -44,7 +45,8 @@ with tempfile.TemporaryDirectory(prefix="paralyn-tensors-") as temporary:
             raise SystemExit(f"GPU launch did not complete: {launch}")
         if not (evidence / launch["source_file"]).is_file():
             raise SystemExit("dispatched MSL source is missing from evidence")
-    if args.kind.startswith("mlp"):
+    report = None
+    if kind.startswith("mlp"):
         kernels = [launch["kernel"] for launch in launches]
         expected = ["paralyn_matmul_f32", "paralyn_bias_activation_f32"] * 2
         if kernels != expected:
@@ -53,3 +55,19 @@ with tempfile.TemporaryDirectory(prefix="paralyn-tensors-") as temporary:
         if report["worst_error_to_bound_output"] > 1 or report["cpu_fallback"] is not False:
             raise SystemExit("MLP report is inconsistent with verification")
     print(f"Evidence audit: {len(launches)} completed Metal launches")
+    return report
+
+
+with tempfile.TemporaryDirectory(prefix="paralyn-tensors-") as temporary:
+    if args.kind != "mlp-match":
+        run(args.kind, Path(temporary) / "proof")
+    else:
+        # Both applications must compute bit-identical hidden activations and outputs
+        # with the same provider artifact; matching error statistics alone is not enough.
+        reports = {kind: run(kind, Path(temporary) / kind) for kind in ("mlp-cpp", "mlp-python")}
+        cpp, python = reports["mlp-cpp"], reports["mlp-python"]
+        for key in ("provider_artifact_sha256", "hidden_sha256", "output_sha256", "shapes", "seed"):
+            if cpp.get(key) is None or cpp.get(key) != python.get(key):
+                raise SystemExit(f"C++ and Python MLP reports differ in {key}: {cpp.get(key)} != {python.get(key)}")
+        print(f"C++/Python MLP comparison: identical hidden and output bytes (output SHA-256 "
+              f"{cpp['output_sha256']}), provider artifact {cpp['provider_artifact_sha256']}")

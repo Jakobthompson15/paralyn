@@ -3,6 +3,7 @@
 // paralyn.msl.tensor provider on the native runtime; there is no CPU fallback.
 // The result is compared with an independent float64-accumulated CPU reference
 // under the a-priori error bound documented in docs/tensors-matmul.md.
+#include <paralyn/executable.hpp> // SHA-256 (paralyn_ir) for report hashes
 #include <paralyn/tensor.hpp>
 #include <algorithm>
 #include <cmath>
@@ -29,6 +30,10 @@ std::vector<float> values(std::size_t count, Rng &rng, float scale) {
   std::vector<float> v(count);
   for (auto &x : v) x = rng.next(scale);
   return v;
+}
+// Hex SHA-256 of the exact little-endian FP32 bytes, as Python's array('f').tobytes().
+std::string sha256(const void *data, std::size_t bytes) {
+  return paralyn::source_sha256(std::string(static_cast<const char *>(data), bytes));
 }
 std::uint64_t argument(int &i, int argc, char **argv) {
   if (++i >= argc) throw std::runtime_error("missing option value");
@@ -111,11 +116,13 @@ int main(int argc, char **argv) {
               << batch << "," << in << "] W1[" << in << "," << hidden << "] W2[" << hidden << ","
               << out << "] seed " << seed << '\n';
     const char *labels[] = {"matmul1", "bias_relu1", "matmul2", "bias2"};
+    std::vector<double> durations;
     int index = 0;
     for (const auto *stage : {&z1, &h, &z2, &y}) {
       const auto timing = stage->timing();
       if (!timing || !timing->completed || !timing->duration_valid || !(timing->duration_seconds > 0))
         throw std::runtime_error("missing completed GPU event for a layer");
+      durations.push_back(timing->duration_seconds);
       std::cout << "GPU " << labels[index++] << ": " << std::setprecision(6)
                 << timing->duration_seconds * 1e6 << " us\n";
     }
@@ -124,16 +131,25 @@ int main(int argc, char **argv) {
     for (auto *owner : {&tx, &tw1, &tb1, &tw2, &tb2, &z1, &h, &z2, &y}) owner->close();
     if (!artifacts.empty()) {
       context.evidence(artifacts);
+      const auto provider = t::operators_artifact();
       std::ofstream report(artifacts + "/mlp-report.json");
       report << std::setprecision(17) << "{\n  \"application\": \"two-layer FP32 MLP inference (C++)\",\n"
-             << "  \"provider\": \"paralyn.msl.tensor\",\n  \"shapes\": {\"batch\": " << batch
+             << "  \"provider\": \"paralyn.msl.tensor\",\n"
+             << "  \"provider_artifact_sha256\": \"" << sha256(provider.data(), provider.size()) << "\",\n"
+             << "  \"shapes\": {\"batch\": " << batch
              << ", \"in\": " << in << ", \"hidden\": " << hidden << ", \"out\": " << out << "},\n"
-             << "  \"seed\": " << seed << ",\n  \"gpu_commands\": 4,\n"
+             << "  \"seed\": " << seed << ",\n  \"gpu_commands\": 4,\n  \"stages\": [";
+      for (int i = 0; i < 4; ++i)
+        report << (i ? ", " : "") << "{\"stage\": \"" << labels[i] << "\", \"gpu_duration_seconds\": "
+               << durations[i] << "}";
+      report << "],\n"
              << "  \"reference\": \"float64 accumulation from FP32 inputs\",\n"
              << "  \"tolerance\": \"componentwise a-priori bound, docs/tensors-matmul.md\",\n"
              << "  \"max_abs_error\": " << max_error << ",\n  \"worst_error_to_bound_hidden\": "
              << worst_h << ",\n  \"worst_error_to_bound_output\": " << worst_y << ",\n"
-             << "  \"cpu_fallback\": false\n}\n";
+             << "  \"cpu_fallback\": false,\n"
+             << "  \"hidden_sha256\": \"" << sha256(gpu_h.data(), gpu_h.size() * 4) << "\",\n"
+             << "  \"output_sha256\": \"" << sha256(gpu_y.data(), gpu_y.size() * 4) << "\"\n}\n";
       if (!report) throw std::runtime_error("cannot write mlp-report.json");
     }
     std::cout << "Verification: PASS two-layer FP32 MLP (" << batch * out

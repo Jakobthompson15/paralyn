@@ -62,10 +62,16 @@ pr_status pr_tensor_desc_validate(const pr_tensor_desc_v1 *desc, uint64_t *requi
  * otherwise capacity must be at least the artifact size. */
 pr_status pr_tensor_operators_artifact(void *data, uint64_t capacity, uint64_t *bytes);
 /* Load the provider artifact through pr_module_load (validation + Metal reflection).
- * The caller owns the returned module handle and releases it with pr_release. */
+ * The caller owns the returned module handle and releases it with pr_release.
+ * Operators accept only module handles returned by this function: any other
+ * module, including the same artifact loaded with pr_module_load, is
+ * PR_INVALID_ARGUMENT. */
 pr_status pr_tensor_operators_load(pr_context context, pr_module *out);
-/* Enqueue on the context's ordered queue. *out receives an event, or 0 when the
- * operation has no GPU work (m == 0 or n == 0). The output must not share an
+/* Enqueue on the context's ordered queue. The queue, the provider module and
+ * every tensor buffer must belong to one context (PR_INVALID_HANDLE /
+ * PR_CONTEXT_MISMATCH otherwise), checked even when there is no GPU work.
+ * *out receives an event, or 0 when the operation has no GPU work (m == 0 or
+ * n == 0; empty bias/activation output). The output must not share an
  * allocation with an input: overlap is PR_INVALID_ARGUMENT; disjoint ranges of
  * the same allocation are PR_UNSUPPORTED in this MSL profile. Inputs may alias. */
 pr_status pr_matmul_f32(pr_queue queue, pr_module operators, const pr_matmul_v1 *op,
