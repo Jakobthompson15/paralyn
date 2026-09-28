@@ -25,8 +25,12 @@ struct QuietBuffer : std::streambuf {
 };
 struct QuietRuntime {
   QuietBuffer buffer;
-  std::streambuf *previous = std::cout.rdbuf(&buffer);
-  ~QuietRuntime() { std::cout.rdbuf(previous); }
+  std::streambuf *previous_out = std::cout.rdbuf(&buffer);
+  std::streambuf *previous_error = std::cerr.rdbuf(&buffer);
+  ~QuietRuntime() {
+    std::cerr.rdbuf(previous_error);
+    std::cout.rdbuf(previous_out);
+  }
 };
 struct Sample {
   int n;
@@ -101,6 +105,8 @@ void write_samples(const std::filesystem::path &directory, const std::vector<Sam
               "output sentinel each run\","
            << "\n  \"verification_timing\": \"CPU comparison and sentinel initialization occur "
               "outside measured total\","
+           << "\n  \"progress_policy\": \"Launch progress is discarded through in-memory stdout/stderr "
+              "sinks; runtime/event log files are disabled; command evidence is exported after measurement\","
            << "\n  \"cpu_fallback\": false\n}\n";
   protocol.close();
   if (!protocol)
@@ -120,6 +126,8 @@ int main(int argc, char **argv) {
     std::filesystem::create_directories(directory);
     // Avoid evidence-file I/O in measured work. Runtime retains all launch records in memory.
     unsetenv("PARALYN_ARTIFACT_DIR");
+    unsetenv("PARALYN_RUNTIME_LOG");
+    unsetenv("PARALYN_EVENT_LOG");
     const auto frontend_start = Clock::now();
     const auto frontend = paralyn::compile_source(source_path.string());
     const double frontend_seconds = seconds(frontend_start);

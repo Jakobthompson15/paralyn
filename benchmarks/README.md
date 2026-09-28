@@ -19,4 +19,6 @@ For each of 1,024, 65,536, 1,048,576 and 16,777,216 elements, each variant recei
 
 The runtime-owned memory counter measures requested lengths of live Metal buffers. It excludes host vectors, source/IR storage, command metadata, pipeline objects and driver allocations. At the largest size, three FP32 buffers occupy 201,326,592 counted bytes; all are freed before final capture.
 
+Measured launches discard progress through in-memory stdout and stderr sinks. The benchmark disables `PARALYN_RUNTIME_LOG` and `PARALYN_EVENT_LOG` before execution so inherited settings cannot add file writes or durable flushes to measured work. Actual command records remain in memory and are exported after measurement. This preserves the original quiet-progress measurement boundary after runtime progress moved to stderr. The earlier product-foundation capture retains valid numerical/completion evidence, but its host totals include unsuppressed stderr progress and should not be used as a before/after runtime performance comparison.
+
 Evidence also includes original CUDA, transformed host source, verified IR, handwritten Metal, every distinct dispatched source, per-launch command status and GPU timestamps. No timing target determines success. Success requires the complete protocol and all CPU comparisons to pass on a physical GPU.

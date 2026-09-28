@@ -42,6 +42,9 @@ def audit(artifacts, source, revision, dirty, llvm_version, transcript):
     with (artifacts / "samples.csv").open(newline="") as stream:
         rows = list(csv.DictReader(stream))
     require(protocol["status"] == "verified", "benchmark did not verify its CPU comparisons")
+    if "progress_policy" in protocol:
+        require("Executing on GPU..." not in transcript and "Compiling kernel..." not in transcript,
+                "per-launch progress escaped the benchmark's in-memory sinks")
     require(protocol["sizes"] == list(SIZES), "wrong benchmark sizes")
     require(protocol["warmups_per_variant_per_size"] == 10 and
             protocol["measured_iterations_per_variant_per_size"] == 100,
