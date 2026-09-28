@@ -633,9 +633,11 @@ int source_command(const Options &options) {
     }
     stage("executable prepared");
     command.insert(command.end(), options.arguments.begin(), options.arguments.end());
+    const auto runtime_artifact = native ? artifact / "native" : artifact;
+    result["runtime_artifacts"] = runtime_artifact.string();
     std::vector<std::pair<std::string, std::string>> environment{
         {"PARALYN_DEVICE", options.device},
-        {"PARALYN_ARTIFACT_DIR", artifact.string()},
+        {"PARALYN_ARTIFACT_DIR", runtime_artifact.string()},
         {"PARALYN_RUNTIME_LOG", (artifact / "runtime.log").string()},
         {"PARALYN_EVENT_LOG", (artifact / "runtime-events.ndjson").string()},
         {"PARALYN_COMMIT", result["source_revision"].get<std::string>()},
@@ -648,6 +650,16 @@ int source_command(const Options &options) {
       const char *old = std::getenv("PYTHONPATH");
       environment.emplace_back("PYTHONPATH",
                                installed_python.string() + (old ? std::string(":") + old : ""));
+    }
+    if (native && !std::getenv("PARALYN_LIBRARY"))
+      environment.emplace_back("PARALYN_LIBRARY",
+                               library("libparalyn_native.dylib", PARALYN_NATIVE_LIBRARY).string());
+    if (native && !std::getenv("PARALYN_OPERATORS")) {
+      auto operators = prefix / "share/paralyn/operators.prk";
+      if (!fs::exists(operators))
+        operators = fs::path(PARALYN_BINARY_DIR) / "operators.prk";
+      if (fs::exists(operators))
+        environment.emplace_back("PARALYN_OPERATORS", operators.string());
     }
     result["application"]["command"] = command;
     result["limitations"] = {"Host I/O inputs are not automatically traced",
@@ -667,8 +679,9 @@ int source_command(const Options &options) {
     if (executed.interrupted)
       result["interruption"] =
           "Interruption forwarded to process group; GPU cancellation is not claimed";
-    if (fs::exists(artifact / "execution.json")) {
-      result["runtime_evidence"] = Json::parse(read(artifact / "execution.json"));
+    if (fs::exists(runtime_artifact / "execution.json")) {
+      result["runtime_evidence_path"] = (runtime_artifact / "execution.json").string();
+      result["runtime_evidence"] = Json::parse(read(runtime_artifact / "execution.json"));
     } else
       result["runtime_evidence"] = nullptr;
     if (fs::exists(artifact / "runtime-events.ndjson")) {
