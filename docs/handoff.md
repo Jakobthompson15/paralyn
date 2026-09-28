@@ -1,4 +1,38 @@
-# Checkpoint: native-product implementation batch
+# Checkpoint: four-lane batch (tensors, kernel cases, SPIR-V, CUDA backend)
+
+Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-cases`, `lane/spirv-metal-import`, `lane/cuda-backend-windows`, merged on `integration/next-batch`. See the top section of [status](status.md) for what was implemented and its limits. None of this has been captured cleanly or archived yet.
+
+## Exact next task per workstream
+
+1. **Qualification (do first):**
+   - From a clean revision of the merged tree, capture all four lanes' tests: product, native, Gate B and the `tensors_*`, `kernel_cases` and `spirv_*` suites.
+   - Archive the evidence under `artifacts/` and reconcile the counts here.
+   - Rerun the full benchmark on an idle GPU.
+   - Rebuild the wheel so it includes `tensor.py` and the tensor provider, then requalify the installed and runtime-only builds (including doctor provenance).
+2. **Runtime/backends:**
+   - Run `scripts/windows-inventory.ps1` on the authorized Windows machines and record the results.
+   - On an NVIDIA machine, follow the steps in `docs/cuda-backend.md`.
+   - Compile the Windows port and add a Windows process test that injects a failure after the readers start.
+   - Confirm NVRTC is discovered without an override, or record the absolute `PARALYN_NVRTC_LIBRARY` used.
+   - HIP/HIPRTC remains a separate required backend.
+3. **Compilers/frontends:**
+   - Put HLSL (DXC) and GLSL (glslang) on the pinned SPIR-V importer.
+   - Design the shader-to-CUDA/HIP bridge.
+   - MSL provenance verification at load time stays open.
+4. **Operators/integrations:**
+   - Add strided and batched operators, reductions and softmax/normalization, working toward the transformer block.
+   - Add a CUDA/HIP matmul provider once a backend is qualified.
+5. **CLI:**
+   - Add `init`, `bench`, `cache`, `toolchain` and NDJSON command streaming.
+   - Extend kernel cases to more dtypes.
+   - Qualify Windows capture.
+
+The M8 PTX/SASS prerequisites are unchanged. No hardware acquisition, remote execution or push is authorized.
+
+---
+
+# Previous checkpoint
+
 
 Starting local HEAD and remote main were both `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`. This extends that working repository and preserves ABI1, `.prk`v1, CUDA semantics and immutable historical evidence. The user explicitly adopted the [complete-platform M0–M9 program](complete-platform-program.md). Software remains0.0.1; this checkpoint does not complete the program or imply a release tag.
 

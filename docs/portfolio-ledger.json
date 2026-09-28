@@ -1179,15 +1179,15 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "E",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
       "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
-        "version": null,
-        "subset": "Named SPIR-V versions, capabilities and compute execution environments with validation.",
-        "subset_status": "design_target_not_yet_pinned"
+        "version": "SPIR-V 1.3 / Vulkan 1.1",
+        "subset": "GLCompute, logical addressing, fixed LocalSize (WorkgroupSize must equal it), 32-bit f32/i32/u32 StorageBuffer arrays and push-constant/uniform scalars; OpenCL Kernel modules rejected, never reinterpreted.",
+        "subset_status": "pinned_initial_profile"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
@@ -1195,13 +1195,17 @@
         "useful_status": "proposed_not_qualified"
       },
       "dependencies": {
-        "compiler_provider_versions": [],
+        "compiler_provider_versions": [
+          "SPIRV-Headers 496543121ce6419f23d6fa5d7194ba66c36212d2",
+          "SPIRV-Tools v2026.4 ef96ed763b43b59b33b31b362f09a02b729fa1c9",
+          "SPIRV-Cross f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7 (vulkan-sdk-1.4.363.0)"
+        ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
-        "provenance": "Not yet established for this track."
+        "provenance": "Vendored source archives pinned by SHA-256 in third_party/SHA256SUMS.json; see docs/spirv-import.md."
       },
-      "execution_path": null,
+      "execution_path": "spirv-val → Paralyn profile/reflection → SPIRV-Cross MSL → PARALYNX1 v2 container → shared Metal engine (optional -DPARALYN_ENABLE_SPIRV=ON).",
       "tests": {
-        "positive_negative_integration": "not_started",
+        "positive_negative_integration": "spirv_importer, spirv_cli, spirv_metal CTests (vector add, structured-loop workgroup reduction, modf write; negative fixtures). Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet.",
         "numerical_contract": null,
         "reproduction": null
       },
@@ -1210,26 +1214,26 @@
           "backend": "metal",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "Implemented on Metal with physical M5 development runs; Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet.",
           "verified_subsets": []
         },
         {
           "backend": "cuda",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge exists.",
           "verified_subsets": []
         },
         {
           "backend": "rocm",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge exists.",
           "verified_subsets": []
         }
       ],
       "blockers": [],
-      "next_task": "Choose a bounded compute environment, pin validator/translation dependencies, and define reflected argument/ABI validation."
+      "next_task": "Archive a clean SPIR-V capture; then build the shader-to-CUDA/HIP bridge and the HLSL/GLSL/WGSL frontends on this importer."
     },
     {
       "id": "mlir",
@@ -2484,11 +2488,12 @@
       "id": "cuda",
       "name": "NVIDIA CUDA",
       "required": true,
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
       "hardware_availability": "not_observed_in_current_environment",
       "verified_subsets": [],
-      "next_task": "At Stage C/G establish available NVIDIA reference hardware, supported public stack, and independent execution backend."
+      "next_task": "Run scripts/windows-inventory.ps1 on authorized machines; on an NVIDIA machine follow the qualification steps in docs/cuda-backend.md.",
+      "note": "Dynamically loaded CUDA Driver API + NVRTC backend for verified-IR modules (docs/cuda-backend.md); host-tested only through a test double. No NVIDIA hardware has executed a kernel."
     },
     {
       "id": "rocm",
@@ -2506,17 +2511,17 @@
       "id": "fp32_matmul",
       "required": true,
       "stage": "D",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
-      "contract": null,
+      "contract": "docs/tensors-matmul.md",
       "candidate_providers": [
         "Apple MPS",
         "NVIDIA cuBLAS",
         "AMD rocBLAS",
         "generated qualified GPU kernel"
       ],
-      "note": "Candidates are not imported providers or compatibility shims. Define layout/strides/accumulation/alias/workspace/ordering contract before implementation.",
-      "next_task": "After native API and a second backend path, specify and implement one useful FP32 matmul provider path with numerical and provider reporting."
+      "note": "paralyn.msl.tensor provider (tiled FP32 matmul with transposes, bias/ReLU) through the public module/launch contract on Metal. Not cuBLAS compatibility, not cross-vendor. Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet.",
+      "next_task": "Archive clean capture; add strided/batched operators and a CUDA/HIP provider path."
     }
   ],
   "operation_backend_version_evidence": [
@@ -2912,7 +2917,7 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Preserve clean product-foundation qualification at 87978b1 and continue the exact ready workstreams in docs/handoff.md: vendor inventory/backend prerequisites, pinned SPIR-V bridge, FP32 tensor/matmul and project/kernel-case terminal contracts. Missing hardware remains an incomplete prerequisite, not passing qualification.",
+  "next_acceptance_gap": "Archive a clean capture of the integrated four-lane batch (tensors/MLP, projects and kernel cases, SPIR-V import, CUDA backend host tests), then continue docs/handoff.md. NVIDIA/Windows qualification needs hardware inventory first; missing hardware remains an incomplete prerequisite.",
   "complete_platform_program": "docs/complete-platform-program.md",
   "additional_required_programs": [
     {
@@ -2936,8 +2941,9 @@
     {
       "id": "tensor_shapes_strides",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "Versioned FP32 tensor descriptor v1 (contiguous 2-D); strides/broadcasting not implemented."
     },
     {
       "id": "reductions_scans",
@@ -3008,8 +3014,9 @@
     {
       "id": "mlp_inference_application",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "examples/native/mlp.py and mlp.cpp run a two-layer FP32 MLP entirely on Metal, checked against a float64 reference; C++/Python outputs hash-matched. Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet."
     },
     {
       "id": "transformer_block_application",
@@ -3102,8 +3109,9 @@
     {
       "id": "project_kernel_case_toml",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "Strict paralyn.toml and typed kernel cases for MSL/.prx/.prk/SPIR-V with declared references (docs/projects-and-cases.md). Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet."
     },
     {
       "id": "installers_completions_offline_release",
