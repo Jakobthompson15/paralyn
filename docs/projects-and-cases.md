@@ -215,7 +215,7 @@ Every verified output is re-read by the test and compared in Python against the 
 
 `examples/cases/generate_data.py --check` proves that the shipped data and reference files reproduce byte for byte. `process_execution` adds bounded-capture checks: exact sidecar prefixes, byte counts, memory bounds, refusal to overwrite, and no leaked descriptors.
 
-The full ctest count is in the branch report. Timing qualification and `verify_benchmark.py` were deliberately **not** run in this lane, because the GPU is shared.
+The full serialized `ctest -j1` passes **24 of 24** tests with no skips: the 23 existing targets plus `kernel_cases`. Gate A, `gate_b_correctness`, `public_msl`, `terminal_contract`, the native suites and `native_cli_arrays` are unchanged and passing. Timing qualification and `verify_benchmark.py` were deliberately **not** run in this lane, because the GPU is shared.
 
 ## Not done / unqualified
 
@@ -232,3 +232,13 @@ The full ctest count is in the branch report. Timing qualification and `verify_b
 - **Streaming capture only on POSIX.** The Windows capture overload is untested and was not compiled in this lane. Python-level logs of the native runtime are not bounded by this change.
 - **Terminal features still missing:** `init`, shell completions, named `bench`, `cache` and `toolchain` commands, and NDJSON command output.
 - **`docs/terminal.md` has stale sentences.** It still says "project TOML" and "kernel-case manifests" are unimplemented; see the proposed edits below.
+
+## Proposed reconciliation (for the integrator; not applied on this branch)
+
+- **`docs/status.md` / `docs/handoff.md`:** mark handoff task 4 as partly done:
+  - done: declarative TOML projects and typed kernel cases; kernel-only execution for public MSL and IR with declared independent verification; missing/malformed case tests; embedded build revision/dirty state in doctor and execution evidence; bounded streaming capture with partial reports on POSIX.
+  - Record the evidence above (80 negative checks, 14 GPU events, 24/24 ctest) as development evidence from a dirty worktree, not as a clean permanent capture.
+  - Next task 4 step: a clean `qualify_product.py`-style capture that runs the shipped cases; recapture installed/runtime-only doctor provenance; then init, completions, NDJSON output and multi-launch cases.
+- **`docs/terminal.md`:** replace "project TOML … remain required future work" and "kernel-case manifests are not yet implemented" with a pointer to this file. State that in-memory capture was replaced by bounded streaming sidecars on POSIX.
+- **`docs/portfolio-ledger.json`:** in the terminal/CLI row, add project/case configuration, kernel-only execution and declared-reference verify as implemented partial capabilities, and keep full terminal UX incomplete. In the Metal-source and native rows, note CLI kernel-case execution as an additional entry point; this is not new frontend coverage.
+- **`README.md`:** optionally add a two-line example of `paralyn verify examples/cases/paralyn.toml --case vector-add`.
