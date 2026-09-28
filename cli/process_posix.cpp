@@ -1,6 +1,8 @@
 #include "process.hpp"
 #include <cerrno>
+#include <algorithm>
 #include <csignal>
+#include <fcntl.h>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -49,6 +51,18 @@ struct SpawnSetup {
     posix_spawnattr_destroy(&attributes);
   }
 };
+void persist(int fd, const char *data, std::size_t size) {
+  while (size) {
+    const auto n = ::write(fd, data, size);
+    if (n < 0 && errno == EINTR)
+      continue;
+    if (n <= 0)
+      throw std::runtime_error(std::string("cannot write application capture: ") +
+                               std::strerror(errno));
+    data += n;
+    size -= static_cast<std::size_t>(n);
+  }
+}
 void checked(int status) {
   if (status)
     throw std::runtime_error(std::strerror(status));
@@ -77,8 +91,23 @@ struct ChildGuard {
 unsigned long process_id() { return static_cast<unsigned long>(getpid()); }
 Process execute(const std::vector<std::string> &args, bool live,
                 const std::vector<std::pair<std::string, std::string>> &env) {
+  return execute(args, live, env, Capture{});
+}
+Process execute(const std::vector<std::string> &args, bool live,
+                const std::vector<std::pair<std::string, std::string>> &env,
+                const Capture &capture) {
   if (args.empty())
     throw std::runtime_error("empty process command");
+  // Sidecars exist before the child starts; O_EXCL never truncates prior evidence.
+  Descriptor sidecars[2];
+  const std::string *paths[2] = {&capture.stdout_path, &capture.stderr_path};
+  for (unsigned i = 0; i < 2; ++i)
+    if (!paths[i]->empty()) {
+      sidecars[i].fd = ::open(paths[i]->c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0644);
+      if (sidecars[i].fd < 0)
+        throw std::runtime_error("cannot create application capture " + *paths[i] + ": " +
+                                 std::strerror(errno));
+    }
   std::map<std::string, std::string> variables;
   for (char **p = environ; *p; ++p) {
     std::string entry = *p;
@@ -152,6 +181,7 @@ Process execute(const std::vector<std::string> &args, bool live,
   if (sigprocmask(SIG_SETMASK, &guard.previous_mask, nullptr))
     throw std::runtime_error("cannot restore signal mask");
   Process result;
+  result.streamed = sidecars[0].fd >= 0 || sidecars[1].fd >= 0;
   pollfd descriptors[2]{{out_read.fd, POLLIN, 0}, {err_read.fd, POLLIN, 0}};
   unsigned open = 2;
   while (open) {
@@ -167,7 +197,22 @@ Process execute(const std::vector<std::string> &args, bool live,
       char buffer[8192];
       const auto count = read(fd.fd, buffer, sizeof(buffer));
       if (count > 0) {
-        (i ? result.err : result.out).append(buffer, static_cast<std::size_t>(count));
+        const auto size = static_cast<std::size_t>(count);
+        (i ? result.err_bytes : result.out_bytes) += size;
+        if (sidecars[i].fd >= 0) {
+          auto &stored = i ? result.err_persisted : result.out_persisted;
+          const auto room = static_cast<std::size_t>(
+              std::min<std::uint64_t>(size, capture.file_limit - stored));
+          persist(sidecars[i].fd, buffer, room);
+          stored += room;
+          if (room < size)
+            (i ? result.err_file_truncated : result.out_file_truncated) = true;
+        }
+        auto &text = i ? result.err : result.out;
+        const auto keep = std::min(size, capture.memory_limit - std::min(capture.memory_limit, text.size()));
+        text.append(buffer, keep);
+        if (keep < size)
+          (i ? result.err_memory_truncated : result.out_memory_truncated) = true;
         if (live) {
           auto &stream = i ? std::cerr : std::cout;
           stream.write(buffer, count);

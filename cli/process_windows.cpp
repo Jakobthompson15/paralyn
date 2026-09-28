@@ -1,5 +1,7 @@
 #include "process.hpp"
 #define NOMINMAX
+#include <algorithm>
+#include <cstdio>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -134,6 +136,42 @@ Process execute(const std::vector<std::string> &args, bool live,
     throw std::runtime_error("cannot read program output");
   result.status = static_cast<int>(code);
   result.interrupted = code == 0xC000013A;
+  return result;
+}
+// Unqualified on Windows: output is persisted after the child exits (streamed =
+// false), with the same exclusive-creation and byte limits as the POSIX runner.
+Process execute(const std::vector<std::string> &args, bool live,
+                const std::vector<std::pair<std::string, std::string>> &env,
+                const Capture &capture) {
+  const std::string *paths[2] = {&capture.stdout_path, &capture.stderr_path};
+  for (auto *path : paths)
+    if (!path->empty()) {
+      auto *file = std::fopen(path->c_str(), "wbx");
+      if (!file)
+        throw std::runtime_error("cannot create application capture " + *path);
+      std::fclose(file);
+    }
+  auto result = execute(args, live, env);
+  std::string *streams[2] = {&result.out, &result.err};
+  for (unsigned i = 0; i < 2; ++i) {
+    auto &text = *streams[i];
+    (i ? result.err_bytes : result.out_bytes) = text.size();
+    if (!paths[i]->empty()) {
+      const auto stored = std::min<std::uint64_t>(text.size(), capture.file_limit);
+      auto *file = std::fopen(paths[i]->c_str(), "wb");
+      bool okay = file && std::fwrite(text.data(), 1, static_cast<std::size_t>(stored), file) == stored;
+      if (file && std::fclose(file))
+        okay = false;
+      if (!okay)
+        throw std::runtime_error("cannot write application capture " + *paths[i]);
+      (i ? result.err_persisted : result.out_persisted) = stored;
+      (i ? result.err_file_truncated : result.out_file_truncated) = stored < text.size();
+    }
+    if (text.size() > capture.memory_limit) {
+      text.resize(capture.memory_limit);
+      (i ? result.err_memory_truncated : result.out_memory_truncated) = true;
+    }
+  }
   return result;
 }
 } // namespace paralyn::cli
