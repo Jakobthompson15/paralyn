@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -287,6 +288,139 @@ int main(int argc, char **argv) {
       w.back() = (5u << 16) | 62u; // OpStore claiming words past the end
       spv::import_module(w);
     }, "truncated instruction");
+
+    // Review regression 1: pointer operands of extended instructions write.
+    // GLSL.std.450 Modf stores through its pointer; b has no OpStore at all.
+    const auto modf_text = read(negative.parent_path() / "modf_write.spvasm");
+    const auto modf = import_text(modf_text, "modf_write.spvasm");
+    expect_buffer(modf, 0, "a", ResourceAccess::Read, 0);
+    expect_buffer(modf, 1, "b", ResourceAccess::ReadWrite, 1);
+    expect_buffer(modf, 2, "c", ResourceAccess::Write, 2);
+    {
+      const auto use = paralyn::spirv_storage_buffer_access(modf.spirv);
+      require(use.at(0) == 1 && use.at(1) == 3 && use.at(2) == 2, "Modf access bits");
+      auto understated = modf;
+      understated.entries[0].parameters[1].access = ResourceAccess::Read;
+      container_rejects([&] { paralyn::serialize_executable(understated); },
+                        "understates the retained SPIR-V's storage-buffer access", "Modf understated access");
+    }
+    rejects("spirv.access", [&] {
+      // The same Modf into the NonWritable shared block type: spirv-val accepts it.
+      auto text = replace(add_text, "               OpMemoryModel",
+                          "        %std = OpExtInstImport \"GLSL.std.450\"\n               OpMemoryModel");
+      import_text(replace(text, "        %sum = OpFAdd %float %av %bv\n",
+                          "        %sum = OpFAdd %float %av %bv\n"
+                          "         %fr = OpExtInst %float %std Modf %sum %b_ptr\n"));
+    }, "Modf into NonWritable");
+    {
+      // Runtime-side analysis of retained binaries the importer would reject:
+      // atomics with the pointer in any position, and pointer-selecting
+      // instructions, widen every buffer they touch to read-write.
+      auto atomic = replace(add_text, "               OpStore %c_ptr %sum\n",
+                            "               OpStore %c_ptr %sum\n"
+                            "               OpAtomicStore %b_ptr %int_0 %int_0 %sum\n");
+      auto use = paralyn::spirv_storage_buffer_access(bytes_of(spv::assemble(atomic)));
+      require(use.at(0) == 1 && use.at(1) == 3 && use.at(2) == 2, "OpAtomicStore pointer access bits");
+      auto select = replace(add_text, "               OpStore %c_ptr %sum\n",
+                            "          %p = OpSelect %ptr_f_sb %inside %a_ptr %b_ptr\n"
+                            "               OpStore %p %sum\n");
+      use = paralyn::spirv_storage_buffer_access(bytes_of(spv::assemble(select)));
+      require(use.at(0) == 3 && use.at(1) == 3 && use.at(2) == 0, "OpSelect pointer access bits");
+    }
+
+    // Review regression 2: WorkgroupSize takes precedence over LocalSize.
+    rejects("spirv.workgroup-size", [&] { import_text(read(negative / "workgroup_size_mismatch.spvasm")); },
+            "WorkgroupSize differs from LocalSize");
+    rejects("spirv.workgroup-size", [&] {
+      import_text(replace(reduce_text, "LocalSize 64 1 1", "LocalSize 32 1 1"));
+    }, "LocalSize differs from WorkgroupSize");
+    tampered = reduce;
+    tampered.entries[0].required_block = {128, 1, 1};
+    container_rejects([&] { paralyn::serialize_executable(tampered); },
+                      "differs from the retained SPIR-V workgroup size", "required block vs retained SPIR-V");
+    tampered = add;
+    tampered.entries[0].required_block = {32, 2, 1};
+    container_rejects([&] { paralyn::serialize_executable(tampered); },
+                      "differs from the retained SPIR-V workgroup size", "required block reshaped");
+
+    // Review regression 3: container v2 MSL is profiled at load, not only hashed.
+    struct Tamper {
+      std::string label, from, to, needle;
+    };
+    const std::string sum = "a.data[gl_GlobalInvocationID.x] + b.data[gl_GlobalInvocationID.x]";
+    const std::string body = "c.data[gl_GlobalInvocationID.x] = " + sum;
+    const std::vector<Tamper> tampers{
+        {"fp contract pragma", "#include <metal_stdlib>",
+         "#pragma clang fp contract(fast)\n#include <metal_stdlib>", "preamble directives"},
+        {"METAL fp pragma", "#include <metal_stdlib>",
+         "#pragma METAL fp math_mode(fast)\n#include <metal_stdlib>", "preamble directives"},
+        {"metal fp pragma", "#include <metal_stdlib>",
+         "#pragma metal fp contract(fast)\n#include <metal_stdlib>", "preamble directives"},
+        {"comment-prefixed pragma", "#include <metal_stdlib>",
+         "/* x */ #pragma clang fp contract(fast)\n#include <metal_stdlib>", "preamble directives"},
+        {"define", "using namespace metal;", "#define add(x, y) fma(x, 1.0, y)\nusing namespace metal;",
+         "preamble directives"},
+        {"extra include", "#include <simd/simd.h>", "#include <simd/simd.h>\n#include <metal_math>",
+         "preamble directives"},
+        {"digraph directive", "using namespace metal;",
+         "%:pragma clang fp contract(fast)\nusing namespace metal;", "'%:'"},
+        {"_Pragma", body, "_Pragma(\"clang fp contract(fast)\") " + body, "_Pragma"},
+        {"FP_CONTRACT", body, "int FP_CONTRACT = 0; " + body, "FP_CONTRACT"},
+        {"fast:: call", sum,
+         "fast::fma(a.data[gl_GlobalInvocationID.x], 1.0f, b.data[gl_GlobalInvocationID.x])", "fast-math"},
+        {"fast namespace", "using namespace metal;", "using namespace metal;\nusing namespace metal::fast;",
+         "using namespace metal"},
+        {"backslash splice", "#include <simd/simd.h>",
+         "#include <simd/simd.h>\n#pra\\\ngma clang fp contract(fast)", "backslash"},
+    };
+    for (const auto &t : tampers) {
+      auto m = add;
+      m.source = replace(m.source, t.from, t.to);
+      m.source_sha256 = paralyn::source_sha256(m.source);
+      container_rejects([&] { paralyn::serialize_executable(m); }, t.needle, "tampered v2 MSL: " + t.label);
+    }
+    {
+      // The same scan applies to deserialized containers (the runtime load
+      // path): re-frame a valid v2 wire image around a replacement source with
+      // a consistent SHA-256 and length, as a hand-edited .prx would.
+      const auto wire = paralyn::serialize_executable(add);
+      auto forge = [&](const std::string &source) {
+        auto u32_at = [&](std::size_t offset) {
+          std::uint32_t n = 0;
+          std::memcpy(&n, wire.data() + offset, 4);
+          return n;
+        };
+        auto put = [](std::vector<unsigned char> &out, const std::string &s) {
+          const auto n = static_cast<std::uint32_t>(s.size());
+          for (unsigned b = 0; b < 32; b += 8)
+            out.push_back(static_cast<unsigned char>(n >> b));
+          out.insert(out.end(), s.begin(), s.end());
+        };
+        std::size_t at = 16;              // magic, version, kind
+        at += 4 + u32_at(at) + 4;         // target, numerical policy
+        for (int k = 0; k < 3; ++k)       // producer, producer version, source name
+          at += 4 + u32_at(at);
+        std::vector<unsigned char> out(wire.begin(), wire.begin() + at);
+        at += 4 + u32_at(at);             // old source SHA-256
+        at += 4 + u32_at(at);             // old source
+        put(out, paralyn::source_sha256(source));
+        put(out, source);
+        out.insert(out.end(), wire.begin() + at, wire.end());
+        return out;
+      };
+      const auto control = forge(add.source);
+      require(control == wire, "wire re-framing is not an identity on the untampered source");
+      require(paralyn::serialize_executable(paralyn::deserialize_executable(control.data(), control.size())) == wire,
+              "re-framed control container does not load");
+      const auto forged =
+          forge(replace(add.source, "#include <metal_stdlib>", "#pragma clang fp contract(fast)\n#include <metal_stdlib>"));
+      container_rejects([&] { paralyn::deserialize_executable(forged.data(), forged.size()); },
+                        "preamble directives", "forged v2 wire with a contraction pragma");
+      const auto fast = forge(replace(add.source, sum,
+                                      "fast::fma(a.data[gl_GlobalInvocationID.x], 1.0f, b.data[gl_GlobalInvocationID.x])"));
+      container_rejects([&] { paralyn::deserialize_executable(fast.data(), fast.size()); }, "fast-math",
+                        "forged v2 wire with fast::fma");
+    }
 
     std::cout << "SPIR-V importer: " << checks << " checks, " << rejections
               << " stable rejections, no GPU work submitted\n";

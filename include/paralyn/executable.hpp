@@ -87,6 +87,8 @@ bool is_executable_artifact(const void *data, std::size_t size) noexcept;
 // the runtime can re-derive it from a container's retained SPIR-V). Returns
 // set-0 binding -> ResourceAccess bits (0 when declared but unused). Rejects
 // storage-buffer pointers passed to function calls, whose use it cannot bound.
+// Fails closed: any other use of a storage-buffer-rooted pointer (for example
+// the pointer operand of GLSL.std.450 Modf/Frexp) counts as read-write.
 std::map<std::uint32_t, std::uint32_t> spirv_storage_buffer_access(
     const std::vector<unsigned char> &spirv);
 } // namespace paralyn

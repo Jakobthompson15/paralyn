@@ -1,7 +1,7 @@
 // SPIR-V-derived modules on the physical Metal GPU through the public C ABI.
 // Every result is compared with an independent CPU reference computed here;
 // no kernel runs on the CPU in place of the GPU.
-// Usage: spirv_metal_tests VECTOR_ADD.prx REDUCE_SUM.prx NEW_EVIDENCE_DIR
+// Usage: spirv_metal_tests VECTOR_ADD.prx REDUCE_SUM.prx MODF_WRITE.prx NEW_EVIDENCE_DIR
 #include "paralyn/executable.hpp"
 #include "paralyn/native.h"
 #include <algorithm>
@@ -118,8 +118,8 @@ float fraction(std::size_t i, unsigned seed) { return float(int((i * 29 + seed) 
 
 int main(int argc, char **argv) {
   try {
-    require(argc == 4, "Usage: spirv_metal_tests VECTOR_ADD.prx REDUCE_SUM.prx NEW_EVIDENCE_DIR");
-    const std::filesystem::path evidence = argv[3];
+    require(argc == 5, "Usage: spirv_metal_tests VECTOR_ADD.prx REDUCE_SUM.prx MODF_WRITE.prx NEW_EVIDENCE_DIR");
+    const std::filesystem::path evidence = argv[4];
     require(!std::filesystem::exists(evidence), "Evidence directory must be new");
     const auto add_bytes = file(argv[1]), reduce_bytes = file(argv[2]);
     const auto add_module = paralyn::deserialize_executable(add_bytes.data(), add_bytes.size());
@@ -147,6 +147,12 @@ int main(int argc, char **argv) {
     h.keep(add);
     success(pr_module_kernel(reduce_handle, "reduce_sum", &reduce));
     h.keep(reduce);
+    pr_module modf_handle = 0;
+    success(pr_module_load_file(context, argv[3], &modf_handle));
+    h.keep(modf_handle);
+    pr_kernel modf = 0;
+    success(pr_module_kernel(modf_handle, "modf_write", &modf));
+    h.keep(modf);
 
     std::uint32_t count = 0;
     success(pr_kernel_parameter_count(add, &count));
@@ -203,6 +209,55 @@ int main(int argc, char **argv) {
       pr_event e = 0;
       failure(pr_launch(queue, add, {65, 1, 1}, {64, 1, 1}, alias.data(), 4, &e), PR_UNSUPPORTED,
               "launch", "repeated-allocation");
+    }
+
+    // GLSL.std.450 Modf writes b through its pointer operand, with no OpStore
+    // to b: the descriptor must say read_write, the GPU result is verified for
+    // both outputs, and a read-only alias of a and b is refused before dispatch.
+    {
+      pr_parameter_info info{};
+      success(pr_kernel_parameter(modf, 1, &info));
+      require(info.name == std::string("b") && info.is_buffer && info.access == PR_READ_WRITE,
+              "modf_write must reflect b as read_write through the C ABI");
+      success(pr_kernel_parameter(modf, 0, &info));
+      require(info.name == std::string("a") && info.access == PR_READ, "modf_write a access");
+      for (std::size_t n : {std::size_t(1), std::size_t(65), std::size_t(100003)}) {
+        std::vector<float> a(n), b(n), c(n + 2, -4242.0f);
+        for (std::size_t i = 0; i < n; ++i) {
+          a[i] = fraction(i, 5);
+          b[i] = fraction(i, 77);
+        }
+        auto ba = buffer(h, context, a), bb = buffer(h, context, b), bc = buffer(h, context, c);
+        auto va = view(h, ba, 0, n, PR_READ), vb = view(h, bb, 0, n, PR_READ_WRITE),
+             vc = view(h, bc, 1, n, PR_WRITE);
+        const auto groups = static_cast<std::uint32_t>((n + 63) / 64);
+        completed(launch(h, queue, modf, {groups, 1, 1}, {64, 1, 1},
+                         {view_arg(va), view_arg(vb), view_arg(vc), u32(static_cast<std::uint32_t>(n))}));
+        const auto out_b = readback(bb, n), out_c = readback(bc, n + 2);
+        require(out_c.front() == -4242.0f && out_c.back() == -4242.0f, "modf_write wrote outside c");
+        for (std::size_t i = 0; i < n; ++i) {
+          const float s = a[i] + b[i]; // exact: multiples of 1/8 with |s| < 32
+          require(out_c[i + 1] == s, "modf_write c mismatch at " + std::to_string(i));
+          require(out_b[i] == std::trunc(s), "modf_write whole part mismatch at " + std::to_string(i) + ": " +
+                                                 std::to_string(out_b[i]) + " != " + std::to_string(std::trunc(s)));
+        }
+        compared_values += static_cast<unsigned>(2 * n + 2);
+      }
+      // The reviewer's reproduction: one PR_READ allocation bound to a and b.
+      std::vector<float> x(64, 2.75f), y(64, 0.0f);
+      auto bx = buffer(h, context, x), by = buffer(h, context, y);
+      auto rx = view(h, bx, 0, 64, PR_READ), wy = view(h, by, 0, 64, PR_WRITE);
+      std::vector<pr_argument> alias{view_arg(rx), view_arg(rx), view_arg(wy), u32(64)};
+      pr_event e = 0;
+      failure(pr_launch(queue, modf, {1, 1, 1}, {64, 1, 1}, alias.data(), 4, &e), PR_INVALID_ARGUMENT,
+              "launch", "access");
+      require(e == 0, "refused launch returned an event");
+      auto rwx = view(h, bx, 0, 64, PR_READ_WRITE);
+      alias = {view_arg(rx), view_arg(rwx), view_arg(wy), u32(64)};
+      failure(pr_launch(queue, modf, {1, 1, 1}, {64, 1, 1}, alias.data(), 4, &e), PR_UNSUPPORTED,
+              "launch", "repeated-allocation");
+      require(readback(bx, 64) == x, "a refused launch modified the read-only allocation");
+      compared_values += 64;
     }
 
     // Structured-loop + workgroup-barrier reduction with a two-member uniform block.

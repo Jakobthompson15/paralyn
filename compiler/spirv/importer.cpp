@@ -8,6 +8,7 @@
 #include <spirv_msl.hpp>
 #include <spirv-tools/libspirv.hpp>
 #include <algorithm>
+#include <array>
 #include <map>
 #include <set>
 #include <sstream>
@@ -60,7 +61,8 @@ Scan scan(const std::vector<std::uint32_t> &w) {
   Scan result;
   bool local_size = false;
   std::map<std::uint32_t, std::uint32_t> builtin_targets; // id -> builtin
-  std::set<std::uint32_t> constant_composites;
+  std::map<std::uint32_t, std::vector<std::uint32_t>> constant_composites; // id -> constituents
+  std::map<std::uint32_t, std::uint32_t> scalar_constants;                   // 32-bit OpConstant
   for (std::size_t i = 5; i < w.size();) {
     const auto count = w[i] >> 16, op = w[i] & 0xffff;
     if (!count || count > w.size() - i)
@@ -142,9 +144,14 @@ Scan scan(const std::vector<std::uint32_t> &w) {
     case 39: // OpTypeForwardPointer
       other.push_back("spirv.addressing|forward pointers are outside the Logical profile");
       break;
+    case 43: // OpConstant
+      need(4);
+      if (count == 4)
+        scalar_constants[w[i + 2]] = w[i + 3];
+      break;
     case 44: // OpConstantComposite
       need(3);
-      constant_composites.insert(w[i + 2]);
+      constant_composites[w[i + 2]].assign(w.begin() + i + 3, w.begin() + end);
       break;
     case 71: // OpDecorate
       need(3);
@@ -202,8 +209,27 @@ Scan scan(const std::vector<std::uint32_t> &w) {
       fail("spirv.builtin", std::string("unsupported builtin ") +
                                 spv::BuiltInToString(static_cast<spv::BuiltIn>(builtin)));
     if (builtin == spv::BuiltInWorkgroupSize) {
-      if (!constant_composites.count(id))
+      const auto composite = constant_composites.find(id);
+      if (composite == constant_composites.end())
         fail("spirv.workgroup-size", "WorkgroupSize must decorate a non-specialization constant");
+      // The WorkgroupSize constant takes precedence over LocalSize in SPIR-V;
+      // the profile requires both to agree so the enforced launch block is the
+      // workgroup the shader computes with.
+      std::array<std::uint32_t, 3> size{0, 0, 0};
+      if (composite->second.size() != 3)
+        fail("spirv.workgroup-size", "WorkgroupSize must be a three-component constant");
+      for (std::size_t k = 0; k < 3; ++k) {
+        const auto value = scalar_constants.find(composite->second[k]);
+        if (value == scalar_constants.end())
+          fail("spirv.workgroup-size", "WorkgroupSize components must be literal 32-bit OpConstant values");
+        size[k] = value->second;
+      }
+      if (size != result.local_size)
+        fail("spirv.workgroup-size",
+             "WorkgroupSize constant (" + std::to_string(size[0]) + ", " + std::to_string(size[1]) + ", " +
+                 std::to_string(size[2]) + ") differs from LocalSize " + std::to_string(result.local_size[0]) +
+                 " " + std::to_string(result.local_size[1]) + " " + std::to_string(result.local_size[2]) +
+                 "; WorkgroupSize would take precedence over the launch block Paralyn enforces");
       result.workgroup_size_constant = true;
     }
   }
@@ -404,7 +430,7 @@ Reflected reflect(sc::CompilerMSL &c, const std::vector<unsigned char> &binary) 
     if (!bits)
       fail("spirv.resource", display(c, r) + " is never loaded or stored");
     if (readonly && (bits & 2))
-      fail("spirv.access", display(c, r) + " is decorated NonWritable but the module stores to it");
+      fail("spirv.access", display(c, r) + " is decorated NonWritable but the module writes to it (or uses its pointer outside loads and stores)");
     if (writeonly && (bits & 1))
       fail("spirv.access", display(c, r) + " is decorated NonReadable but the module loads from it");
     p.access = static_cast<ResourceAccess>(bits);
@@ -566,7 +592,7 @@ ExecutableModule import_module(const std::vector<std::uint32_t> &words, const Im
     fail("spirv.cross", std::string("SPIRV-Cross MSL lowering failed: ") + e.what());
   }
   // Numerical policy 1 forbids source-level overrides of contraction/fast math.
-  for (const char *forbidden : {"fast::", "FP_CONTRACT", "fp_contract", "_Pragma"})
+  for (const char *forbidden : {"fast::", "FP_CONTRACT", "fp_contract", "_Pragma", "#pragma metal", "#pragma METAL"})
     if (module.source.find(forbidden) != std::string::npos)
       fail("spirv.numerics", std::string("generated MSL contains '") + forbidden +
                                  "', which would override numerical policy 1");

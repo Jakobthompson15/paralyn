@@ -19,7 +19,9 @@ NEGATIVE = {
     "bad_capability.spvasm": "P-SPIRV-CAPABILITY",
     "invalid_module.spvasm": "P-SPIRV-VALIDATION",
     "binding_mismatch.spvasm": "P-SPIRV-BINDING",
+    "workgroup_size_mismatch.spvasm": "P-SPIRV-WORKGROUP-SIZE",
 }
+MODF_WRITE = Path(__file__).with_name("modf_write.spvasm")
 
 
 def require(condition, message):
@@ -51,6 +53,57 @@ def compile_fixtures(paralyn, examples, assembled, root):
                 f"{name}: .spvasm (in-process) and .spv (build-time spirv-as) imports differ")
         modules[name] = text_module
     return modules
+
+
+def reframe_source(container, transform):
+    """Rewrite a v2 .prx's generated MSL with a consistent SHA-256 and length,
+    as a hand-edited container would be. Returns the new container bytes."""
+    import hashlib
+    import struct
+
+    def string_at(offset):
+        (n,) = struct.unpack_from("<I", container, offset)
+        return offset + 4 + n, container[offset + 4:offset + 4 + n]
+
+    require(container[:8] == b"PARALYNX" and struct.unpack_from("<II", container, 8) == (2, 2),
+            "not a SPIR-V-derived v2 container")
+    at, _ = string_at(16)                   # target
+    at += 4                                 # numerical policy
+    for _ in range(3):                      # producer, producer version, source name
+        at, _ = string_at(at)
+    head = container[:at]
+    at, _ = string_at(at)                   # source SHA-256
+    at, source = string_at(at)
+    source = transform(source.decode()).encode()
+    digest = hashlib.sha256(source).hexdigest().encode()
+    return (head + struct.pack("<I", len(digest)) + digest + struct.pack("<I", len(source)) + source +
+            container[at:])
+
+
+def tampered_containers(args, root, module):
+    """A hand-edited v2 container must not pass load-time checks (review finding 3)."""
+    original = module.read_bytes()
+    identity = root / "identity.prx"
+    identity.write_bytes(reframe_source(original, lambda text: text))
+    require(identity.read_bytes() == original, "container re-framing is not an identity")
+    require(cli(args.paralyn, "check", str(identity))["status"] == "checked", "re-framed control failed")
+    cases = {
+        "contract-pragma": lambda t: "#pragma clang fp contract(fast)\n" + t,
+        "fast-fma": lambda t: t.replace("a.data[gl_GlobalInvocationID.x] + b.data[gl_GlobalInvocationID.x]",
+                                        "fast::fma(a.data[gl_GlobalInvocationID.x], 1.0f, "
+                                        "b.data[gl_GlobalInvocationID.x])"),
+        "define": lambda t: t.replace("using namespace metal;", "#define X 1\nusing namespace metal;"),
+    }
+    rejected = 0
+    for label, transform in cases.items():
+        forged = root / f"forged-{label}.prx"
+        forged.write_bytes(reframe_source(original, transform))
+        require(forged.read_bytes() != original, f"{label}: tamper did not change the container")
+        for command in ("check", "inspect"):
+            report = cli(args.paralyn, command, str(forged), expect=1)
+            require(report["status"] == "failed", f"{label}: {command} accepted a tampered container")
+            rejected += 1
+    return rejected
 
 
 def cli_mode(args, root):
@@ -87,6 +140,10 @@ def cli_mode(args, root):
                     f"{fixture}: expected {diagnostic}, got {report.get('diagnostic')}")
             require(not output.exists(), f"{fixture}: a failed import wrote an output module")
             rejected += 1
+    rejected += tampered_containers(args, root, modules["vector_add"])
+    modf = cli(args.paralyn, "inspect", str(MODF_WRITE))["entries"][0]["parameters"]
+    require([p["access_name"] for p in modf] == ["read", "read_write", "write", "read"],
+            "modf_write: Modf pointer operand must make b read_write")
     run = cli(args.paralyn, "run", str(args.examples / "vector_add.spvasm"), expect=1)
     require(run["diagnostic"]["id"] == "P-KERNEL-CASE-REQUIRED", "run must not execute a kernel module")
     support = cli(args.paralyn, "support")["support"]["inputs"]
@@ -99,8 +156,11 @@ def cli_mode(args, root):
 def gpu_mode(args, root):
     modules = compile_fixtures(args.paralyn, args.examples, args.assembled, root)
     evidence = root / "evidence"
-    subprocess.run([args.driver, str(modules["vector_add"]), str(modules["reduce_sum"]), str(evidence)],
-                   check=True)
+    modf = root / "modf_write.prx"
+    report = cli(args.paralyn, "compile", str(MODF_WRITE), "--output", str(modf))
+    require(report["status"] == "compiled", "modf_write did not compile")
+    subprocess.run([args.driver, str(modules["vector_add"]), str(modules["reduce_sum"]), str(modf),
+                    str(evidence)], check=True)
     require((evidence / "execution.json").is_file(), "driver did not export runtime evidence")
     environment = dict(os.environ, PARALYN_LIBRARY=str(args.library),
                        PYTHONPATH=str(args.python_path) + os.pathsep + os.environ.get("PYTHONPATH", ""))
