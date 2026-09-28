@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <mutex>
 #include <set>
 #include <sstream>
@@ -157,6 +158,8 @@ struct MetalExecutable final : CompiledExecutable {
   std::shared_ptr<const int> owner;
   ExecutableModule description;
   std::vector<Pipeline> entries;
+  // SpirvMsl only: reflected byte size of each packed scalar block, by slot.
+  std::vector<std::map<std::uint32_t, std::size_t>> blocks;
 };
 struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> {
   id<MTLDevice> device;
@@ -469,6 +472,74 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     if (entry.required_block[0])
       geometry(pipeline.state, {1, 1, 1}, {entry.required_block[0], entry.required_block[1], entry.required_block[2]});
   }
+  // SPIR-V-derived MSL wraps each resource in a SPIRV-Cross block structure, so
+  // the check is structural: every active slot must match the reflected
+  // descriptor's element type/offset/access, and every descriptor must be active.
+  std::map<std::uint32_t, std::size_t> validate_spirv_reflection(const ExecutableEntry &entry,
+                                                                 const Pipeline &pipeline) const {
+    if (!pipeline.reflection)
+      throw Error(ErrorCode::compilation, "Metal did not return executable argument reflection");
+    std::map<std::uint32_t, std::size_t> blocks;
+    std::set<std::uint32_t> reflected, declared;
+    for (const auto &p : entry.parameters) declared.insert(p.binding);
+    for (id<MTLBinding> binding in pipeline.reflection.bindings) {
+      if (!binding.used) continue;
+      if (binding.type != MTLBindingTypeBuffer)
+        throw Error(ErrorCode::unsupported, "SPIR-V executable profile only accepts buffer resources");
+      id<MTLBufferBinding> argument = (id<MTLBufferBinding>)binding;
+      const auto slot = static_cast<std::uint32_t>(argument.index);
+      std::vector<const ExecutableParameter *> at;
+      for (const auto &p : entry.parameters)
+        if (p.binding == slot) at.push_back(&p);
+      if (at.empty())
+        throw Error(ErrorCode::compilation, "SPIR-V descriptor omits active Metal buffer slot " + std::to_string(slot));
+      MTLStructType *layout = argument.bufferStructType;
+      if (argument.bufferDataType != MTLDataTypeStruct || !layout ||
+          (argument.bufferPointerType && argument.bufferPointerType.elementIsArgumentBuffer))
+        throw Error(ErrorCode::compilation, "SPIR-V Metal slot " + std::to_string(slot) + " is not a block structure");
+      const unsigned actual_access = argument.access == MTLBindingAccessReadOnly ? 1u :
+                                      argument.access == MTLBindingAccessWriteOnly ? 2u : 3u;
+      auto expected = [](ScalarType t) {
+        return t == ScalarType::I32 ? MTLDataTypeInt : t == ScalarType::U32 ? MTLDataTypeUInt : MTLDataTypeFloat;
+      };
+      if (at.front()->buffer) {
+        const auto &p = *at.front();
+        MTLStructMember *array = nil;
+        for (MTLStructMember *m in layout.members)
+          if (m.offset == 0) array = m;
+        if (at.size() != 1 || !array || array.dataType != MTLDataTypeArray || !array.arrayType ||
+            array.arrayType.elementType != expected(p.type) || array.arrayType.stride != 4)
+          throw Error(ErrorCode::compilation, "SPIR-V storage buffer layout differs from descriptor at " + p.name);
+        // SPIRV-Cross emits storage buffers as non-const `device` (descriptor
+        // aliasing), so Metal reports qualifier-based read-write access here.
+        // verify_executable re-derives the actual access from the retained
+        // SPIR-V and checks the descriptor against it before this point.
+        if (!argument.bufferAlignment || p.alignment % argument.bufferAlignment)
+          throw Error(ErrorCode::compilation, "SPIR-V descriptor understates reflected alignment at " + p.name);
+      } else {
+        if (actual_access != 1)
+          throw Error(ErrorCode::compilation, "SPIR-V scalar block at Metal slot " + std::to_string(slot) + " is not read-only");
+        const std::size_t size = argument.bufferDataSize;
+        if (!size || size > 4096)
+          throw Error(ErrorCode::compilation, "SPIR-V scalar block size is outside the inline-bytes limit");
+        for (const auto *p : at) {
+          bool found = false;
+          for (MTLStructMember *m in layout.members)
+            found |= m.offset == p->block_offset && m.dataType == expected(p->type);
+          if (p->buffer || !found || p->block_offset + 4 > size)
+            throw Error(ErrorCode::compilation, "SPIR-V scalar block member differs from descriptor at " + p->name);
+        }
+        blocks[slot] = size;
+      }
+      reflected.insert(slot);
+    }
+    if (reflected != declared)
+      throw Error(ErrorCode::compilation, "SPIR-V descriptor contains resources Metal reports inactive");
+    if (pipeline.state.staticThreadgroupMemoryLength > device.maxThreadgroupMemoryLength)
+      throw Error(ErrorCode::unsupported, "SPIR-V workgroup memory exceeds device capacity");
+    geometry(pipeline.state, {1, 1, 1}, {entry.required_block[0], entry.required_block[1], entry.required_block[2]});
+    return blocks;
+  }
   std::shared_ptr<CompiledExecutable> prepare(const ExecutableModule &module) override {
     std::lock_guard<std::mutex> lock(mutex);
     @autoreleasepool {
@@ -481,7 +552,10 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       for (const auto &entry : module.entries) {
         double seconds = 0;
         auto compiled = pipeline(entry.name, source, seconds);
-        validate_reflection(entry, compiled);
+        if (module.format == ExecutableFormat::SpirvMsl)
+          result->blocks.push_back(validate_spirv_reflection(entry, compiled));
+        else
+          validate_reflection(entry, compiled);
         result->entries.push_back(compiled);
       }
       return result;
@@ -534,14 +608,25 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
       if (!encoder) throw Error(ErrorCode::execution, "Metal could not create a compute encoder");
       [encoder setComputePipelineState:state];
+      const bool packed = executable->description.format == ExecutableFormat::SpirvMsl;
+      // SPIR-V scalars are members of one reflected block per slot; copy each
+      // typed argument to its declared offset, then bind the block once.
+      std::map<std::uint32_t, std::vector<unsigned char>> blocks;
+      if (packed)
+        for (const auto &[slot, size] : executable->blocks[entry_index]) blocks[slot].assign(size, 0);
       for (std::size_t i = 0; i < arguments.size(); ++i) {
         const auto &a = arguments[i];
         const auto slot = entry.parameters[i].binding;
         if (a.is_buffer) {
           auto allocation = buffer(a.allocation);
           [encoder setBuffer:allocation->metal offset:a.offset atIndex:slot];
+        } else if (packed) {
+          auto &block = blocks.at(slot);
+          std::memcpy(block.data() + entry.parameters[i].block_offset, a.bytes.data(), a.bytes.size());
         } else [encoder setBytes:a.bytes.data() length:a.bytes.size() atIndex:slot];
       }
+      for (const auto &[slot, bytes] : blocks)
+        [encoder setBytes:bytes.data() length:bytes.size() atIndex:slot];
       [encoder dispatchThreadgroups:MTLSizeMake(grid.x, grid.y, grid.z)
               threadsPerThreadgroup:MTLSizeMake(block.x, block.y, block.z)];
       [encoder endEncoding];
