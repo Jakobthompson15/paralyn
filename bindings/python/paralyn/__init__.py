@@ -238,6 +238,7 @@ class ClockDomain(IntEnum):
 
 ARTIFACT_VERIFIED_IR = 1 << 0
 ARTIFACT_MSL_SOURCE = 1 << 1
+ARTIFACT_SPIRV_MSL = 1 << 2
 
 
 @dataclass(frozen=True)
@@ -631,7 +632,7 @@ __all__ = ["ABI_VERSION", "Access", "Buffer", "Context", "Device", "Error", "Eve
 
 from .array import Array, add, affine, asarray, float32
 __all__ += ["Array", "add", "affine", "asarray", "float32"]
-__all__ += ["ARTIFACT_MSL_SOURCE", "ARTIFACT_VERIFIED_IR", "ClockDomain", "DeviceCapabilities",
+__all__ += ["ARTIFACT_MSL_SOURCE", "ARTIFACT_SPIRV_MSL", "ARTIFACT_VERIFIED_IR", "ClockDomain", "DeviceCapabilities",
             "EventTiming", "device_capabilities"]
 
 from .tensor import (Activation, Tensor, TensorDescriptor, bias_activation_into, bias_add,

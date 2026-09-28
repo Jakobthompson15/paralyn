@@ -84,7 +84,7 @@ def main():
         caps = context.capabilities
         require(caps.stable_id.startswith("metal:registry:") and caps.backend == "Metal",
                 "Python capability wrapper lacks backend-qualified identity")
-        require(caps.artifact_formats == p.ARTIFACT_VERIFIED_IR | p.ARTIFACT_MSL_SOURCE and
+        require(caps.artifact_formats == p.ARTIFACT_VERIFIED_IR | p.ARTIFACT_MSL_SOURCE | p.ARTIFACT_SPIRV_MSL and
                 caps.max_buffer_bindings == 31 and all(caps.max_block), "capability record")
         require(p.device_capabilities(0).stable_id == caps.stable_id, "device/context capabilities differ")
         rejects(lambda: p.device_capabilities(1 << 20), p.Error, p.Status.DEVICE_UNAVAILABLE)
