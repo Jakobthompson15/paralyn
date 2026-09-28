@@ -121,6 +121,14 @@ public:
     check(pr_event_wait(handle_, &info));
     return info;
   }
+  // Versioned timing: validity flags and clock domain are explicit.
+  pr_event_timing_v1 timing() const {
+    pr_event_timing_v1 info{};
+    info.struct_size = sizeof(info);
+    info.version = PR_QUERY_VERSION_1;
+    check(pr_event_timing(handle_, &info));
+    return info;
+  }
 };
 class Kernel final : public Handle {
 public:
@@ -170,6 +178,13 @@ public:
     check(pr_context_device(handle_, &d));
     return d;
   }
+  pr_device_capabilities_v1 capabilities() const {
+    pr_device_capabilities_v1 c{};
+    c.struct_size = sizeof(c);
+    c.version = PR_QUERY_VERSION_1;
+    check(pr_context_capabilities(handle_, &c));
+    return c;
+  }
   Buffer buffer(uint64_t bytes) const {
     pr_buffer b = 0;
     check(pr_buffer_create(handle_, bytes, &b));
@@ -197,5 +212,12 @@ inline std::vector<pr_device_info> devices() {
   for (uint32_t i = 0; i < count; ++i)
     check(pr_device_get(i, &out[i]));
   return out;
+}
+inline pr_device_capabilities_v1 device_capabilities(uint32_t index) {
+  pr_device_capabilities_v1 c{};
+  c.struct_size = sizeof(c);
+  c.version = PR_QUERY_VERSION_1;
+  check(pr_device_capabilities_get(index, &c));
+  return c;
 }
 } // namespace paralyn::native
