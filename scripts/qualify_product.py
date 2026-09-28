@@ -253,10 +253,13 @@ def audit_msl(directory, recorded):
     require(Counter(x["kernel"] for x in execution["launches"]) ==
             {"vector_add": 4, "block_reduce": 3, "tiled_transpose": 3}, "MSL kernel counts differ")
     original = (directory / "inputs/kernels.metal").read_bytes()
+    # Numerical policy 1 deliberately adds this exact contraction directive.
+    # Require every remaining byte to match the hashed user source.
+    dispatched = b"#pragma STDC FP_CONTRACT OFF\n" + original
     for value, launch in zip(report["events"], execution["launches"]):
         require(event(value) == event(launch), "MSL driver/native timestamp mismatch")
-        require((directory / "msl/evidence" / launch["source_file"]).read_bytes() == original,
-                "MSL dispatched source differs from compiled input")
+        require((directory / "msl/evidence" / launch["source_file"]).read_bytes() == dispatched,
+                "MSL dispatched source differs from numerical-policy prelude plus compiled input")
     return execution
 
 

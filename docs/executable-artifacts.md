@@ -18,7 +18,7 @@ Aliases declared read-only may bind the same allocation to multiple slots. Repea
 
 Declared workgroups must match exactly when provided. Device and compiled-pipeline limits are checked. Shared threadgroup arrays/barriers inside MSL work; the example suite includes 64-lane reduction and a 16x16 tiled transpose. Geometry implements full logical groups, with source bounds checks where required. No CPU kernel fallback exists.
 
-Numerical policy 1 requests Metal3.1 safe math, precise functions and disabled contraction. Explicit source operations preserve MSL semantics; this is not a claim of full CUDA or universal IEEE754 equivalence. The archive preserves actually dispatched MSL. Completion/error/resource retention uses the same engine as native IR and CUDA.
+Numerical policy 1 requests Metal3.1 safe math, precise functions and disabled contraction. Explicit source operations preserve MSL semantics; this is not a claim of full CUDA or universal IEEE754 equivalence. The backend prepends exactly `#pragma STDC FP_CONTRACT OFF` plus a newline to the hashed input source. The archive preserves those actually dispatched bytes and the independent auditor checks the exact prelude plus every original source byte. Completion/error/resource retention uses the same engine as native IR and CUDA.
 
 ## Implemented evidence boundary
 

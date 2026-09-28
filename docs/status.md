@@ -2,7 +2,7 @@
 
 Starting local/remote main: `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`. New actual code implements FP32 arrays and installable modules, a public validated/reflected MSL path, versioned runtime capability/timing queries, conditional/runtime-only builds and structured terminal commands/reports. See [implementation audit](implementation-audit.md), [artifact profile](executable-artifacts.md), [terminal contract](terminal.md), and [complete required program](complete-platform-program.md). The final clean archive is a separate qualification step; original evidence below is unchanged.
 
-Development hardware tests pass on the physical M5: Python arrays20 events; C++ arrays21 including retained output lifetimes; public MSL10 events/13 negatives; terminal58 command cases including a realGPU doctor reference; installed Python3.9.6 and3.14.5 and relocated C++ examples. Gate B caught the moved runtime-log compatibility transcript and passes after preserving that transcript without mixing application streams. Every required portfolio row remains tracked; no full platform or cross-vendor completion is claimed.
+Development hardware tests pass on the physical M5: Python arrays20 events; C++ arrays21 including retained output lifetimes; public MSL10 events/13 negatives; terminal60 command cases including a realGPU doctor reference; installed Python3.9.6 and3.14.5 and relocated C++ examples. Gate B caught the moved runtime-log compatibility transcript and passes after preserving that transcript without mixing application streams. Every required portfolio row remains tracked; no full platform or cross-vendor completion is claimed.
 
 # Status
 
@@ -19,7 +19,7 @@ Evidence: [artifacts/gate-b](../artifacts/gate-b/README.md), including [build/te
 - The four-size benchmark completed 880 launches: ten warmups and one hundred measured iterations per variant/size, alternating order. Every output was independently checked. Full samples separate compilation, transfers, GPU duration and total latency. Counted runtime-owned buffers peaked at 201,326,592 bytes and returned to zero. No speedup threshold was used.
 - A fresh build directory using already-installed dependencies reached its first verified GPU result in 6.698 seconds on this machine; dependency installation and a fresh OS were not measured.
 
-The native C/C++ byte-buffer/context/module API and Python bindings now exist and pass clean physical-M5 qualification. The next bounded gap is the small contiguous FP32 array/operator surface over that runtime; checkpoint evidence is described below. All 17 required frontend/input families and three clients remain tracked in the [portfolio ledger](portfolio-ledger.json). NVIDIA/AMD execution remains unavailable and unqualified.
+The native C/C++ byte-buffer/context/module API and Python bindings now exist and pass clean physical-M5 qualification. The subsequent native-product implementation above adds the contiguous FP32 array/operator surface; historical byte-buffer checkpoint evidence is described below. All 17 required frontend/input families and three clients remain tracked in the [portfolio ledger](portfolio-ledger.json). NVIDIA/AMD execution remains unavailable and unqualified.
 
 The sections below preserve the history of Gate A.
 

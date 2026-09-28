@@ -62,6 +62,15 @@ def capture_cases(source):
         copied = Path(temporary) / "capture"
         shutil.copytree(source, copied)
         Q.audit_capture(copied)
+        recorded = Q.read_json(copied / "qualification.json")["provenance"]
+        source_file = Q.read_json(copied / "msl/evidence/execution.json")["launches"][0]["source_file"]
+        shader = copied / "msl/evidence" / source_file
+        original_shader = shader.read_bytes()
+        for altered in (original_shader.split(b"\n", 1)[1], original_shader + b" ",
+                        original_shader.replace(b"FP_CONTRACT OFF", b"FP_CONTRACT ON", 1)):
+            shader.write_bytes(altered)
+            rejects(lambda: Q.audit_msl(copied, recorded), "different MSL numerical-policy transformation")
+        shader.write_bytes(original_shader)
         library = copied / "snapshot/binaries/libparalyn_native.dylib"
         with library.open("ab") as stream:
             stream.write(b"corruption")

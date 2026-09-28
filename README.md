@@ -42,7 +42,7 @@ build/paralyn run examples/vector_add.cu
 
 `run` compiles and executes trusted local source as a native program, with the same host access as launching that program yourself. It does not sandbox host C++.
 
-Specify `--device auto` (default), `metal:0`, or a listed numeric index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `.paralyn/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
+Specify `--device auto` (default), `metal:0`, or a listed numeric index. Pass host arguments after `--`. Each CUDA run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `.paralyn/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
 
 ## Native C/C++ and Python
 
