@@ -11,8 +11,8 @@ Lane: CLI/qualification (handoff task 4). Written 2026-09-28 on branch `lane/pro
   The GPU executes the kernel through the ordinary native runtime (C ABI 1). Host code only uploads, downloads and compares. There is no CPU fallback.
 - **Strict case schema** (`paralyn.kernel-case`, version 1), parsed with vendored toml++ 3.4.0.
 - **Strict project schema** (`paralyn.project`, version 1) in `paralyn.toml`. It declares modules, cases and single-file programs.
-- **Verification contracts.** A contract names an independent reference and an explicit tolerance. `verify` prints `Verification: PASS` only after it has compared every element of every declared output.
-- **Build revision and dirty state** are captured at build time, not only at configure time. They are embedded in the CLI and the runtime and reported by `doctor`, `run`/`verify`/`check` and every `execution.json`.
+- **Verification contracts.** A contract names an independent reference and an explicit tolerance. `verify` requires a check for every declared output (`P-CASE-VERIFY-UNCOVERED` otherwise, before any GPU work) and prints `Verification: PASS` only after it has compared every element of every declared output.
+- **Build revision and dirty state** are captured at build time, not only at configure time. They are embedded in the CLI and the runtime and reported by `doctor`, by `run`/`verify`/`check`/`inspect`/`explain`/`compile` reports for single-file and kernel-case targets, and by every `execution.json`.
 - **Stretch goal: bounded streaming capture of application stdout/stderr, plus partial reports.**
 
 Single-file programs still need no manifest. `paralyn run examples/vector_add.cu` and the native C/C++/Python programs behave as before. Gate A, Gate B and the product/native terminal tests pass unchanged; the counts are under "Test evidence" below.
@@ -48,8 +48,8 @@ length = 1003
 fill = -65536.0               # explicit initial contents (canary/sentinel value)
 output = true                 # read back and saved; at least one output is required
 
-[[verify]]                    # optional; required by `paralyn verify`
-buffer = "out"                # must be a declared output; at most one check per buffer
+[[verify]]                    # optional for run; verify needs one per output buffer
+buffer = "out"                # must be a declared output; exactly one check per buffer
 reference = { file = "data/vector_add_expected.f32", sha256 = "3246…" }
 tolerance = { kind = "exact" }
 ```
@@ -79,6 +79,8 @@ A reference is exactly one of:
 
   An unknown builtin is `P-REFERENCE-BUILTIN-UNKNOWN`. Output elements that a builtin does not define must keep their declared initial contents, so trailing sentinels are checked too.
 
+  A builtin's shape contract is static, because the case declares every buffer length and scalar value. `count`, `width*height` or the number of `block-sum-f32` groups exceeding a declared buffer, or a negative i32 role, is rejected with `P-REFERENCE-SHAPE` when the case is loaded. This applies to `run`, `check` and `verify` alike, before any module load or GPU dispatch, and leaves no evidence directory.
+
 The tolerance is required and has no default:
 
 - `{ kind = "exact" }` compares identical bit patterns: `-0` ≠ `+0`, and a NaN must match bit for bit.
@@ -87,7 +89,7 @@ The tolerance is required and has no default:
 
 Integer outputs accept only `exact`. The report records per-check compared and mismatch counts, the first 16 mismatches, the maximum absolute error and the maximum ULP distance.
 
-`run` executes and saves outputs but never verifies. Its report has `verification.status = "not_requested"` and `contract_declared` true or false. `verify` fails with `P-REFERENCE-REQUIRED` when the case has no `[[verify]]`. A mismatch exits 1, prints `Verification: FAIL`, and records `P-VERIFY-MISMATCH` with `failure_origin = "verification"`. `check MODULE --case` compiles the module, reflects it and binds the case without submitting GPU work.
+`run` executes and saves outputs but never verifies. Its report has `verification.status = "not_requested"` and `contract_declared` true or false; a contract that covers only some outputs is accepted by `run`. `verify` fails with `P-REFERENCE-REQUIRED` when the case has no `[[verify]]`, and with `P-CASE-VERIFY-UNCOVERED` (listing the buffers) when any `output = true` buffer has no check. Both are raised before any GPU work. A mismatch exits 1, prints `Verification: FAIL`, and records `P-VERIFY-MISMATCH` with `failure_origin = "verification"`. `check MODULE --case` compiles the module, reflects it and binds the case without submitting GPU work.
 
 ## Project file (`paralyn.toml`)
 
@@ -128,30 +130,32 @@ Within a project, a target is selected as follows:
 - With no selector, `project.default` is used.
 - With no selector and no default, the only declared target is used. With several targets it is `P-PROJECT-SELECTION-AMBIGUOUS`, and the message lists the targets.
 
-Other ambiguous combinations fail with `P-TARGET-AMBIGUOUS`: TARGET together with `--project`, and `--manifest` in project mode. `verify` accepts cases only; selecting a program is `P-REFERENCE-REQUIRED`. Names must be unique across cases and programs. All paths resolve relative to the project file. Reports include `project {path, sha256, name, case|program, module}`.
+Other ambiguous combinations fail with `P-TARGET-AMBIGUOUS`: TARGET together with `--project`, and `--manifest` in project mode. Flags that do not apply to the selected target are rejected rather than ignored: `--entry` without a kernel case (complete programs, project programs, or `check MODULE --entry` without `--case`) is `P-CASE-NOT-APPLICABLE`, and `--manifest` on anything but a `.metal` target (`.cu`, `.py`, `.c/.cpp`, `.prx`, `.prk`) is `P-MANIFEST-NOT-APPLICABLE`. `run`/`verify` on a kernel module with `--entry` but no `--case` stays `P-KERNEL-CASE-REQUIRED`. `verify` accepts cases only; selecting a program is `P-REFERENCE-REQUIRED`. Names must be unique across cases and programs. All paths resolve relative to the project file. Reports include `project {path, sha256, name, case|program, module}`.
 
 ## Stable error identifiers
 
 | Id | Meaning |
 |---|---|
 | `P-KERNEL-CASE-REQUIRED` | `run`/`verify` on a kernel module without `--case`. The message gives the exact invocation. |
-| `P-CASE-NOT-APPLICABLE` | `--case` on a complete program. |
+| `P-CASE-NOT-APPLICABLE` | `--case` on a complete program; `--entry` without a kernel case. |
+| `P-MANIFEST-NOT-APPLICABLE` | `--manifest` on a target that is not `.metal`. |
 | `P-CASE-FILE`, `P-CASE-SYNTAX`, `P-CASE-SCHEMA`, `P-CASE-VERSION` | Unreadable file, invalid TOML, wrong schema name, unsupported version. |
 | `P-CASE-UNKNOWN-FIELD`, `P-CASE-MISSING-FIELD`, `P-CASE-TYPE`, `P-CASE-VALUE` | Strict field validation. |
 | `P-CASE-DATA-SOURCE`, `P-CASE-DATA-SIZE`, `P-CASE-DATA-FILE`, `P-CASE-DATA-HASH` | Declared data problems. |
 | `P-CASE-OUTPUT-REQUIRED`, `P-CASE-DUPLICATE-ARGUMENT`, `P-CASE-VERIFY-BUFFER`, `P-CASE-VERIFY-ROLE` | Case structure. |
+| `P-CASE-VERIFY-UNCOVERED` | `verify` on a case whose output buffers do not all have a `[[verify]]` check. |
 | `P-CASE-ENTRY-REQUIRED`, `P-CASE-ENTRY-MISMATCH`, `P-CASE-ENTRY-UNKNOWN` | Entry selection. |
 | `P-CASE-ARGUMENT-MISSING`, `P-CASE-ARGUMENT-UNKNOWN`, `P-CASE-ARGUMENT-TYPE`, `P-CASE-OUTPUT-ACCESS`, `P-CASE-ARGUMENTS` | Binding against reflected parameters; program arguments given to a kernel case. |
 | `P-REFERENCE-REQUIRED`, `P-REFERENCE-BUILTIN-UNKNOWN`, `P-REFERENCE-SHAPE`, `P-VERIFY-MISMATCH` | Verification. |
 | `P-PROJECT-*` (`SYNTAX`, `UNKNOWN-FIELD`, `MISSING-FIELD`, `TYPE`, `VALUE`, `VERSION`, `SCHEMA`, `REFERENCE`, `AMBIGUOUS-NAME`, `EMPTY`, `SELECTION-AMBIGUOUS`, `SELECTION-UNKNOWN`, `ARGUMENTS-AMBIGUOUS`, `REQUIRED`) | Project schema and selection. |
 | `P-TARGET-AMBIGUOUS`, `P-TARGET-REQUIRED` | Target selection. |
-| `P-CAPTURE-LIMIT` | Invalid `PARALYN_CAPTURE_LIMIT_BYTES`. |
+| `P-CAPTURE-LIMIT` | Invalid `PARALYN_CAPTURE_LIMIT_BYTES` for `run PROGRAM`; validated before the evidence directory is created or host code is compiled. |
 
 ## Evidence layout for kernel cases
 
 A new or empty `--artifacts DIR`, or `.paralyn/runs/<id>/` by default, contains:
 
-- `case.toml`: a byte copy of the case.
+- `case.toml`: the exact bytes that were parsed; their SHA256 is `case.sha256` in the report (the file is not re-read).
 - `module.metal.prx`, `module.prx` or `module.prk`: the exact module bytes that were loaded.
 - `outputs/<buffer>.bin`, with its SHA256 recorded in the report.
 - `runtime.log` and `runtime-events.ndjson`, now routed here for the CLI's in-process runtime.
@@ -183,7 +187,7 @@ The header is compiled into:
 `paralyn run PROGRAM` now appends application stdout and stderr to the `application.stdout` and `application.stderr` sidecars while the child runs:
 
 - The files are created with `O_EXCL`, so they are never overwritten.
-- Each stream is limited to 1 GiB, or to the value of `PARALYN_CAPTURE_LIMIT_BYTES`.
+- Each stream is limited to 1 GiB, or to the value of `PARALYN_CAPTURE_LIMIT_BYTES`. An invalid value fails with `P-CAPTURE-LIMIT` before any evidence directory exists.
 - Excess bytes are counted and reported as truncated, in `application.capture` in the report.
 - Only the first 16 MiB per stream stays in memory for the `verification.txt` compatibility transcript, which records any truncation.
 
@@ -191,7 +195,9 @@ A `report.json` with `status: running, partial: true` is written before any appl
 
 ## Test evidence (this branch, Apple M5, macOS 26.5.1, LLVM 21.1.8, Debug build)
 
-`tests/kernel_cases.py` is registered as ctest `kernel_cases` with labels `gpu;cli;cases`. It reports **80 negative checks and 14 GPU events**. Every negative check asserts the exact stable id and that no evidence was created.
+`tests/kernel_cases.py` is registered as ctest `kernel_cases` with labels `gpu;cli;cases`. It reports **95 negative checks and 17 GPU events**. Every negative check asserts the exact stable id and that no evidence was created.
+
+Review fixes (follow-up on this branch) added: `P-CASE-VERIFY-UNCOVERED` with a two-output Metal kernel written by the test; `P-REFERENCE-SHAPE` for `vector-add-f32` (count 8 over 5-element inputs, under `run`, `verify` and `check`) and for `transpose-f32` (width+1); `P-CASE-NOT-APPLICABLE` for `--entry` on a `.cu`, a `.py`, a project program and `check MODULE`; `P-MANIFEST-NOT-APPLICABLE` for `.cu`, `.py`, `inspect .cu`, `.prx` and `.prk`; `P-CAPTURE-LIMIT` asserted by id for a `.py` and a `.cu` program with the `--artifacts` directory absent afterwards. Positive checks added: the evidence `case.toml` hashes to `case.sha256` for every GPU run, and `inspect`/`check` of a `.prx` report `build`.
 
 The GPU events are:
 
@@ -210,6 +216,7 @@ The GPU events are:
   - the same one-ULP difference passes only when `ulp = 1` is declared.
 - **One CUDA program through a project**, whose own comparison prints PASS; the report still says `not_requested`.
 - **One `doctor`** with revision provenance in both the report and `execution.json`.
+- **Three two-output kernel events** (test-local `two_outputs.metal`): `run` with a contract covering only `x` (allowed, not verified); `verify` with both outputs covered and a wrong `y` reference (fails with `P-VERIFY-MISMATCH`, no PASS); `verify` with both outputs covered and correct references (PASS, 8 values across 2 checks, re-audited in Python).
 
 Every verified output is re-read by the test and compared in Python against the shipped reference bytes and an independent recomputation. The test also requires that `execution.json` records exactly one completed launch with the case's grid/block, and that the NDJSON events contain exactly one completed command.
 
@@ -237,7 +244,7 @@ The full serialized `ctest -j1` passes **24 of 24** tests with no skips: the 23 
 
 - **`docs/status.md` / `docs/handoff.md`:** mark handoff task 4 as partly done:
   - done: declarative TOML projects and typed kernel cases; kernel-only execution for public MSL and IR with declared independent verification; missing/malformed case tests; embedded build revision/dirty state in doctor and execution evidence; bounded streaming capture with partial reports on POSIX.
-  - Record the evidence above (80 negative checks, 14 GPU events, 24/24 ctest) as development evidence from a dirty worktree, not as a clean permanent capture.
+  - Record the evidence above (95 negative checks, 17 GPU events, 24/24 ctest) as development evidence from a dirty worktree, not as a clean permanent capture.
   - Next task 4 step: a clean `qualify_product.py`-style capture that runs the shipped cases; recapture installed/runtime-only doctor provenance; then init, completions, NDJSON output and multi-launch cases.
 - **`docs/terminal.md`:** replace "project TOML … remain required future work" and "kernel-case manifests are not yet implemented" with a pointer to this file. State that in-memory capture was replaced by bounded streaming sidecars on POSIX.
 - **`docs/portfolio-ledger.json`:** in the terminal/CLI row, add project/case configuration, kernel-only execution and declared-reference verify as implemented partial capabilities, and keep full terminal UX incomplete. In the Metal-source and native rows, note CLI kernel-case execution as an additional entry point; this is not new frontend coverage.
