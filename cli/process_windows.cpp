@@ -1,16 +1,27 @@
+// Windows process runner. UNBUILT AND UNTESTED: no Windows toolchain or machine
+// was available when this was written; it is kept correct by inspection only
+// and must be compiled and exercised (tests/process_tests.cpp equivalent) on
+// Windows before any Windows support claim. See docs/cuda-backend.md.
 #include "process.hpp"
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+#include <atomic>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 #include <windows.h>
 namespace paralyn::cli {
 namespace {
 std::wstring wide(const std::string &s) {
+  if (s.empty())
+    return {};
   int n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s.data(), static_cast<int>(s.size()),
                               nullptr, 0);
-  if (!n && !s.empty())
+  if (!n)
     throw std::runtime_error("invalid UTF-8 process argument");
   std::wstring w(n, L'\0');
   MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s.data(), static_cast<int>(s.size()), w.data(),
@@ -32,21 +43,72 @@ std::wstring quote(const std::string &s) {
   out.append(2 * slashes, L'\\');
   return out + L'"';
 }
+std::runtime_error failure(const char *what) {
+  return std::runtime_error(std::string(what) + " (Windows error " + std::to_string(GetLastError()) + ")");
+}
 struct Handle {
   HANDLE h = nullptr;
-  ~Handle() {
+  Handle() = default;
+  explicit Handle(HANDLE value) : h(value) {}
+  Handle(const Handle &) = delete;
+  Handle &operator=(const Handle &) = delete;
+  ~Handle() { reset(); }
+  void reset() {
     if (h && h != INVALID_HANDLE_VALUE)
       CloseHandle(h);
+    h = nullptr;
   }
 };
-volatile DWORD active = 0;
+// Environment names are case-insensitive on Windows ("Path" and "PATH" are one
+// variable) and the block must be sorted case-insensitively.
+struct NameLess {
+  bool operator()(const std::wstring &a, const std::wstring &b) const {
+    return CompareStringOrdinal(a.c_str(), static_cast<int>(a.size()), b.c_str(),
+                                static_cast<int>(b.size()), TRUE) == CSTR_LESS_THAN;
+  }
+};
+std::atomic<DWORD> active{0};
 BOOL WINAPI interrupted(DWORD event) {
   if (event != CTRL_C_EVENT && event != CTRL_BREAK_EVENT)
     return FALSE;
-  if (active)
-    GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, active);
+  if (const DWORD pid = active.load())
+    GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid);
   return TRUE;
 }
+struct AttributeList {
+  std::vector<unsigned char> storage;
+  LPPROC_THREAD_ATTRIBUTE_LIST list = nullptr;
+  explicit AttributeList(DWORD count) {
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(nullptr, count, 0, &size);
+    storage.resize(size);
+    list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.data());
+    if (!InitializeProcThreadAttributeList(list, count, 0, &size))
+      throw failure("cannot initialize process attributes");
+  }
+  ~AttributeList() { DeleteProcThreadAttributeList(list); }
+};
+// Unwinding always leaves no running child, no reader thread and no installed
+// console handler, mirroring the POSIX ChildGuard.
+struct ChildGuard {
+  Handle job, process, thread;
+  std::vector<std::thread> readers;
+  bool handler = false, reaped = false;
+  ~ChildGuard() {
+    if (process.h && !reaped) {
+      if (!job.h || !TerminateJobObject(job.h, 1))
+        TerminateProcess(process.h, 1);
+      WaitForSingleObject(process.h, INFINITE);
+    }
+    // Termination closes the child's pipe ends, so readers reach end-of-file.
+    for (auto &reader : readers)
+      if (reader.joinable())
+        reader.join();
+    active.store(0);
+    if (handler)
+      SetConsoleCtrlHandler(interrupted, FALSE);
+  }
+};
 } // namespace
 unsigned long process_id() { return GetCurrentProcessId(); }
 Process execute(const std::vector<std::string> &args, bool live,
@@ -54,25 +116,43 @@ Process execute(const std::vector<std::string> &args, bool live,
   if (args.empty())
     throw std::runtime_error("empty process command");
   SECURITY_ATTRIBUTES security{sizeof(security), nullptr, TRUE};
-  Handle out_read, out_write, err_read, err_write;
+  Handle out_read, out_write, err_read, err_write, input;
   if (!CreatePipe(&out_read.h, &out_write.h, &security, 0) ||
       !CreatePipe(&err_read.h, &err_write.h, &security, 0))
-    throw std::runtime_error("cannot create child output pipes");
-  SetHandleInformation(out_read.h, HANDLE_FLAG_INHERIT, 0);
-  SetHandleInformation(err_read.h, HANDLE_FLAG_INHERIT, 0);
-  std::map<std::wstring, std::wstring> vars;
-  auto inherited = GetEnvironmentStringsW();
-  if (!inherited)
-    throw std::runtime_error("cannot read process environment");
-  for (auto p = inherited; *p; p += wcslen(p) + 1) {
-    std::wstring entry = p;
-    auto i = entry.find(L'=', entry[0] == L'=' ? 1 : 0);
-    if (i != std::wstring::npos)
-      vars[entry.substr(0, i)] = entry.substr(i + 1);
+    throw failure("cannot create child output pipes");
+  if (!SetHandleInformation(out_read.h, HANDLE_FLAG_INHERIT, 0) ||
+      !SetHandleInformation(err_read.h, HANDLE_FLAG_INHERIT, 0))
+    throw failure("cannot restrict pipe inheritance");
+  // Give the child an explicitly inheritable duplicate of our stdin, or NUL.
+  const HANDLE parent_input = GetStdHandle(STD_INPUT_HANDLE);
+  if (!parent_input || parent_input == INVALID_HANDLE_VALUE ||
+      !DuplicateHandle(GetCurrentProcess(), parent_input, GetCurrentProcess(), &input.h, 0, TRUE,
+                       DUPLICATE_SAME_ACCESS)) {
+    input.h = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &security,
+                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (input.h == INVALID_HANDLE_VALUE) {
+      input.h = nullptr;
+      throw failure("cannot open NUL for child input");
+    }
   }
-  FreeEnvironmentStringsW(inherited);
-  for (const auto &item : env)
-    vars[wide(item.first)] = wide(item.second);
+  std::map<std::wstring, std::wstring, NameLess> vars;
+  {
+    std::unique_ptr<wchar_t, decltype(&FreeEnvironmentStringsW)> inherited(GetEnvironmentStringsW(),
+                                                                         &FreeEnvironmentStringsW);
+    if (!inherited)
+      throw failure("cannot read process environment");
+    for (auto p = inherited.get(); *p; p += wcslen(p) + 1) {
+      std::wstring entry = p;
+      auto i = entry.find(L'=', entry[0] == L'=' ? 1 : 0);
+      if (i != std::wstring::npos)
+        vars[entry.substr(0, i)] = entry.substr(i + 1);
+    }
+  }
+  for (const auto &item : env) {
+    const auto name = wide(item.first);
+    vars.erase(name); // replace any differently cased spelling
+    vars[name] = wide(item.second);
+  }
   std::wstring environment;
   for (const auto &item : vars) {
     environment += item.first + L"=" + item.second;
@@ -85,55 +165,77 @@ Process execute(const std::vector<std::string> &args, bool live,
       command += L' ';
     command += quote(arg);
   }
-  STARTUPINFOW startup{};
-  startup.cb = sizeof(startup);
-  startup.dwFlags = STARTF_USESTDHANDLES;
-  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  startup.hStdOutput = out_write.h;
-  startup.hStdError = err_write.h;
+  if (command.size() >= 32767)
+    throw std::runtime_error("command line exceeds the Windows 32767-character limit");
+  // Inherit exactly the three standard handles, never unrelated inheritable handles.
+  HANDLE inherit[] = {input.h, out_write.h, err_write.h};
+  AttributeList attributes(1);
+  if (!UpdateProcThreadAttribute(attributes.list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherit,
+                                 sizeof(inherit), nullptr, nullptr))
+    throw failure("cannot restrict inherited handles");
+  STARTUPINFOEXW startup{};
+  startup.StartupInfo.cb = sizeof(startup);
+  startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+  startup.StartupInfo.hStdInput = input.h;
+  startup.StartupInfo.hStdOutput = out_write.h;
+  startup.StartupInfo.hStdError = err_write.h;
+  startup.lpAttributeList = attributes.list;
+  ChildGuard guard;
+  // A job lets an unwinding caller terminate the child's whole process tree.
+  guard.job.h = CreateJobObjectW(nullptr, nullptr);
   PROCESS_INFORMATION process{};
   if (!CreateProcessW(nullptr, command.data(), nullptr, nullptr, TRUE,
-                      CREATE_NEW_PROCESS_GROUP | CREATE_UNICODE_ENVIRONMENT, environment.data(),
-                      nullptr, &startup, &process))
-    throw std::runtime_error("cannot start program (Windows error " +
-                             std::to_string(GetLastError()) + ")");
-  Handle process_handle{process.hProcess}, thread_handle{process.hThread};
-  CloseHandle(out_write.h);
-  out_write.h = nullptr;
-  CloseHandle(err_write.h);
-  err_write.h = nullptr;
-  active = process.dwProcessId;
-  SetConsoleCtrlHandler(interrupted, TRUE);
+                      CREATE_NEW_PROCESS_GROUP | CREATE_UNICODE_ENVIRONMENT | CREATE_SUSPENDED |
+                          EXTENDED_STARTUPINFO_PRESENT,
+                      environment.data(), nullptr, &startup.StartupInfo, &process))
+    throw failure("cannot start program");
+  guard.process.h = process.hProcess;
+  guard.thread.h = process.hThread;
+  if (guard.job.h && !AssignProcessToJobObject(guard.job.h, process.hProcess))
+    guard.job.reset(); // e.g. restricted nesting: fall back to TerminateProcess on unwind
+  // The child owns its copies; our write ends must close for readers to see EOF.
+  out_write.reset();
+  err_write.reset();
+  input.reset();
+  active.store(process.dwProcessId);
+  guard.handler = SetConsoleCtrlHandler(interrupted, TRUE) != FALSE;
   Process result;
   DWORD read_errors[2]{};
   auto reader = [&](HANDLE handle, std::string &target, std::ostream &output, unsigned index) {
-    char buffer[8192];
-    DWORD n = 0;
-    while (ReadFile(handle, buffer, sizeof(buffer), &n, nullptr) && n) {
-      target.append(buffer, n);
-      if (live) {
-        output.write(buffer, n);
-        output.flush();
+    try {
+      char buffer[8192];
+      DWORD n = 0;
+      while (ReadFile(handle, buffer, sizeof(buffer), &n, nullptr) && n) {
+        target.append(buffer, n);
+        if (live) {
+          output.write(buffer, n);
+          output.flush();
+        }
       }
+      auto e = GetLastError();
+      if (e != ERROR_BROKEN_PIPE && e != ERROR_SUCCESS)
+        read_errors[index] = e;
+    } catch (...) {
+      read_errors[index] = ERROR_NOT_ENOUGH_MEMORY; // never let an exception escape a thread
     }
-    auto e = GetLastError();
-    if (e != ERROR_BROKEN_PIPE && e != ERROR_SUCCESS)
-      read_errors[index] = e;
   };
-  std::thread a(reader, out_read.h, std::ref(result.out), std::ref(std::cout), 0);
-  std::thread b(reader, err_read.h, std::ref(result.err), std::ref(std::cerr), 1);
-  WaitForSingleObject(process_handle.h, INFINITE);
-  a.join();
-  b.join();
-  active = 0;
-  SetConsoleCtrlHandler(interrupted, FALSE);
+  guard.readers.reserve(2);
+  guard.readers.emplace_back(reader, out_read.h, std::ref(result.out), std::ref(std::cout), 0);
+  guard.readers.emplace_back(reader, err_read.h, std::ref(result.err), std::ref(std::cerr), 1);
+  if (ResumeThread(process.hThread) == static_cast<DWORD>(-1))
+    throw failure("cannot resume program");
+  if (WaitForSingleObject(guard.process.h, INFINITE) != WAIT_OBJECT_0)
+    throw failure("cannot wait for program");
+  guard.reaped = true;
+  for (auto &thread : guard.readers)
+    thread.join();
   DWORD code = 0;
-  if (!GetExitCodeProcess(process_handle.h, &code))
-    throw std::runtime_error("cannot read program exit status");
+  if (!GetExitCodeProcess(guard.process.h, &code))
+    throw failure("cannot read program exit status");
   if (read_errors[0] || read_errors[1])
     throw std::runtime_error("cannot read program output");
   result.status = static_cast<int>(code);
-  result.interrupted = code == 0xC000013A;
+  result.interrupted = code == 0xC000013A; // STATUS_CONTROL_C_EXIT
   return result;
 }
 } // namespace paralyn::cli

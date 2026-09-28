@@ -13,6 +13,7 @@ from enum import IntEnum
 import math
 import os
 from pathlib import Path
+import sys
 
 __version__ = "0.0.1"
 ABI_VERSION = 1
@@ -155,6 +156,9 @@ class _Library:
 
 
 _libraries = {}
+# Platform file name of the native C ABI library (see cli/platform.hpp).
+_NATIVE_NAME = {"win32": "paralyn_native.dll", "darwin": "libparalyn_native.dylib"}.get(
+    sys.platform, "libparalyn_native.so")
 
 
 def _library(path=None):
@@ -162,19 +166,19 @@ def _library(path=None):
         path = os.environ.get("PARALYN_LIBRARY")
     if path is None:
         package = Path(__file__).resolve().parent
-        bundled = package / "_native" / "libparalyn_native.dylib"
+        bundled = package / "_native" / _NATIVE_NAME
         checkout = package.parents[2]
         if bundled.is_file():
             path = bundled
         elif (checkout / "CMakeLists.txt").is_file():
-            path = checkout / "build" / "libparalyn_native.dylib"
+            path = checkout / "build" / _NATIVE_NAME
         else:
             raise FileNotFoundError("Paralyn's installed native library is missing; reinstall the "
                                     "platform wheel or set PARALYN_LIBRARY explicitly")
     path = str(Path(path).resolve())
     if path not in _libraries:
         if not Path(path).is_file():
-            raise FileNotFoundError("Build libparalyn_native.dylib and set PARALYN_LIBRARY "
+            raise FileNotFoundError(f"Build {_NATIVE_NAME} and set PARALYN_LIBRARY "
                                     f"to its path (looked for {path})")
         _libraries[path] = _Library(path)
     return _libraries[path]

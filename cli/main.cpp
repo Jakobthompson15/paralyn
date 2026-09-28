@@ -4,6 +4,7 @@
 #if PARALYN_HAS_COMPILER
 #include "paralyn/frontend.hpp"
 #endif
+#include "platform.hpp"
 #include "process.hpp"
 #include <chrono>
 #include <cli11/CLI11.hpp>
@@ -21,7 +22,9 @@
 #include <mach-o/dyld.h>
 #endif
 #ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -120,9 +123,14 @@ fs::path includes() {
   auto path = prefix / "include";
   return fs::exists(path / "paralyn/native.h") ? path : fs::path(PARALYN_INCLUDE_DIR);
 }
-fs::path library(const char *name, const char *fallback) {
-  auto p = prefix / "lib" / name;
-  return fs::exists(p) ? p : fs::path(fallback);
+fs::path library(const std::string &name, const char *fallback) {
+  // Installed layout: shared/import/static libraries in lib/; Windows DLLs in bin/.
+  for (const char *dir : {"lib", "bin"}) {
+    auto p = prefix / dir / name;
+    if (fs::exists(p))
+      return p;
+  }
+  return fs::path(fallback);
 }
 std::string run_id() {
   return std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -612,7 +620,12 @@ int source_command(const Options &options) {
   try {
     if (extension == ".py") {
       const char *python = std::getenv("PARALYN_PYTHON");
-      command = {python ? python : "python3", source.string()};
+#ifdef _WIN32
+      const char *default_python = "python"; // python.org/Store installs; py launcher is optional
+#else
+      const char *default_python = "python3";
+#endif
+      command = {python ? python : default_python, source.string()};
     } else {
       auto input = source;
       if (!native) {
@@ -620,31 +633,37 @@ int source_command(const Options &options) {
         write(artifact / "paralyn-ir.txt", ir);
         input = artifact / "host.cpp";
       }
-      auto program = artifact / "program";
-      std::vector<std::string> compile{extension == ".c" ? PARALYN_HOST_CC : PARALYN_HOST_CXX,
-                                       extension == ".c" ? "-std=c11" : "-std=c++17",
-                                       "-O0",
-                                       "-g",
-                                       "-fno-fast-math",
-                                       "-ffp-contract=off",
-                                       "-I",
-                                       includes().string(),
-                                       "-iquote",
-                                       source.parent_path().string(),
-                                       input.string()};
+      namespace platform = paralyn::cli::platform;
+      auto program = artifact / (std::string("program") + platform::executable_suffix);
+      platform::HostCompile host;
+      host.c_language = extension == ".c";
+      host.compiler = host.c_language ? PARALYN_HOST_CC : PARALYN_HOST_CXX;
+      host.style = platform::compiler_style(PARALYN_HOST_CXX_VARIANT, PARALYN_HOST_CXX_ID);
+      host.include_dir = includes().string();
+      host.quote_dir = source.parent_path().string();
+      host.input = input.string();
+      host.output = program.string();
+      host.object_dir = artifact.string();
       if (native) {
-        auto lib = library("libparalyn_native.dylib", PARALYN_NATIVE_LIBRARY);
-        compile.push_back(lib.string());
-        compile.push_back("-Wl,-rpath," + lib.parent_path().string());
+        // Link the import library on Windows; the DLL is found at run time via PATH.
+        auto lib = library(platform::native_link_library, PARALYN_NATIVE_LINK_LIBRARY);
+        host.link_inputs.push_back(lib.string());
+        host.runtime_dirs.push_back(
+            library(platform::native_library, PARALYN_NATIVE_LIBRARY).parent_path().string());
       } else {
-        compile.push_back(library("libparalyn_runtime.a", PARALYN_RUNTIME_ARCHIVE).string());
-        compile.push_back(library("libparalyn_ir.a", PARALYN_IR_ARCHIVE).string());
+        host.link_inputs.push_back(
+            library(platform::static_library("paralyn_runtime"), PARALYN_RUNTIME_ARCHIVE).string());
+        host.link_inputs.push_back(
+            library(platform::static_library("paralyn_ir"), PARALYN_IR_ARCHIVE).string());
+#if !defined(_WIN32) && !defined(__APPLE__)
+        host.extra.push_back("-ldl"); // runtime dynamically loads the CUDA driver/NVRTC
+#endif
       }
 #if PARALYN_HAS_METAL
-      compile.insert(compile.end(), {"-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
-                                     "-framework", "Metal", "-framework", "Foundation"});
+      host.extra.insert(host.extra.end(), {"-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
+                                           "-framework", "Metal", "-framework", "Foundation"});
 #endif
-      compile.insert(compile.end(), {"-o", program.string()});
+      auto compile = platform::host_compile_command(host);
       auto compiled = execute(compile);
       write(artifact / "compiler.stdout", compiled.out);
       write(artifact / "compiler.stderr", compiled.err);
@@ -685,12 +704,20 @@ int source_command(const Options &options) {
       installed_python = fs::path(PARALYN_SOURCE_DIR) / "bindings/python";
     if (fs::exists(installed_python / "paralyn")) {
       const char *old = std::getenv("PYTHONPATH");
-      environment.emplace_back("PYTHONPATH",
-                               installed_python.string() + (old ? std::string(":") + old : ""));
+      environment.emplace_back("PYTHONPATH", paralyn::cli::platform::prepend_path_list(
+                                                 installed_python.string(), old));
     }
+    const auto native_library =
+        library(paralyn::cli::platform::native_library, PARALYN_NATIVE_LIBRARY);
     if (native && !std::getenv("PARALYN_LIBRARY"))
-      environment.emplace_back("PARALYN_LIBRARY",
-                               library("libparalyn_native.dylib", PARALYN_NATIVE_LIBRARY).string());
+      environment.emplace_back("PARALYN_LIBRARY", native_library.string());
+#ifdef _WIN32
+    // Windows has no rpath: make the native DLL's directory visible to the child.
+    if (native)
+      environment.emplace_back("PATH", paralyn::cli::platform::prepend_path_list(
+                                           native_library.parent_path().string(),
+                                           std::getenv("PATH")));
+#endif
     if (native && !std::getenv("PARALYN_OPERATORS")) {
       auto operators = prefix / "share/paralyn/operators.prk";
       if (!fs::exists(operators))
