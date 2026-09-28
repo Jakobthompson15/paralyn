@@ -434,6 +434,21 @@ Json describe(const paralyn::FrontendResult &frontend) {
 }
 #endif
 std::string revision() { return PARALYN_EMBEDDED_REVISION; }
+// Per-stream application capture bound: 1 GiB unless PARALYN_CAPTURE_LIMIT_BYTES
+// supplies a decimal byte count. Excess output is counted and reported as truncated.
+std::uint64_t capture_file_limit() {
+  const char *text = std::getenv("PARALYN_CAPTURE_LIMIT_BYTES");
+  if (!text || !*text)
+    return std::uint64_t(1) << 30;
+  std::uint64_t value = 0;
+  for (const char *p = text; *p; ++p) {
+    if (*p < '0' || *p > '9' || value > (UINT64_MAX - 9) / 10)
+      throw Diagnostic("P-CAPTURE-LIMIT", "input",
+                       "PARALYN_CAPTURE_LIMIT_BYTES must be a decimal byte count");
+    value = value * 10 + std::uint64_t(*p - '0');
+  }
+  return value;
+}
 std::string bytes_file(const std::vector<std::uint32_t> &words) {
   std::string out(words.size() * 4, '\0');
   for (std::size_t i = 0; i < words.size(); ++i)
@@ -1052,14 +1067,42 @@ int source_command(const Options &options) {
                              "run does not verify results",
                              "Native applications may explicitly select a different context; "
                              "runtime events identify observed work"};
-    auto executed = execute(command, !options.json, environment);
-    write(artifact / "application.stdout", executed.out);
-    write(artifact / "application.stderr", executed.err);
+    // Application streams go to bounded sidecars while the child runs; only a
+    // bounded prefix stays in memory for the compatibility transcript.
+    paralyn::cli::Capture capture;
+    capture.stdout_path = (artifact / "application.stdout").string();
+    capture.stderr_path = (artifact / "application.stderr").string();
+    capture.file_limit = capture_file_limit();
+    capture.memory_limit = 16 * 1024 * 1024;
+    // A partial report exists before arbitrary application code runs, so an
+    // abnormal CLI termination still leaves the run's identity and inputs.
+    {
+      auto partial = result;
+      partial["status"] = "running";
+      partial["partial"] = true;
+      write(artifact / "report.json", partial.dump(2) + "\n");
+    }
+    auto executed = execute(command, !options.json, environment, capture);
+    result["application"]["capture"] = {
+        {"streamed", executed.streamed},
+        {"file_limit_bytes", capture.file_limit},
+        {"stdout_bytes", executed.out_bytes},
+        {"stdout_persisted_bytes", executed.out_persisted},
+        {"stdout_truncated", executed.out_file_truncated},
+        {"stderr_bytes", executed.err_bytes},
+        {"stderr_persisted_bytes", executed.err_persisted},
+        {"stderr_truncated", executed.err_file_truncated}};
     const auto runtime_transcript =
         fs::exists(artifact / "runtime.log") ? read(artifact / "runtime.log") : "";
+    std::string transcript_note;
+    if (executed.out_memory_truncated || executed.err_memory_truncated)
+      transcript_note = "\n[transcript retains the first " +
+                        std::to_string(capture.memory_limit) +
+                        " bytes per stream; see application.stdout/application.stderr]\n";
     write(artifact / "verification.txt",
-          executed.out + executed.err + "\nRuntime progress:\n" + runtime_transcript +
-              "\nHost exit status: " + std::to_string(executed.status) + "\n");
+          executed.out + executed.err + transcript_note + "\nRuntime progress:\n" +
+              runtime_transcript + "\nHost exit status: " + std::to_string(executed.status) +
+              "\n");
     result["application"]["exit_code"] = executed.status;
     result["application"]["interrupted"] = executed.interrupted;
     if (executed.interrupted)

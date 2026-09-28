@@ -348,6 +348,36 @@ class Suite:
         assert value["build"]["revision"] == value["source_revision"]
         self.gpu_events += 1
 
+    def bounded_capture(self):
+        """Program streams are bounded sidecars; a partial report exists while the app runs."""
+        app = self.work / "noisy.py"
+        app.write_text(
+            "import json, os, pathlib, sys\n"
+            "report = pathlib.Path(os.environ['PARALYN_ARTIFACT_DIR']).parent / 'report.json'\n"
+            "state = json.loads(report.read_text())\n"
+            "sys.stderr.write('partial=%s status=%s\\n' % (state['partial'], state['status']))\n"
+            "sys.stdout.write('x' * 5000)\n"
+            "sys.exit(3)\n")
+        destination = self.artifacts()
+        environment = dict(self.environment, PARALYN_CAPTURE_LIMIT_BYTES="1000",
+                           PARALYN_PYTHON=sys.executable)
+        result = subprocess.run([str(self.paralyn), "run", str(app), "--json", "--artifacts", str(destination)],
+                                cwd=self.work, env=environment, text=True, capture_output=True, timeout=60)
+        assert result.returncode == 3, (result.stdout, result.stderr)
+        value = json.loads(result.stdout)
+        capture = value["application"]["capture"]
+        assert capture["streamed"] and capture["stdout_bytes"] == 5000 and capture["stdout_persisted_bytes"] == 1000
+        assert capture["stdout_truncated"] and not capture["stderr_truncated"], capture
+        assert (destination / "application.stdout").read_bytes() == b"x" * 1000
+        assert (destination / "application.stderr").read_text() == "partial=True status=running\n"
+        final = json.loads((destination / "report.json").read_text())
+        assert final["status"] == "failed" and "partial" not in final and final["exit_code"] == 3
+        environment["PARALYN_CAPTURE_LIMIT_BYTES"] = "12x"
+        bad = subprocess.run([str(self.paralyn), "run", str(app), "--json", "--artifacts", str(self.artifacts())],
+                             cwd=self.work, env=environment, text=True, capture_output=True, timeout=60)
+        assert bad.returncode == 1 and "PARALYN_CAPTURE_LIMIT_BYTES" in json.loads(bad.stdout)["diagnostic"]["message"]
+        self.negative += 1
+
     def doctor_provenance(self):
         value = self.json("doctor", "--device", "metal:0", "--artifacts", self.artifacts())
         assert re.fullmatch(r"[0-9a-f]{40}", value["build"]["revision"]) and type(value["build_dirty"]) is bool
@@ -377,6 +407,7 @@ def main():
         suite.run_is_not_verify()
         suite.detects_mismatch()
         suite.program_through_project()
+        suite.bounded_capture()
         suite.doctor_provenance()
         print(json.dumps({"negative_checks": suite.negative, "gpu_events": suite.gpu_events}))
 

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <iostream>
 #include <stdexcept>
 #include <streambuf>
@@ -74,6 +75,45 @@ int main(int argc, char **argv) {
     const auto streamed = execute({self, "--streams"});
     check(streamed.status == 0 && streamed.out == pattern(0) && streamed.err == pattern(1),
           "Simultaneous binary stdout/stderr were lost, mixed or deadlocked");
+    {
+      // Bounded streaming sidecars: exact prefixes on disk, counted excess, bounded memory.
+      const auto root = std::filesystem::temp_directory_path() / ("paralyn-capture-" + std::to_string(getpid()));
+      std::filesystem::create_directory(root);
+      auto slurp = [](const std::filesystem::path &p) {
+        std::ifstream f(p, std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(f), {});
+      };
+      paralyn::cli::Capture bounded;
+      bounded.stdout_path = (root / "bounded.stdout").string();
+      bounded.stderr_path = (root / "bounded.stderr").string();
+      bounded.file_limit = 300000;
+      bounded.memory_limit = 1000;
+      const auto limited = execute({self, "--streams"}, false, {}, bounded);
+      check(limited.status == 0 && limited.streamed && limited.out_bytes == pattern(0).size() &&
+                limited.err_bytes == pattern(1).size(), "Capture byte counts are wrong");
+      check(limited.out_persisted == 300000 && limited.err_persisted == 300000 &&
+                limited.out_file_truncated && limited.err_file_truncated,
+            "Capture file limit was not enforced or reported");
+      check(slurp(bounded.stdout_path) == pattern(0).substr(0, 300000) &&
+                slurp(bounded.stderr_path) == pattern(1).substr(0, 300000),
+            "Capture sidecars do not hold the exact stream prefixes");
+      check(limited.out == pattern(0).substr(0, 1000) && limited.err == pattern(1).substr(0, 1000) &&
+                limited.out_memory_truncated && limited.err_memory_truncated,
+            "Capture memory limit was not enforced or reported");
+      paralyn::cli::Capture full;
+      full.stdout_path = (root / "full.stdout").string();
+      full.stderr_path = (root / "full.stderr").string();
+      const auto complete = execute({self, "--streams"}, false, {}, full);
+      check(complete.out == pattern(0) && slurp(full.stdout_path) == pattern(0) &&
+                slurp(full.stderr_path) == pattern(1) && !complete.out_file_truncated &&
+                !complete.out_memory_truncated, "Unbounded capture lost data");
+      const auto count = descriptor_count();
+      bool refused = false;
+      try { execute({self, "--streams"}, false, {}, full); } catch (const std::exception &) { refused = true; }
+      check(refused && slurp(full.stdout_path) == pattern(0), "Capture overwrote an existing sidecar");
+      check(descriptor_count() == count, "Refused capture leaked descriptors");
+      std::filesystem::remove_all(root);
+    }
     const std::vector<std::string> exact{"", "white space", "quote\"backslash\\", "line\nbreak", "Unicode Δ 🍎", "--not-an-option"};
     std::vector<std::string> command{self, "--arguments"}; command.insert(command.end(), exact.begin(), exact.end());
     const std::string environment = "environment = Unicode Δ\nquote\"";
