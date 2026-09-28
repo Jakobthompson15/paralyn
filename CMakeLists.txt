@@ -234,3 +234,42 @@ if(BUILD_TESTING AND PARALYN_ENABLE_METAL AND PARALYN_BUILD_COMPILER)
   add_test(NAME native_cli_arrays COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/native/cli_arrays.py --paralyn $<TARGET_FILE:paralyn>)
   set_tests_properties(native_cli_arrays PROPERTIES LABELS "gpu;arrays;cli" TIMEOUT 180)
 endif()
+if(PARALYN_ENABLE_SPIRV)
+  # Hand-written SPIR-V assembly fixtures, assembled and validated at build time
+  # by the pinned spirv-as/spirv-val (Vulkan 1.1 target environment).
+  set(PARALYN_SPIRV_FIXTURES "${PROJECT_BINARY_DIR}/spirv-fixtures")
+  set(_spirv_fixture_outputs "")
+  foreach(name vector_add reduce_sum)
+    add_custom_command(OUTPUT ${PARALYN_SPIRV_FIXTURES}/${name}.spv
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${PARALYN_SPIRV_FIXTURES}
+      COMMAND ${PARALYN_SPIRV_AS} --target-env vulkan1.1 ${PROJECT_SOURCE_DIR}/examples/spirv/${name}.spvasm -o ${PARALYN_SPIRV_FIXTURES}/${name}.spv
+      COMMAND ${PARALYN_SPIRV_VAL} --target-env vulkan1.1 ${PARALYN_SPIRV_FIXTURES}/${name}.spv
+      DEPENDS paralyn_spirv_tools_build ${PARALYN_SPIRV_AS} ${PROJECT_SOURCE_DIR}/examples/spirv/${name}.spvasm
+      COMMENT "Assembling ${name}.spvasm with the pinned spirv-as")
+    list(APPEND _spirv_fixture_outputs ${PARALYN_SPIRV_FIXTURES}/${name}.spv)
+  endforeach()
+  add_custom_target(spirv_fixtures ALL DEPENDS ${_spirv_fixture_outputs})
+  if(BUILD_TESTING)
+    add_executable(spirv_importer_tests tests/spirv/importer_tests.cpp)
+    target_link_libraries(spirv_importer_tests PRIVATE paralyn_spirv)
+    add_dependencies(spirv_importer_tests spirv_fixtures)
+    add_test(NAME spirv_importer COMMAND spirv_importer_tests ${PROJECT_SOURCE_DIR}/examples/spirv
+      ${PROJECT_SOURCE_DIR}/tests/spirv/negative ${PARALYN_SPIRV_FIXTURES})
+    set_tests_properties(spirv_importer PROPERTIES LABELS "spirv" TIMEOUT 60)
+    if(PARALYN_ENABLE_METAL)
+      find_package(Python3 REQUIRED COMPONENTS Interpreter)
+      set(_spirv_runner ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/spirv/run_spirv.py
+        --paralyn $<TARGET_FILE:paralyn> --examples ${PROJECT_SOURCE_DIR}/examples/spirv
+        --negative ${PROJECT_SOURCE_DIR}/tests/spirv/negative --assembled ${PARALYN_SPIRV_FIXTURES})
+      add_test(NAME spirv_cli COMMAND ${_spirv_runner} --mode cli)
+      set_tests_properties(spirv_cli PROPERTIES LABELS "gpu;spirv;cli" TIMEOUT 120)
+      add_executable(spirv_metal_tests tests/spirv/metal_tests.cpp)
+      target_link_libraries(spirv_metal_tests PRIVATE paralyn_native paralyn_ir)
+      target_compile_options(spirv_metal_tests PRIVATE -fno-fast-math -ffp-contract=off)
+      add_dependencies(spirv_metal_tests spirv_fixtures)
+      add_test(NAME spirv_metal COMMAND ${_spirv_runner} --mode gpu --driver $<TARGET_FILE:spirv_metal_tests>
+        --library $<TARGET_FILE:paralyn_native> --python-path ${PROJECT_SOURCE_DIR}/bindings/python)
+      set_tests_properties(spirv_metal PROPERTIES LABELS "gpu;spirv" TIMEOUT 180)
+    endif()
+  endif()
+endif()

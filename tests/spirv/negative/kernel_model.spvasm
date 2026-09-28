@@ -1,0 +1,25 @@
+; Negative fixture: an OpenCL-style Kernel-execution-model vector add
+; (Physical64 addressing, OpenCL memory model, CrossWorkgroup pointers).
+; Kernel SPIR-V is a distinct profile; Paralyn must reject it explicitly and
+; never reinterpret it as Vulkan GLCompute. Expected: spirv.kernel-model /
+; P-SPIRV-KERNEL-MODEL.
+               OpCapability Addresses
+               OpCapability Kernel
+          %ocl = OpExtInstImport "OpenCL.std"
+               OpMemoryModel Physical64 OpenCL
+               OpEntryPoint Kernel %main "vector_add"
+       %void = OpTypeVoid
+      %float = OpTypeFloat 32
+        %ptr = OpTypePointer CrossWorkgroup %float
+       %func = OpTypeFunction %void %ptr %ptr %ptr
+       %main = OpFunction %void None %func
+          %a = OpFunctionParameter %ptr
+          %b = OpFunctionParameter %ptr
+          %c = OpFunctionParameter %ptr
+      %entry = OpLabel
+         %av = OpLoad %float %a
+         %bv = OpLoad %float %b
+        %sum = OpFAdd %float %av %bv
+               OpStore %c %sum
+               OpReturn
+               OpFunctionEnd
