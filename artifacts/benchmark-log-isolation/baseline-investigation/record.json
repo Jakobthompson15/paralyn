@@ -1,0 +1,52 @@
+{
+  "scope": "Investigate changed small-workload measurements against baseline on the same machine today; not replacement of immutable captures",
+  "steps": [
+    {
+      "name": "baseline-configure",
+      "command": [
+        "cmake",
+        "-S",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "exit_code": 0,
+      "seconds": 1.588111542
+    },
+    {
+      "name": "baseline-build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build",
+        "--target",
+        "gate_b_benchmark",
+        "paralyn",
+        "-j4"
+      ],
+      "exit_code": 0,
+      "seconds": 4.955052042
+    },
+    {
+      "name": "baseline-benchmark",
+      "command": [
+        "/opt/homebrew/bin/python3.14",
+        "scripts/verify_benchmark.py",
+        "--benchmark",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build/gate_b_benchmark",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build/paralyn",
+        "--source",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/perf-investigation-87978b1/baseline",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "seconds": 4.94870525
+    }
+  ]
+}

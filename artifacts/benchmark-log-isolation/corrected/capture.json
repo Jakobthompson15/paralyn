@@ -1,0 +1,22 @@
+{
+  "benchmark_sha256": "18082c100364442433f44da9d4016acd5c6f7ba33b13f7bfa0935637d1139e71",
+  "paralyn_sha256": "923cd9987c4873daacfaaa70b535a84c6b629c4b0b1a04071eb5602330eae06b",
+  "source_sha256": "ef38c75684722b775b6fc351ca1b955e3c2eb12522153487ea64708040a9b0c7",
+  "status": "verified",
+  "command": [
+    "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/benchmark-e465e74/gate_b_benchmark",
+    "--source",
+    "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/examples/vector_add.cu",
+    "--artifacts",
+    "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/benchmark-isolation-e465e74/corrected"
+  ],
+  "paralyn_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+  "paralyn_commit": "e465e747d2c17eff8c503d8fa658a87cc33462be",
+  "paralyn_dirty": false,
+  "device": "Apple M5",
+  "started_utc": "2026-09-28T21:55:50.687988+00:00",
+  "finished_utc": "2026-09-28T21:55:58.720879+00:00",
+  "benchmark_exit_status": 0,
+  "cpu_fallback": false,
+  "audit": "880 rows, pairing/order, all sources, numerical policy, real command status/timestamps, buffer release and CPU comparison reports checked"
+}

@@ -1,0 +1,9 @@
+{
+  "snapshot/sources/benchmarks/gate_b_benchmark.cpp": "8fc7cd931e6112db3589626371755f64337357d4f04b042602981555acbbc861",
+  "snapshot/sources/benchmarks/README.md": "7d85d9f864b8da1f30ca4ab236ebf33e1a156e3eef79645866793b9e5449c04c",
+  "snapshot/sources/scripts/verify_benchmark.py": "700ee20434d68db51d5ac151273cbb09a90ebc9d09023f8d1b387bc8c84344b1",
+  "snapshot/build/gate_b_benchmark": "18082c100364442433f44da9d4016acd5c6f7ba33b13f7bfa0935637d1139e71",
+  "snapshot/build/paralyn": "923cd9987c4873daacfaaa70b535a84c6b629c4b0b1a04071eb5602330eae06b",
+  "snapshot/build/CMakeCache.txt": "eee8435962713887b11ba61855f7a6ac547bbfb8ea7d313a502cb454b61ba249",
+  "snapshot/build/build.ninja": "c9fbe9c81990d7565d2a580c9233bcd0a75f8e43dd6602a98bd05408fc9fc3e2"
+}

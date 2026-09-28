@@ -1,0 +1,77 @@
+{
+  "source_revision": "e465e747d2c17eff8c503d8fa658a87cc33462be",
+  "source_dirty_at_start": false,
+  "steps": [
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/benchmark-e465e74",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "cwd": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+      "exit_code": 0,
+      "seconds": 2.501761292
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/benchmark-e465e74",
+        "--target",
+        "gate_b_benchmark",
+        "paralyn",
+        "-j4"
+      ],
+      "cwd": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+      "exit_code": 0,
+      "seconds": 7.25109775
+    },
+    {
+      "name": "corrected",
+      "command": [
+        "/opt/homebrew/bin/python3.14",
+        "scripts/verify_benchmark.py",
+        "--benchmark",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/benchmark-e465e74/gate_b_benchmark",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/benchmark-e465e74/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/benchmark-isolation-e465e74/corrected",
+        "--require-clean"
+      ],
+      "cwd": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+      "exit_code": 0,
+      "seconds": 8.949092541
+    },
+    {
+      "name": "baseline-repeat",
+      "command": [
+        "/opt/homebrew/bin/python3.14",
+        "scripts/verify_benchmark.py",
+        "--benchmark",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build/gate_b_benchmark",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3/build/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/benchmark-isolation-e465e74/baseline-repeat",
+        "--require-clean"
+      ],
+      "cwd": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/work/perf-baseline-f3",
+      "exit_code": 0,
+      "seconds": 8.219792458999997
+    }
+  ],
+  "scope": "Benchmark measurement-boundary correction; production runtime/compiler code unchanged since87978b1",
+  "inherited_log_settings_ignored": true
+}

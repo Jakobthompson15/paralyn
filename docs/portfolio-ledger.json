@@ -153,6 +153,22 @@
         "cpu_fallback": false
       },
       "limits": "Counts describe separate captures and must not be added to repeated CTest executions. Scoped Metal foundation only; all full portable tracks, remaining operators/integrations and vendor backends remain incomplete."
+    },
+    "benchmark_measurement_followup": {
+      "source_revision": "e465e747d2c17eff8c503d8fa658a87cc33462be",
+      "source_dirty": false,
+      "scope": "Full Gate B numerical/protocol benchmark with stdout/stderr progress sinks and inherited runtime/event log file output disabled",
+      "qualification": "verified",
+      "corrected_gpu_launches": 880,
+      "additional_baseline_gpu_launches": 1760,
+      "artifacts": [
+        "artifacts/benchmark-log-isolation/README.md",
+        "artifacts/benchmark-log-isolation/build-validation.json",
+        "artifacts/benchmark-log-isolation/corrected/capture.json",
+        "artifacts/benchmark-log-isolation/comparison.json",
+        "artifacts/benchmark-log-isolation/SHA256SUMS.json"
+      ],
+      "limits": "Measurement boundary corrected; non-isolated desktop timing variation does not establish a speedup or absence of performance regressions. Production runtime/compiler/CLI/binding files unchanged from87978b1."
     }
   },
   "frontend_tracks": [

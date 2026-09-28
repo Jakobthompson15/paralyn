@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "status": "measurement_boundary_fixed_and_full_protocol_passed",
+  "measurements": {
+    "historical_stage_b": {
+      "source_revision": "76217b7708d7b503449bf42e556e4c148bda88e6",
+      "source_dirty": false,
+      "samples_sha256": "afb6bd5fba36e3b56eac9bdfb87f574679ad602f119df606891e2113e4e43210",
+      "transcript_bytes": 493,
+      "observations": [
+        {
+          "elements": 1024,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.4998950064182281e-06,
+          "median_total_seconds": 0.0001820205
+        },
+        {
+          "elements": 1024,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.5003606677055359e-06,
+          "median_total_seconds": 0.00019775
+        },
+        {
+          "elements": 65536,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 4.37488779425621e-06,
+          "median_total_seconds": 0.000167313
+        },
+        {
+          "elements": 65536,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 4.37488779425621e-06,
+          "median_total_seconds": 0.0001670205
+        },
+        {
+          "elements": 1048576,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00011056219227612019,
+          "median_total_seconds": 0.0005508125000000001
+        },
+        {
+          "elements": 1048576,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00011099991388618946,
+          "median_total_seconds": 0.0005318955000000001
+        },
+        {
+          "elements": 16777216,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0018615208100527525,
+          "median_total_seconds": 0.006132166499999999
+        },
+        {
+          "elements": 16777216,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.001884916564449668,
+          "median_total_seconds": 0.006069625
+        }
+      ]
+    },
+    "unsuppressed_progress": {
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "samples_sha256": "2328dd184cd2c3a7e9f71925a9430cd6c5c0b4cd747e96112ca5acd587525ec4",
+      "transcript_bytes": 100223,
+      "observations": [
+        {
+          "elements": 1024,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 5.541834980249405e-06,
+          "median_total_seconds": 0.0002940835
+        },
+        {
+          "elements": 1024,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 5.541834980249405e-06,
+          "median_total_seconds": 0.0002962705
+        },
+        {
+          "elements": 65536,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 8.37491825222969e-06,
+          "median_total_seconds": 0.0002318755
+        },
+        {
+          "elements": 65536,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 8.37491825222969e-06,
+          "median_total_seconds": 0.000234187
+        },
+        {
+          "elements": 1048576,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00010870839469134808,
+          "median_total_seconds": 0.000529979
+        },
+        {
+          "elements": 1048576,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00010875007137656212,
+          "median_total_seconds": 0.000505229
+        },
+        {
+          "elements": 16777216,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0017435625195503235,
+          "median_total_seconds": 0.006044312
+        },
+        {
+          "elements": 16777216,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0017731250263750553,
+          "median_total_seconds": 0.006066479
+        }
+      ]
+    },
+    "baseline_first": {
+      "source_revision": "f3c6c9955daf5a81d764fd0e634eb786a8489bcd",
+      "source_dirty": false,
+      "samples_sha256": "2967e8ea264523515eb91faf90763b4a1a2131b809a153a382fa27eb37239425",
+      "transcript_bytes": 497,
+      "observations": [
+        {
+          "elements": 1024,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 3.166496753692627e-06,
+          "median_total_seconds": 0.000212354
+        },
+        {
+          "elements": 1024,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 3.1874515116214752e-06,
+          "median_total_seconds": 0.0002152085
+        },
+        {
+          "elements": 65536,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 6.458256393671036e-06,
+          "median_total_seconds": 0.00018883350000000002
+        },
+        {
+          "elements": 65536,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 6.375135853886604e-06,
+          "median_total_seconds": 0.0001806875
+        },
+        {
+          "elements": 1048576,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00011893780902028084,
+          "median_total_seconds": 0.00053175
+        },
+        {
+          "elements": 1048576,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00012022932060062885,
+          "median_total_seconds": 0.0005218955
+        },
+        {
+          "elements": 16777216,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0017249374650418758,
+          "median_total_seconds": 0.005943667
+        },
+        {
+          "elements": 16777216,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0017217497806996107,
+          "median_total_seconds": 0.0060077080000000005
+        }
+      ]
+    },
+    "corrected": {
+      "source_revision": "e465e747d2c17eff8c503d8fa658a87cc33462be",
+      "source_dirty": false,
+      "samples_sha256": "0a202672b716a64b7ca3e49f0476ed00e995319528603685094c41de18ce4389",
+      "transcript_bytes": 499,
+      "observations": [
+        {
+          "elements": 1024,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.8333084881305695e-06,
+          "median_total_seconds": 0.000213792
+        },
+        {
+          "elements": 1024,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.8333084881305695e-06,
+          "median_total_seconds": 0.0002018125
+        },
+        {
+          "elements": 65536,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 4.729023203253746e-06,
+          "median_total_seconds": 0.000193708
+        },
+        {
+          "elements": 65536,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 4.708301275968552e-06,
+          "median_total_seconds": 0.000168229
+        },
+        {
+          "elements": 1048576,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00012075016275048256,
+          "median_total_seconds": 0.000615875
+        },
+        {
+          "elements": 1048576,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00012206239625811577,
+          "median_total_seconds": 0.000637333
+        },
+        {
+          "elements": 16777216,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.002004312351346016,
+          "median_total_seconds": 0.008219229500000001
+        },
+        {
+          "elements": 16777216,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0019202707335352898,
+          "median_total_seconds": 0.008310666500000001
+        }
+      ]
+    },
+    "baseline_repeat": {
+      "source_revision": "f3c6c9955daf5a81d764fd0e634eb786a8489bcd",
+      "source_dirty": false,
+      "samples_sha256": "57ed0e47375fe54d33a9cc30da6e7437d90c353ee5b4afd4ed5904ebec33080c",
+      "transcript_bytes": 505,
+      "observations": [
+        {
+          "elements": 1024,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 5.7085417211055756e-06,
+          "median_total_seconds": 0.0003425205
+        },
+        {
+          "elements": 1024,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 5.62518835067749e-06,
+          "median_total_seconds": 0.00031875
+        },
+        {
+          "elements": 65536,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.2125354260206223e-05,
+          "median_total_seconds": 0.000406
+        },
+        {
+          "elements": 65536,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 1.2124888598918915e-05,
+          "median_total_seconds": 0.0003686045
+        },
+        {
+          "elements": 1048576,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.00013587484136223793,
+          "median_total_seconds": 0.0009395205000000001
+        },
+        {
+          "elements": 1048576,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0001268959604203701,
+          "median_total_seconds": 0.000888354
+        },
+        {
+          "elements": 16777216,
+          "variant": "generated",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.001954458188265562,
+          "median_total_seconds": 0.0076603545
+        },
+        {
+          "elements": 16777216,
+          "variant": "handwritten",
+          "measured_samples": 100,
+          "median_gpu_seconds": 0.0018479793798178434,
+          "median_total_seconds": 0.007743396
+        }
+      ]
+    }
+  },
+  "interpretation": [
+    "The879 capture quieted stdout only after runtime progress moved to stderr;100223 transcript bytes entered launch timing.",
+    "The corrected capture restores both in-memory progress sinks and explicitly disables inherited runtime/event log file settings;499 transcript bytes remain and neither injected log file was created.",
+    "Both old and new revisions show substantial run-to-run and within-run timing variation. Corrected tiny-kernel timings overlap the earlier baseline range, but this does not establish a causal speedup or absence of performance regressions.",
+    "All warmup and measurement rows are retained. No selected-sample performance or broad AI speedup claim is made. Controlled environment/thermal/power scheduling and repeat-run statistical performance acceptance remain required."
+  ]
+}

@@ -1,0 +1,18 @@
+[1/18] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o
+[2/18] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o
+[3/18] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o
+[4/18] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o
+[5/18] Linking CXX static library libparalyn_ir.a
+[6/18] Building CXX object CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o
+[7/18] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/runtime.mm.o
+[8/18] Building CXX object CMakeFiles/paralyn_native.dir/runtime/native.cpp.o
+[9/18] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/engine.mm.o
+[10/18] Linking CXX static library libparalyn_runtime.a
+[11/18] Building CXX object CMakeFiles/paralyn.dir/cli/process_posix.cpp.o
+[12/18] Linking CXX shared library libparalyn_native.dylib
+[13/18] Building CXX object CMakeFiles/gate_b_benchmark.dir/benchmarks/gate_b_benchmark.cpp.o
+[14/18] Building CXX object CMakeFiles/paralyn.dir/cli/main.cpp.o
+[15/18] Building CXX object CMakeFiles/paralyn_frontend.dir/compiler/frontend/frontend.cpp.o
+[16/18] Linking CXX static library libparalyn_frontend.a
+[17/18] Linking CXX executable paralyn
+[18/18] Linking CXX executable gate_b_benchmark
