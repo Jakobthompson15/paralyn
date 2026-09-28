@@ -247,7 +247,8 @@ void descriptors(Suite &s) {
 }
 
 void errors(Suite &s) {
-  auto ab = s.upload(random(6, 3)), bb = s.upload(random(12, 4)), cb = s.upload(std::vector<float>(8));
+  const auto a_host = random(6, 3), b_host = random(12, 4);
+  auto ab = s.upload(a_host), bb = s.upload(b_host), cb = s.upload(std::vector<float>(8));
   auto a = t::contiguous(ab, {2, 3}), b = t::contiguous(bb, {3, 4}), c = t::contiguous(cb, {2, 4});
   pr_event e = 99;
   auto run = [&](pr_matmul_v1 op, pr_status expected, const std::string &label,
@@ -260,6 +261,10 @@ void errors(Suite &s) {
   run(record(2, 4, 3, &a, &b, &c), PR_SUCCESS, "valid");
   n::Event valid(e);
   valid.wait();
+  const auto valid_ref = reference(a_host, b_host, 2, 4, 3, false, false);
+  const auto valid_out = s.read(cb);
+  for (std::size_t i = 0; i < valid_out.size(); ++i)
+    require(same_bits(valid_out[i], valid_ref.sequential[i]), "raw C ABI matmul differs from reference");
   run(record(3, 4, 3, &a, &b, &c), PR_INVALID_ARGUMENT, "m mismatch");
   run(record(2, 4, 2, &a, &b, &c), PR_INVALID_ARGUMENT, "k mismatch");
   run(record(2, 5, 3, &a, &b, &c), PR_INVALID_ARGUMENT, "n mismatch");

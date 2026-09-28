@@ -174,8 +174,9 @@ def main():
             ab = owners.enter_context(context.buffer(6 * 4))
             bb = owners.enter_context(context.buffer(12 * 4))
             cb = owners.enter_context(context.buffer(8 * 4))
-            ab.write(values(6, 1).tobytes())
-            bb.write(values(12, 2).tobytes())
+            a_raw, b_raw = values(6, 1), values(12, 2)
+            ab.write(a_raw.tobytes())
+            bb.write(b_raw.tobytes())
             A = p.TensorDescriptor(ab, (2, 3))
             B = p.TensorDescriptor(bb, (3, 4))
             C = p.TensorDescriptor(cb, (2, 4))
@@ -183,6 +184,10 @@ def main():
             with p.matmul_into(queue, ops, A, B, C, m=2, n=4, k=3) as event:
                 require(event.timing().completed, "low-level matmul event")
                 events += 1
+            raw = array("f")
+            raw.frombytes(cb.read())
+            seq, _, _ = reference(a_raw, b_raw, 2, 4, 3, False, False)
+            require([bits(v) for v in raw] == [bits(v) for v in seq], "low-level matmul differs")
             for kwargs, status in (({"m": 3, "n": 4, "k": 3}, p.Status.INVALID_ARGUMENT),
                                    ({"m": 2, "n": 4, "k": 2}, p.Status.INVALID_ARGUMENT)):
                 rejects(lambda kwargs=kwargs: p.matmul_into(queue, ops, A, B, C, **kwargs), p.Error, status,
