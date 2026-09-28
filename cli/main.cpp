@@ -177,9 +177,41 @@ Json devices(const Options &options) {
       continue;
     if (options.requires == "fp32" && !(c.scalar_types & PR_SCALAR_F32))
       continue;
-    result.push_back(device_info(d, c, "metal:" + std::to_string(i)));
+    // Selectors are backend-qualified with per-backend ordinals (metal:N, cuda:N).
+    const std::string backend = d.backend;
+    const std::string prefix = backend == "CUDA" ? "cuda" : "metal";
+    uint32_t ordinal = 0;
+    for (uint32_t j = 0; j < i; ++j) {
+      pr_device_info earlier{};
+      paralyn::native::check(pr_device_get(j, &earlier));
+      ordinal += backend == earlier.backend;
+    }
+    result.push_back(device_info(d, c, prefix + ":" + std::to_string(ordinal)));
   }
   return result;
+}
+Json backend_status(const char *name) {
+  pr_backend_status_v1 s{};
+  s.struct_size = sizeof(s);
+  s.version = PR_QUERY_VERSION_1;
+  paralyn::native::check(pr_backend_status_get(name, &s));
+  Json result{{"implemented", s.implemented != 0},
+              {"available", s.available != 0},
+              {"device_count", s.device_count},
+              {"reason", s.reason}};
+  if (std::string(name) == "cuda") {
+    result["driver_library"] = s.driver_library;
+    result["nvrtc_library"] = s.compiler_library;
+    result["driver_version"] = s.driver_version ? Json(s.driver_version) : Json(nullptr);
+    result["nvrtc_version"] = s.compiler_version ? Json(s.compiler_version) : Json(nullptr);
+    // Availability is not qualification: no NVIDIA hardware evidence exists yet.
+    result["qualification"] = "unavailable";
+  }
+  return result;
+}
+Json backends() {
+  return Json{{"metal", backend_status("metal")}, {"cuda", backend_status("cuda")},
+              {"hip", backend_status("hip")}};
 }
 Json context_info(const paralyn::native::Context &context, const std::string &selector) {
   pr_device_capabilities_v1 c{};
@@ -225,6 +257,7 @@ int doctor(const Options &options) {
   result["compiler"] = {{"available", bool(PARALYN_HAS_COMPILER)},
                         {"llvm_version", PARALYN_LLVM_VERSION}};
   result["devices"] = devices(options);
+  result["backends"] = backends();
   auto context = paralyn::native::Context(options.device);
   result["device"] = context_info(context, options.device);
   auto bytes = paralyn::serialize_module({probe_kernel()});
@@ -274,8 +307,8 @@ int doctor(const Options &options) {
   result["artifacts"] = artifact.string();
   write(artifact / "report.json", result.dump(2) + "\n");
   output(options, result,
-         "Paralyn\nDevice       " + std::string(context.device().name) +
-             " / Metal\nGPU probe    completed\nVerification PASS (257 independently compared FP32 "
+         "Paralyn\nDevice       " + std::string(context.device().name) + " / " +
+             std::string(context.device().backend) + "\nGPU probe    completed\nVerification PASS (257 independently compared FP32 "
              "values)\nReport       " +
              (artifact / "report.json").string() + "\n");
   return 0;
@@ -627,6 +660,10 @@ int source_command(const Options &options) {
       command = {program.string()};
     }
     // Resolve the requested backend before running arbitrary application code.
+    if (!native && options.device.rfind("cuda:", 0) == 0)
+      throw Diagnostic("P-BACKEND-PROFILE", "device",
+                       "CUDA-source programs currently execute through the Metal compatibility "
+                       "runtime; cuda:INDEX applies to native C/C++/Python modules only");
     {
       auto context = paralyn::native::Context(options.device);
       result["selected_device"] = context_info(context, options.device);
@@ -739,8 +776,12 @@ Json support() {
                 {"CUDA Python", "not_implemented"}}},
               {"backends",
                {{"metal", PARALYN_HAS_METAL ? "implemented_subset" : "not_built"},
-                {"cuda", "not_implemented"},
+                {"cuda", "implemented_unqualified"},
                 {"rocm", "not_implemented"}}},
+              {"backend_availability", backends()},
+              {"cuda_backend_scope",
+               "CUDA Driver API + NVRTC, dynamically loaded; verified-IR modules (native C/C++/"
+               "Python) only; no NVIDIA hardware qualification evidence"},
               {"complete_portfolio", false}};
 }
 } // namespace
@@ -765,7 +806,8 @@ int main(int argc, char **argv) {
       sub->add_option("--requires", options.requires, "Filter by fp32 or fp64");
     if (command == "doctor" || command == "run" || command == "check" || command == "explain" ||
         command == "verify")
-      sub->add_option("--device", options.device, "auto, metal:INDEX, or legacy numeric index");
+      sub->add_option("--device", options.device,
+                      "auto, metal:INDEX, cuda:INDEX, or legacy numeric (Metal) index");
     if (command == "doctor" || command == "run" || command == "verify")
       sub->add_option("--artifacts", options.artifacts, "New/empty evidence directory");
     if (command == "run") {
@@ -791,16 +833,25 @@ int main(int argc, char **argv) {
   }
   try {
     app.parse(static_cast<int>(cli_args.size()), cli_args.data());
-    if (options.device.rfind("cuda:", 0) == 0 || options.device.rfind("rocm:", 0) == 0)
+    if (options.device.rfind("rocm:", 0) == 0 || options.device.rfind("hip:", 0) == 0)
       throw Diagnostic("P-BACKEND-UNIMPLEMENTED", "device",
                        "The requested vendor backend is not implemented. Installing its SDK alone "
                        "cannot enable this path. Run paralyn support for current profiles.");
+    if (options.device.rfind("cuda:", 0) == 0) {
+      const auto cuda = backend_status("cuda");
+      if (!cuda["available"].get<bool>())
+        throw Diagnostic("P-BACKEND-UNAVAILABLE", "device",
+                         "CUDA backend unavailable on this machine: " +
+                             cuda["reason"].get<std::string>() +
+                             ". Hardware or driver absence is reported, never emulated.");
+    }
     if (!options.report.empty() && fs::exists(options.report))
       throw Diagnostic("P-OUTPUT-EXISTS", "report",
                        "Report already exists; existing files are never overwritten");
     if (options.command == "devices") {
       auto result = report("devices");
       result["devices"] = devices(options);
+      result["backends"] = backends();
       result["status"] = "completed";
       std::ostringstream text;
       for (const auto &d : result["devices"])
@@ -809,6 +860,9 @@ int main(int argc, char **argv) {
              << ")\n";
       if (result["devices"].empty())
         text << "No matching GPU devices available. Run paralyn doctor for diagnostics.\n";
+      const auto &cuda = result["backends"]["cuda"];
+      if (!cuda["available"].get<bool>())
+        text << "CUDA backend: unavailable — " << cuda["reason"].get<std::string>() << "\n";
       output(options, result, text.str());
       return 0;
     }
@@ -820,8 +874,12 @@ int main(int argc, char **argv) {
       for (const auto &row : result["support"]["inputs"])
         text << row["name"].get<std::string>() << ": " << row["implementation"].get<std::string>()
              << " — " << row["scope"].get<std::string>() << "\n";
-      text << "\nNVIDIA/CUDA and AMD/HIP backends, Numba CUDA, CuPy and CUDA Python: not "
-              "implemented.\nAll tracks remain required. No complete-portfolio claim.\n";
+      const auto &cuda = result["support"]["backend_availability"]["cuda"];
+      text << "\nCUDA backend (Driver API + NVRTC, verified-IR modules): implemented, unqualified; "
+           << (cuda["available"].get<bool>() ? std::string("available")
+                                             : "unavailable — " + cuda["reason"].get<std::string>())
+           << "\nAMD/HIP backend, Numba CUDA, CuPy and CUDA Python: not implemented.\nAll tracks "
+              "remain required. No complete-portfolio claim.\n";
       output(options, result, text.str());
       return 0;
     }
