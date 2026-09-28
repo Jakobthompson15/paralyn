@@ -37,3 +37,7 @@ Review exact licenses before adding dependencies or copying examples. Public doc
 ## Terminal command parsing and JSON reports
 
 The CLI vendors CLI11 2.4.2 (BSD-3-Clause) and nlohmann/json 3.11.3 (MIT). Exact upstream URLs, license copies and checksums are in `third_party/`. Their headers are build inputs; configuring and running Paralyn does not download dependencies. They are not linked into the native runtime or required by the Python binding.
+
+## Project and kernel-case TOML
+
+The CLI vendors toml++ (tomlplusplus) **3.4.0** by Mark Gillard, MIT license, single header `third_party/tomlplusplus/toml.hpp` with its license in `third_party/tomlplusplus/LICENSE`. Source: tag `v3.4.0` (commit `30172438cee64926dc41fdd9c11fb3ba5b2ba9de`) of <https://github.com/marzer/tomlplusplus>. The checked-in bytes are pinned by SHA256 in `third_party/SHA256SUMS.json`; their Git blob identities (`toml.hpp` `0599bf5ed502caa77a5359da68f2b10c2d9dddde`, `LICENSE` `261cd6158738041e15adb526423d05075b060fcb`) were cross-checked against that tag when imported on 2026-09-28. It is used only by the CLI to parse `paralyn.toml` projects and kernel-case files; the native runtime and Python binding do not include it.
