@@ -104,7 +104,9 @@ class Suite:
             data = Path(output["path"]).read_bytes()
             assert hashlib.sha256(data).hexdigest() == output["sha256"], output
             assert len(data) == output["elements"] * 4
-        assert Path(value["artifacts"], "case.toml").is_file()
+        # The evidence copy is exactly the bytes whose digest the report records.
+        copied = Path(value["artifacts"], "case.toml").read_bytes()
+        assert hashlib.sha256(copied).hexdigest() == value["case"]["sha256"], value["case"]
         assert value["verification"]["status"] == ("passed" if verified else "not_requested"), value
         self.gpu_events += 1
 
@@ -124,6 +126,22 @@ class Suite:
         self.fails("P-CASE-FILE", "run", prx, "--entry", "vector_add", "--case", self.work / "absent.toml")
         self.fails("P-CASE-ARGUMENTS", "run", prx, "--case", self.cases / "vector_add.toml", "--", "x")
         self.prx = prx
+        # Selection flags that do not apply to the target are rejected, never ignored.
+        cu = self.source / "examples/vector_add.cu"
+        app = self.work / "app.py"
+        app.write_text("print('never executed')\n")
+        self.fails("P-CASE-NOT-APPLICABLE", "run", cu, "--entry", "vector_add")
+        self.fails("P-CASE-NOT-APPLICABLE", "run", app, "--entry", "main")
+        self.fails("P-CASE-NOT-APPLICABLE", "check", prx, "--entry", "vector_add", "--device", "metal:0")
+        self.fails("P-CASE-NOT-APPLICABLE", "run", "--project", self.cases / "paralyn.toml",
+                   "--program", "cuda-vector-add", "--entry", "vector_add")
+        self.fails("P-MANIFEST-NOT-APPLICABLE", "run", cu, "--manifest", self.manifest)
+        self.fails("P-MANIFEST-NOT-APPLICABLE", "run", app, "--manifest", self.manifest)
+        self.fails("P-MANIFEST-NOT-APPLICABLE", "inspect", cu, "--manifest", self.manifest)
+        self.fails("P-MANIFEST-NOT-APPLICABLE", "run", prx, "--manifest", self.manifest,
+                   "--case", self.cases / "vector_add.toml")
+        self.fails("P-MANIFEST-NOT-APPLICABLE", "verify", self.prk, "--manifest", self.manifest,
+                   "--case", self.cases / "ir_affine.toml")
 
     def malformed_cases(self):
         base = self.base()
@@ -173,6 +191,19 @@ class Suite:
         run("P-REFERENCE-BUILTIN-UNKNOWN", self.case("builtin.toml", base.replace("vector-add-f32", "vector-mul-f32")))
         run("P-CASE-MISSING-FIELD", self.case("role.toml", base.replace(', count = "n"', "")))
         run("P-CASE-VERIFY-ROLE", self.case("role-type.toml", base.replace('count = "n"', 'count = "a"')))
+        # Builtin shape contracts are static: rejected by run as well as verify and check,
+        # before any dispatch could read past the declared a/b allocations.
+        oversized = self.case("shape.toml", base.replace("value = 5", "value = 8"))
+        assert oversized.read_text() != base
+        run("P-REFERENCE-SHAPE", oversized)
+        self.fails("P-REFERENCE-SHAPE", "verify", self.prx, "--case", oversized)
+        self.fails("P-REFERENCE-SHAPE", "check", self.prx, "--case", oversized, "--device", "metal:0")
+        shutil.copy(self.cases / "data/transpose_input.f32", local / "transpose_input.f32")
+        transpose = (self.cases / "transpose_builtin.toml").read_text()
+        wide = self.case("shape-transpose.toml", re.sub(r"(\[scalars\.width\][^\[]*value = )(\d+)",
+                                                         lambda m: m.group(1) + str(int(m.group(2)) + 1), transpose))
+        assert wide.read_text() != transpose
+        self.fails("P-REFERENCE-SHAPE", "run", self.prx, "--case", wide)
         run("P-CASE-UNKNOWN-FIELD", self.case("role-extra.toml", base.replace('count = "n"', 'count = "n", scale = "n"')))
         run("P-CASE-VERIFY-BUFFER", self.case("verify-input.toml", base.replace('buffer = "out"', 'buffer = "a"')))
         run("P-CASE-DATA-SOURCE", self.case("reference-empty.toml", base.replace('{ builtin = "vector-add-f32", lhs = "a", rhs = "b", count = "n" }', "{}")))
@@ -189,6 +220,59 @@ class Suite:
         run("P-CASE-OUTPUT-ACCESS", self.case("output-read.toml", base.replace('[buffers.a]\ndtype = "f32"\nlength = 5', '[buffers.a]\ndtype = "f32"\noutput = true\nlength = 5')))
         self.fails("P-REFERENCE-REQUIRED", "verify", self.prx, "--case",
                    self.case("no-verify.toml", base.split("[[verify]]")[0]))
+
+    def two_outputs(self):
+        """verify must cover every declared output; a partial contract never prints PASS."""
+        metal = self.work / "two_outputs.metal"
+        metal.write_text(
+            "#include <metal_stdlib>\nusing namespace metal;\n"
+            "kernel void two_outputs(device const float* a [[buffer(0)]],\n"
+            "                        device float* x [[buffer(1)]],\n"
+            "                        device float* y [[buffer(2)]],\n"
+            "                        constant uint& n [[buffer(3)]],\n"
+            "                        uint i [[thread_position_in_grid]]) {\n"
+            "  if (i < n) { x[i] = a[i] + 1.0f; y[i] = a[i] * 2.0f; }\n}\n")
+
+        def parameter(name, kind, access, binding):
+            return {"name": name, "type": kind, "buffer": kind == "f32", "access": access,
+                    "binding": binding, "alignment": 4, "minimum_bytes": 4}
+        manifest = self.work / "two_outputs.json"
+        manifest.write_text(json.dumps({
+            "target": "metal-msl3.1", "numerical_policy": 1,
+            "entries": [{"name": "two_outputs", "required_block": [0, 0, 0], "parameters": [
+                parameter("a", "f32", "read", 0), parameter("x", "f32", "read_write", 1),
+                parameter("y", "f32", "read_write", 2), parameter("n", "u32", "read", 3)]}]}))
+        body = ('schema = "paralyn.kernel-case"\nschema_version = 1\n'
+                '[case]\nname = "two"\nentry = "two_outputs"\n'
+                '[launch]\ngrid = [1, 1, 1]\nblock = [4, 1, 1]\n'
+                '[scalars.n]\ntype = "u32"\nvalue = 4\n'
+                '[buffers.a]\ndtype = "f32"\nlength = 4\nvalues = [1.0, 2.0, 3.0, 4.0]\n'
+                '[buffers.x]\ndtype = "f32"\nlength = 4\nfill = 0.0\noutput = true\n'
+                '[buffers.y]\ndtype = "f32"\nlength = 4\nfill = 0.0\noutput = true\n'
+                '[[verify]]\nbuffer = "x"\nreference = { values = [2.0, 3.0, 4.0, 5.0] }\n'
+                'tolerance = { kind = "exact" }\n')
+        partial = self.case("two-partial.toml", body)
+        target = (metal, "--manifest", manifest)
+        value = self.fails("P-CASE-VERIFY-UNCOVERED", "verify", *target, "--case", partial, "--device", "metal:0")
+        assert "output buffer(s) y " in value["diagnostic"]["message"], value
+        # run performs no comparison, so a partial contract is still executable there.
+        ran = self.json("run", *target, "--case", partial, "--device", "metal:0", "--artifacts", self.artifacts())
+        self.gpu_report(ran, "two_outputs", False)
+        # With both outputs covered, a wrong y reference must fail.
+        wrong = self.case("two-wrong.toml", body + '[[verify]]\nbuffer = "y"\n'
+                          'reference = { values = [2.0, 4.0, 6.0, 12345.0] }\ntolerance = { kind = "exact" }\n')
+        destination = self.artifacts()
+        result = self.call("verify", *target, "--case", wrong, "--device", "metal:0", "--artifacts", destination)
+        assert result.returncode == 1 and "PASS" not in result.stdout, (result.stdout, result.stderr)
+        assert json.loads((destination / "report.json").read_text())["diagnostic"]["id"] == "P-VERIFY-MISMATCH"
+        self.gpu_events += 1
+        full = self.case("two-full.toml", body + '[[verify]]\nbuffer = "y"\n'
+                         'reference = { values = [2.0, 4.0, 6.0, 8.0] }\ntolerance = { kind = "exact" }\n')
+        value = self.json("verify", *target, "--case", full, "--device", "metal:0", "--artifacts", self.artifacts())
+        self.gpu_report(value, "two_outputs", True)
+        assert value["verification"]["compared"] == 8 and len(value["verification"]["checks"]) == 2, value
+        outputs = {o["name"]: floats(o["path"]) for o in value["outputs"]}
+        assert outputs == {"x": [2.0, 3.0, 4.0, 5.0], "y": [2.0, 4.0, 6.0, 8.0]}, outputs
 
     def malformed_projects(self):
         project = self.cases / "paralyn.toml"
@@ -310,6 +394,12 @@ class Suite:
         checked = self.json("check", self.prx, "--case", self.cases / "block_reduce.toml", "--device", "metal:0")
         assert checked["gpu_work_submitted"] is False and checked["status"] == "checked"
         assert "run_id" not in checked
+        # Build provenance is also reported for single-file check/inspect.
+        for command in (("inspect", self.prx), ("check", self.prx, "--device", "metal:0")):
+            inspected = self.json(*command)
+            assert re.fullmatch(r"[0-9a-f]{40}", inspected["build"]["revision"]), inspected
+            assert inspected["source_revision"] == inspected["build"]["revision"]
+            assert type(inspected["build_dirty"]) is bool and inspected["gpu_work_submitted"] is False
         existing = self.artifacts()
         existing.mkdir()
         (existing / "keep").write_text("x")
@@ -373,10 +463,16 @@ class Suite:
         final = json.loads((destination / "report.json").read_text())
         assert final["status"] == "failed" and "partial" not in final and final["exit_code"] == 3
         environment["PARALYN_CAPTURE_LIMIT_BYTES"] = "12x"
-        bad = subprocess.run([str(self.paralyn), "run", str(app), "--json", "--artifacts", str(self.artifacts())],
-                             cwd=self.work, env=environment, text=True, capture_output=True, timeout=60)
-        assert bad.returncode == 1 and "PARALYN_CAPTURE_LIMIT_BYTES" in json.loads(bad.stdout)["diagnostic"]["message"]
-        self.negative += 1
+        rejected = self.artifacts()
+        for target in (app, self.source / "examples/vector_add.cu"):
+            bad = subprocess.run([str(self.paralyn), "run", str(target), "--json", "--artifacts", str(rejected)],
+                                 cwd=self.work, env=environment, text=True, capture_output=True, timeout=60)
+            assert bad.returncode == 1, (bad.stdout, bad.stderr)
+            diagnostic = json.loads(bad.stdout)["diagnostic"]
+            assert diagnostic["id"] == "P-CAPTURE-LIMIT", diagnostic
+            assert "PARALYN_CAPTURE_LIMIT_BYTES" in diagnostic["message"], diagnostic
+            assert not rejected.exists(), f"rejected capture limit created evidence in {rejected}"
+            self.negative += 1
 
     def doctor_provenance(self):
         value = self.json("doctor", "--device", "metal:0", "--artifacts", self.artifacts())
@@ -403,6 +499,7 @@ def main():
         suite.missing_case()
         suite.malformed_cases()
         suite.malformed_projects()
+        suite.two_outputs()
         suite.positive()
         suite.run_is_not_verify()
         suite.detects_mismatch()
