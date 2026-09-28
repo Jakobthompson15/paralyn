@@ -1,3 +1,24 @@
+# Native-product batch audit — 2026-09-28
+
+Baseline local and remote main were both `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`, clean, with14passing CTests reproduced. The user's first requested batch is implemented in these actual files/targets:
+
+| Area | Implementation files | Build/tests |
+|---|---|---|
+| Runtime queries/executables | `include/paralyn/native.h`, `include/paralyn/detail/backend.hpp`, `runtime/native.cpp`, `backends/metal/engine.mm` | native_query_tests, native_queries, original native suites |
+| Runtime event channel | `runtime/telemetry.cpp`, `backends/metal/runtime.mm` | telemetry_tests/runtime_telemetry, throwing-log/shutdown regressions |
+| Native MSL input | `include/paralyn/executable.hpp`, `compiler/ir/executable.cpp`, `examples/metal/kernels.*` | executable_tests, msl_tests/public_msl,13structured negatives |
+| Arrays/operators | `include/paralyn/array.hpp`, `bindings/python/paralyn/array.py`, `bindings/python/operators.cu` | array_operators, array_tests/arrays_cpp, arrays_python |
+| Packaging | `bindings/python/build_wheel.py`, `bindings/python/test_install.py`, conditional/install CMake targets | deterministic wheel, offline isolated Python installs and relocated C++ |
+| Terminal/process | `cli/main.cpp`, `cli/process_*`, pinned third_party CLI11/json | terminal_contract, process_execution, native_compile, preserved GatesA/B |
+| Inventory | `scripts/windows-inventory.ps1` | read-only script only; Windows not yet qualified |
+| Qualification | `scripts/qualify_product.py` | source-linked main records, separately identified retained-output events, independent references and hashes |
+
+Versioned additions preserve ABI1 struct layouts and old artifact bytes. Native MSL pipeline objects and their resource contract are production code distinct from the old test hook. Runtime-only builds have noLLVM dependency. A no-backend build is explicitly unavailable execution, not CPU fallback or a vendor backend.
+
+Other13 input tracks, all three clients and NVIDIA/AMD backends are still unimplemented. Full arrays/tensor/function/offload/framework/library/application/terminal/release obligations remain in the adopted program. New source files and passing realGPU tests constitute the progress here; updated ledgers do not.
+
+The following prior audit is retained as history.
+
 # Implementation audit — native-runtime checkpoint
 
 The session began with local HEAD and remote `main` both at `0e7041f046ee5d5ff8f2560233ed5b1ba9c812cd`. There were no newer local implementations or uncommitted changes. That snapshot contained the CUDA/Metal Gates A/B implementation and evidence, six CTest targets, and design-only native/Python rows. The user's published-snapshot assessment was correct.

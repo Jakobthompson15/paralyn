@@ -1,3 +1,9 @@
+# Native-product implementation update — 2026-09-28
+
+Starting local/remote main: `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`. New actual code implements FP32 arrays and installable modules, a public validated/reflected MSL path, versioned runtime capability/timing queries, conditional/runtime-only builds and structured terminal commands/reports. See [implementation audit](implementation-audit.md), [artifact profile](executable-artifacts.md), [terminal contract](terminal.md), and [complete required program](complete-platform-program.md). The final clean archive is a separate qualification step; original evidence below is unchanged.
+
+Development hardware tests pass on the physical M5: Python arrays20 events; C++ arrays21 including retained output lifetimes; public MSL10 events/13 negatives; terminal58 command cases including a realGPU doctor reference; installed Python3.9.6 and3.14.5 and relocated C++ examples. Gate B caught the moved runtime-log compatibility transcript and passes after preserving that transcript without mixing application streams. Every required portfolio row remains tracked; no full platform or cross-vendor completion is claimed.
+
 # Status
 
 Updated 2026-09-25. **CUDA/Metal Gates A and B passed on the physical Apple M5.** The Gate B checkpoint was captured from clean revision `8af773c9b8925a27041fcca1ab4cc58c82c56edb` and independently audited. All six tests passed with no skips. **The native C/C++ and Python byte-buffer/launch slice also passed clean qualification** at `76217b7708d7b503449bf42e556e4c148bda88e6`: all 14 current CTests, 21 native GPU events, and repeated CUDA Gates A/B plus the full benchmark. [Native checkpoint evidence](../artifacts/stage-b/README.md) is permanent. No release tag has been created; the broader v1.1 frontend portfolio remains incomplete.
@@ -54,7 +60,7 @@ The fresh build and all four CTest targets passed without skips. `paralyn device
 
 The source is written in ordinary CUDA style but has not been compiled/run with `nvcc` here. No NVIDIA hardware/toolkit test is claimed. Source-context macros and certain host preprocessing are explicitly rejected as documented in `cuda-compatibility.md`.
 
-Metal is the only implemented backend. Native C/C++ and Python byte-buffer/launch interfaces are now implemented. CUDA/ROCm backends, native arrays/operators, distributed execution and persistent caching remain unimplemented. Gate B correctness and its benchmark are qualified only for the documented current Metal subset.
+Metal is the only implemented backend. Native C/C++ and Python byte-buffer/launch interfaces and contiguous FP32 array add/affine now exist. CUDA/ROCm backends, broader tensor/operators, distributed execution and persistent caching remain unimplemented. Gate B correctness and its benchmark are qualified only for the documented current Metal subset.
 
 ## Native runtime checkpoint
 

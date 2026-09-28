@@ -33,3 +33,7 @@ Homebrew and the OS may install additional transitive components. This source re
 | Other frameworks, APIs, and papers | See `docs/prior-art.md`; each implementation has its own terms | Research reference only |
 
 Review exact licenses before adding dependencies or copying examples. Public documentation and a familiar API name do not grant permission to copy proprietary implementations. If licensed third-party code is later adopted, retain its copyright, provenance, applicable license text, and notices in the same change.
+
+## Terminal command parsing and JSON reports
+
+The CLI vendors CLI11 2.4.2 (BSD-3-Clause) and nlohmann/json 3.11.3 (MIT). Exact upstream URLs, license copies and checksums are in `third_party/`. Their headers are build inputs; configuring and running Paralyn does not download dependencies. They are not linked into the native runtime or required by the Python binding.

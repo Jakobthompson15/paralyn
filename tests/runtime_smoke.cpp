@@ -49,21 +49,22 @@ int main(int argc, char **argv) {
   try {
     if (argc == 2 && std::string(argv[1]) == "--throwing-log") {
       paralyn::Kernel kernel{"logging_failure", {}, {}};
-      auto *original = std::cout.rdbuf();
-      const auto exceptions = std::cout.exceptions();
+      unsetenv("PARALYN_RUNTIME_LOG");
+      auto *original = std::cerr.rdbuf();
+      const auto exceptions = std::cerr.exceptions();
       ThrowingSubmissionLog failing(original);
-      std::cout.rdbuf(&failing);
-      std::cout.exceptions(std::ios::badbit | std::ios::failbit);
+      std::cerr.rdbuf(&failing);
+      std::cerr.exceptions(std::ios::badbit | std::ios::failbit);
       bool rejected = false;
       try {
         paralyn::launch(kernel, {1, 1, 1}, {1, 1, 1}, {});
       } catch (const std::exception &) {
         rejected = true;
       }
-      std::cout.exceptions(std::ios::goodbit);
-      std::cout.clear();
-      std::cout.rdbuf(original);
-      std::cout.exceptions(exceptions);
+      std::cerr.exceptions(std::ios::goodbit);
+      std::cerr.clear();
+      std::cerr.rdbuf(original);
+      std::cerr.exceptions(exceptions);
       if (!rejected || paralyn::runtime_statistics().completed_launches != 0)
         throw std::runtime_error("Throwing log unexpectedly submitted or completed GPU work");
       // A retained uncommitted command would make this synchronization hang/fail.

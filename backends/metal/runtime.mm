@@ -2,6 +2,7 @@
 #include <cuda_runtime.h>
 #include "paralyn/detail/backend.hpp"
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -47,9 +48,9 @@ struct Adapter {
   explicit Adapter(const std::string &choice) : engine(backend::create_context(choice)), selector(choice) {}
   void announce_device() {
     if (announced) return;
-    std::cout << "Device: " << engine->device_info().name << "\nBackend: Metal\nSelection: "
-              << (selector == "auto" ? "auto; first device in stable registry-ID order"
-                                     : "explicit device index " + selector) << '\n';
+    backend::progress("Device: " + engine->device_info().name + "\nBackend: Metal\nSelection: " +
+                      (selector == "auto" ? "auto; first device in stable registry-ID order"
+                                          : "explicit device index " + selector) + '\n');
     announced = true;
   }
   std::shared_ptr<backend::Buffer> allocation(const void *token) const {
@@ -71,6 +72,8 @@ void exit_shutdown();
 void ensure_shutdown_handler() {
   static const bool installed = std::atexit(exit_shutdown) == 0;
   if (!installed) {
+    try { backend::runtime_event("process_failure", "failed", "Cannot install GPU shutdown handler"); }
+    catch (...) { std::fputs("Paralyn shutdown event log also failed\n", stderr); }
     std::cerr << "Paralyn could not install its GPU shutdown handler\n";
     std::_Exit(EXIT_FAILURE);
   }
@@ -83,11 +86,18 @@ Adapter &context() {
   }
   return *active_context;
 }
-void remember(cudaError_t code, const std::string &message) {
+void remember(cudaError_t code, const char *message) noexcept {
   ensure_shutdown_handler();
   last_error = code;
   last_detail_code = code;
-  *last_detail = message;
+  try { *last_detail = message; } catch (...) { last_detail->clear(); }
+  try {
+    backend::runtime_event("api_failure", "failed", std::string("CUDA compatibility: ") + message);
+  } catch (...) {
+    // The original compatibility error remains the returned result; failure of
+    // its diagnostic channel is part of the detail rather than a silent drop.
+    try { *last_detail += " [runtime event log also failed]"; } catch (...) {}
+  }
 }
 cudaError_t remember_exception() noexcept {
   try {
@@ -112,6 +122,8 @@ void exit_shutdown() {
     if (active_context) active_context->sync();
     if (last_error != cudaSuccess) throw RuntimeError(last_error, *last_detail);
   } catch (const std::exception &error) {
+    try { backend::runtime_event("process_failure", "failed", error.what()); }
+    catch (...) { std::fputs("Paralyn shutdown event log also failed\n", stderr); }
     std::cerr << "Paralyn shutdown failed: " << error.what() << '\n';
     std::cerr.flush(); std::cout.flush();
     std::_Exit(EXIT_FAILURE);

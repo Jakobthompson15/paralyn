@@ -9,8 +9,8 @@ Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documente
 | Track | Stage | Implementation | Full-track qualification | Proven narrower scope |
 |---|---|---|---|---|
 | CUDA C++ | A | `implementing` | `unavailable` | Documented CUDA/Metal subset, Gates A and B; other vendors unqualified |
-| Native C/C++ | B | `implementing` | `unavailable` | ABI 1 byte buffers/views/modules/launch; real Metal vector-add/affine tests |
-| Native Python | B | `implementing` | `unavailable` | ctypes binding to ABI 1; real Metal vector-add/affine tests |
+| Native C/C++ | B | `implementing` | `unavailable` | ABI1 buffers/modules/launch plus C++ FP32 arrays; real Metal tests |
+| Native Python | B | `implementing` | `unavailable` | ctypes ABI1 and owned FP32 arrays; real Metal add/affine tests |
 | HIP C++ | E | `not_started` | `unavailable` | None |
 | Triton | E | `not_started` | `unavailable` | None |
 | OpenCL C | E | `not_started` | `unavailable` | None |
@@ -22,7 +22,7 @@ Software remains v0.0.1. CUDA/Metal Gates A and B are verified for the documente
 | WGSL | E | `not_started` | `unavailable` | None |
 | SPIR-V inputs | E | `not_started` | `unavailable` | None |
 | MLIR inputs | E | `not_started` | `unavailable` | None |
-| Metal source | E | `not_started` | `unavailable` | None; internal MSL smoke is not a frontend |
+| Metal source | E | `implementing` | `unavailable` | Public validated/reflected MSL modules; vector add, shared reduction and tiled transpose GPU tests |
 | PTX | H | `not_started` | `unavailable` | None |
 | SASS | H | `not_started` | `unavailable` | None |
 
@@ -40,7 +40,7 @@ The complete version/subset, candidate reference and useful workloads, dependenc
 
 Numba CUDA, CuPy, and CUDA Python are clients, not three new kernel languages. A custom-operation demonstration cannot establish full client replacement. Do not falsify CUDA identity or patch availability checks to manufacture compatibility.
 
-A separate Stage F requirement selects **one first useful PyTorch, JAX, or ONNX integration** after the native foundation. PyTorch custom operators, a device backend, exported graphs, and torch.compile are separate surfaces. JAX requires a real runtime/compiler boundary, not merely StableHLO import; ONNX needs a tested importer/provider and explicit fallback accounting. The ledger lists these candidates independently, plus TensorFlow, MLX, NumPy, Array API, and DLPack investigation targets. It does not incorrectly turn every framework surface into a mandatory implementation. None is implemented or qualified.
+The 2026-09-28 complete-platform program now explicitly requires PyTorch (custom operator, device, compiled graph, inference, backward/training), followed by separate JAX and ONNX profiles. Those are distinct achievements; none is implemented yet. DLPack/real device/stream ownership remains required. TensorFlow, MLX, NumPy and general Array API investigations are not silently promoted to extra mandatory frameworks.
 
 ## Backend qualification
 
@@ -50,7 +50,7 @@ A separate Stage F requirement selects **one first useful PyTorch, JAX, or ONNX 
 | CUDA / NVIDIA | `not_started` | None; hardware not observed in this environment | `unavailable` |
 | HIP/ROCm / AMD | `not_started` | None; hardware not observed in this environment | `unavailable` |
 
-The native MSL smoke hook exercises backend submission, but lacks the public module/import contract required for the Metal-source frontend. The public native C ABI now allocates without CUDA APIs and Python binds that shared runtime. Explicit source/build/test files are audited in [implementation-audit.md](implementation-audit.md). There are still no tensor/operator providers or array APIs.
+The public MSL path now uses validated source/resource containers and compiled/reflected pipelines; the older smoke hook remains only a regression test. The public native C ABI now allocates without CUDA APIs and Python binds that shared runtime. Explicit source/build/test files are audited in [implementation-audit.md](implementation-audit.md). Contiguous one-dimensional FP32 array add/affine now exist. Matmul, multidimensional tensors, framework/provider integrations and other vendor backends remain unimplemented.
 
 ## Evidence and status rules
 
@@ -60,4 +60,4 @@ The preserved clean Paralyn Gate A revision is `c823dfcdc4c3d37d8ed1648b4b0d9382
 
 For each claimed frontend × operation × backend × version, require actual input, validated compilation/import, resources and arguments, synchronization/errors, physical execution, and independent results. At minimum vary inputs/dimensions, repeat work, reject unsupported input, and verify a reference example plus a second meaningful operation/useful workload. Binary tracks need real executable reference artifacts.
 
-Next: implement the small contiguous FP32 array/operator surface over the now-working native runtime, while establishing authorized hardware prerequisites for Stage C. The new byte-buffer interfaces do not remove any later obligation. The [roadmap](../ROADMAP.md) preserves every later required track.
+Next: qualify the new native-product implementation, then follow the exact ready tasks in [handoff](handoff.md): vendor hardware/backend prerequisites, a pinned SPIR-V bridge, FP32 tensor/matmul and project/kernel-case terminal work. The full [program](complete-platform-program.md) and ledger retain every remaining obligation.

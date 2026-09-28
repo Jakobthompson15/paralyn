@@ -1,6 +1,6 @@
-# Architecture: CUDA and native runtime
+# Architecture: CUDA, native runtime and public executable modules
 
-Updated 2026-09-25 after implementation review. This describes the current source interfaces and their limits. Code being present is not hardware acceptance: actual test results belong in `status.md`. The first accepted execution under the original working name UniCUDA is preserved unchanged in `../artifacts/gate-a/`; the separately verified renamed run from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1` is preserved in `../artifacts/paralyn-gate-a/`. The adopted [mandate v1.1](master-mandate-v1.1.md) expands future architecture; its [delta](mandate-v1.1-delta.md) and [portfolio](frontend-matrix.md) preserve all required tracks without asserting they exist.
+Updated 2026-09-28. The native-product extension adds versioned capability/timing queries, public MSL compiled modules, FP32 arrays, conditional/runtime-only builds, packaging and structured terminal reports. See [native API](native-api.md), [executable artifacts](executable-artifacts.md), and [terminal contract](terminal.md) for the current additions. The foundational CUDA/IR design below remains in use. This describes the current source interfaces and their limits. Code being present is not hardware acceptance: actual test results belong in `status.md`. The first accepted execution under the original working name UniCUDA is preserved unchanged in `../artifacts/gate-a/`; the separately verified renamed run from clean revision `c823dfcdc4c3d37d8ed1648b4b0d93825cbdb6b1` is preserved in `../artifacts/paralyn-gate-a/`. The adopted [mandate v1.1](master-mandate-v1.1.md) expands future architecture; its [delta](mandate-v1.1-delta.md) and [portfolio](frontend-matrix.md) preserve all required tracks without asserting they exist.
 
 ## Goal and implementation boundary
 
@@ -20,11 +20,11 @@ complete CUDA source
                                                          physical Apple GPU
 ```
 
-There is one compiled-in Metal implementation. `include/paralyn/detail/backend.hpp` now defines the internal context/buffer/event boundary consumed by both the CUDA adapter and native C ABI. `backends/metal/engine.mm` implements it; `backends/metal/runtime.mm` retains the CUDA token adapter. Native offset views are implemented. There is no backend registry, plugin ABI, or negotiated multi-backend protocol; adding an abstract interface does not implement NVIDIA/AMD execution.
+There is one available GPU implementation, Metal, which is now conditionally built. A no-backend build enumerates zero devices and fails execution; it is not CPU emulation. `include/paralyn/detail/backend.hpp` now defines the internal context/buffer/event boundary consumed by both the CUDA adapter and native C ABI. `backends/metal/engine.mm` implements it; `backends/metal/runtime.mm` retains the CUDA token adapter. Native offset views are implemented. There is no backend registry, plugin ABI, or negotiated multi-backend protocol; adding an abstract interface does not implement NVIDIA/AMD execution.
 
 ## Toolchain and commands
 
-The compiler/core use C++17. Objective-C++ and public Metal/Foundation frameworks are confined to Metal integration. The frontend links Clang LibTooling; the generated host executable links the runtime and IR archives without LLVM libraries. The CLI itself links the frontend and therefore depends on the selected LLVM installation.
+The compiler/core use C++17. Objective-C++ and public Metal/Foundation frameworks are confined to Metal integration. The frontend links Clang LibTooling; the generated host executable links the runtime and IR archives without LLVM libraries. A compiler-enabled CLI links the frontend and needs the selected LLVM installation. A runtime-only CLI and native library build without LLVM.
 
 The selected Homebrew LLVM/Clang is **21.1.8**, with matching headers/libraries; integration tests passed on this installation. Other versions require their own build/parser verification. CMake enables C, C++, and Objective-C++ because LLVM's dependency checks need C enabled. CMake/CTest and Ninja handle builds/tests.
 
@@ -67,7 +67,7 @@ The implemented portable model contains:
 
 The actual operators are addition, multiplication, and less-than. Casts needed for CUDA index arithmetic preserve explicit signed/unsigned 32-bit conversion. Builtins represent x/y/z of `threadIdx`, `blockIdx`, `blockDim`, and `gridDim`; all twelve coordinate/dimension builtin components were checked against a CPU reference across three 3D launch shapes in Gate B. Indexing requires a buffer parameter and an integer index.
 
-`verify` checks types, arity, declarations/references, literal validity, operators, writable buffers, and structured conditions. `dump_ir` is deterministic. `emit_cpp` serializes the verified model as immutable C++ objects embedded in the host program. `emit_msl` takes that model and a `BindingLayout`; it verifies the IR before emitting Metal. There is no text-IR parser at runtime.
+`verify` checks types, arity, declarations/references, literal validity, operators, writable buffers, and structured conditions. `dump_ir` is deterministic. `emit_cpp` serializes the verified model as immutable C++ objects embedded in the host program. `emit_msl` takes that model and a `BindingLayout`; it verifies the IR before emitting Metal. There is no text-IR parser at runtime. The separate public MSL source container has its own validated descriptors and retained compiled-pipeline path.
 
 Custom structured IR keeps the initial MSL backend small and CUDA-level indexing visible. LLVM IR offers mature optimization but introduces lower-level target details; MLIR offers reusable dialects and progressive lowering but has a larger integration cost; SPIR-V is a device representation, not CUDA host semantics. Reconsider a hybrid/MLIR path when real optimization or multiple backend needs justify it. The present small IR does not claim those systems' breadth.
 

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <limits>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -79,6 +81,19 @@ id<MTLDevice> choose_device(const std::string &selector) {
     throw Error(ErrorCode::invalid_device, "Device index is out of range");
   return devices[index];
 }
+DeviceInfo describe(id<MTLDevice> device) {
+  DeviceInfo result{utf8(device.name), "Metal", utf8(NSProcessInfo.processInfo.operatingSystemVersionString),
+                    device.registryID, device.maxBufferLength, bool(device.hasUnifiedMemory),
+                    device.recommendedMaxWorkingSetSize, {}, 0, {0, 0, 0}};
+  std::ostringstream identity;
+  identity << "metal:registry:" << std::hex << std::setw(16) << std::setfill('0') << device.registryID;
+  result.stable_id = identity.str();
+  result.max_threadgroup_memory_bytes = device.maxThreadgroupMemoryLength;
+  const auto limit = device.maxThreadsPerThreadgroup;
+  result.max_block = {static_cast<std::uint32_t>(limit.width), static_cast<std::uint32_t>(limit.height),
+                      static_cast<std::uint32_t>(limit.depth)};
+  return result;
+}
 
 struct Accounting {
   std::atomic<std::uint64_t> current{0}, peak{0};
@@ -100,10 +115,12 @@ struct MetalBuffer final : Buffer {
 };
 struct Work {
   id<MTLCommandBuffer> command;
+  std::shared_ptr<CompiledExecutable> executable;
   std::vector<std::shared_ptr<MetalBuffer>> resources;
   std::string kernel, source;
   Dim3 grid, block;
   std::size_t source_index;
+  std::uint64_t operation_id = 0;
   double compile_seconds;
   bool recorded = false;
   EventInfo info;
@@ -132,22 +149,39 @@ struct Bindings {
   std::vector<std::size_t> offsets;
   std::vector<std::shared_ptr<MetalBuffer>> allocations;
 };
+struct Pipeline {
+  id<MTLComputePipelineState> state;
+  MTLComputePipelineReflection *reflection;
+};
+struct MetalExecutable final : CompiledExecutable {
+  std::shared_ptr<const int> owner;
+  ExecutableModule description;
+  std::vector<Pipeline> entries;
+};
 struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> {
   id<MTLDevice> device;
   id<MTLCommandQueue> queue;
   mutable std::mutex mutex;
   const std::shared_ptr<const int> identity = std::make_shared<const int>(0);
   const std::shared_ptr<Accounting> accounting = std::make_shared<Accounting>();
-  std::unordered_map<std::string, id<MTLComputePipelineState>> pipelines;
+  std::unordered_map<std::string, Pipeline> pipelines;
   std::vector<std::shared_ptr<Work>> pending;
   std::vector<Execution> executions;
   std::string terminal_failure, latest_source;
   std::vector<std::string> sources;
   RuntimeStatistics counters;
+  const std::uint64_t trace_id;
+  std::uint64_t next_operation_id = 1;
 
-  explicit MetalContext(const std::string &selector) : device(choose_device(selector)) {
+  static std::uint64_t next_context_id() {
+    static std::atomic<std::uint64_t> next{1};
+    return next.fetch_add(1);
+  }
+  explicit MetalContext(const std::string &selector)
+      : device(choose_device(selector)), trace_id(next_context_id()) {
     queue = [device newCommandQueue];
     if (!queue) throw Error(ErrorCode::execution, "Metal failed to create a command queue");
+    runtime_event("context", "created", describe(device).stable_id, trace_id);
   }
   ~MetalContext() override {
     // Public close/wait reports errors; destruction still completes retained GPU work.
@@ -155,9 +189,7 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
   }
   DeviceInfo device_info() const override {
     @autoreleasepool {
-      return {utf8(device.name), "Metal", utf8(NSProcessInfo.processInfo.operatingSystemVersionString),
-              device.registryID, device.maxBufferLength, bool(device.hasUnifiedMemory),
-              device.recommendedMaxWorkingSetSize};
+      return describe(device);
     }
   }
   std::shared_ptr<MetalBuffer> buffer(const std::shared_ptr<Buffer> &value) const {
@@ -194,6 +226,7 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       if (bytes) std::memcpy(static_cast<unsigned char *>(allocation->metal.contents) + offset, source, bytes);
       counters.host_to_device_seconds += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
       counters.host_to_device_bytes += bytes;
+      runtime_event("transfer", "completed", "host_to_device", trace_id, 0, bytes);
     }
   }
   void read(const std::shared_ptr<Buffer> &value, std::size_t offset,
@@ -208,6 +241,7 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       if (bytes) std::memcpy(destination, static_cast<unsigned char *>(allocation->metal.contents) + offset, bytes);
       counters.device_to_host_seconds += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
       counters.device_to_host_bytes += bytes;
+      runtime_event("transfer", "completed", "device_to_host", trace_id, 0, bytes);
     }
   }
   RuntimeStatistics snapshot() const {
@@ -230,9 +264,16 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     if (!completed)
       work->failure = "Metal command failed for " + work->kernel + ": " + metal_error(work->command.error);
     work->info = {completed, work->command.GPUStartTime, work->command.GPUEndTime};
-    if (completed && (!(work->info.gpu_start_seconds > 0) ||
+    if (completed && (!std::isfinite(work->info.gpu_start_seconds) ||
+                      !std::isfinite(work->info.gpu_end_seconds) ||
+                      !(work->info.gpu_start_seconds > 0) ||
                       !(work->info.gpu_end_seconds > work->info.gpu_start_seconds)))
       work->failure = "Metal completed " + work->kernel + " without positive GPU timing evidence";
+    if (completed && work->failure.empty()) {
+      work->info.duration_valid = work->info.timestamps_valid = true;
+      work->info.clock_domain = 2;
+      work->info.duration_seconds = work->info.gpu_end_seconds - work->info.gpu_start_seconds;
+    }
     // Complete all allocating copies before mutating counters/record state. A
     // failed host allocation must not make a later wait count this command twice.
     std::string completed_source = work->source;
@@ -251,6 +292,10 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     if (first_failure) terminal_failure.swap(failure_copy);
     work->recorded = true;
     work->resources.clear();
+    // Record actual completion before diagnostics: an I/O failure must not make
+    // a later wait double-count the command or retry an already-consumed event.
+    runtime_event("completion", work->failure.empty() ? "completed" : "failed",
+                  work->failure.empty() ? work->kernel : work->failure, trace_id, work->operation_id);
   }
   void sync_locked() {
     // Inspect every submitted command even when a previous command failed.
@@ -327,13 +372,19 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     if (x > UINT64_MAX / y || x * y > UINT64_MAX / z)
       throw Error(ErrorCode::invalid_value, "Logical grid thread count overflows 64 bits");
   }
-  id<MTLComputePipelineState> pipeline(const std::string &entrypoint, const std::string &source,
-                                      double &seconds) {
+  void log_launch(const std::string &name, Dim3 grid, Dim3 block) const {
+    std::ostringstream log;
+    log << "Kernel: " << name << "\nGrid: " << grid.x << " × " << grid.y << " × " << grid.z
+        << "\nBlock: " << block.x << " × " << block.y << " × " << block.z << '\n';
+    progress(log.str());
+  }
+  Pipeline pipeline(const std::string &entrypoint, const std::string &source, double &seconds) {
     const std::string key = entrypoint + '\n' + source;
     const auto found = pipelines.find(key);
     if (found != pipelines.end()) {
       seconds = 0;
-      std::cout << "Reusing kernel pipeline...\n" << std::flush;
+      progress("Reusing kernel pipeline...\n");
+      runtime_event("compilation", "reused", entrypoint, trace_id);
       return found->second;
     }
     const auto start = std::chrono::steady_clock::now();
@@ -346,19 +397,26 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     NSError *error = nil;
     NSString *text = [[NSString alloc] initWithBytes:source.data() length:source.size()
                                           encoding:NSUTF8StringEncoding];
-    std::cout << "Compiling kernel...\n" << std::flush;
+    if (!text) throw Error(ErrorCode::compilation, "Metal shader source is not valid UTF-8");
+    progress("Compiling kernel...\n");
+    runtime_event("compilation", "started", entrypoint, trace_id);
     id<MTLLibrary> library = [device newLibraryWithSource:text options:options error:&error];
     if (!library) throw Error(ErrorCode::compilation, "Metal shader compilation failed: " + metal_error(error));
-    if (error) std::cerr << "Metal compiler: " << metal_error(error) << '\n';
+    if (error) progress("Metal compiler: " + metal_error(error) + '\n');
     NSString *name = [NSString stringWithUTF8String:entrypoint.c_str()];
     id<MTLFunction> function = [library newFunctionWithName:name];
     if (!function) throw Error(ErrorCode::compilation, "Generated Metal library has no entrypoint named " + entrypoint);
-    id<MTLComputePipelineState> result = [device newComputePipelineStateWithFunction:function error:&error];
-    if (!result) throw Error(ErrorCode::compilation, "Metal pipeline creation failed: " + metal_error(error));
+    MTLComputePipelineReflection *reflection = nil;
+    id<MTLComputePipelineState> state = [device newComputePipelineStateWithFunction:function
+                         options:MTLPipelineOptionBindingInfo | MTLPipelineOptionBufferTypeInfo
+                      reflection:&reflection error:&error];
+    if (!state) throw Error(ErrorCode::compilation, "Metal pipeline creation failed: " + metal_error(error));
+    Pipeline result{state, reflection};
     pipelines.emplace(key, result);
     seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     counters.pipeline_compile_seconds += seconds;
     ++counters.pipeline_compilations;
+    runtime_event("compilation", "completed", entrypoint, trace_id);
     return result;
   }
   void prepare(const Kernel &kernel) override {
@@ -372,6 +430,139 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       for (unsigned i = 0; i < kernel.parameters.size(); ++i) layout.push_back(i);
       double seconds = 0;
       pipeline("uc_kernel_" + kernel.name, emit_msl(kernel, layout), seconds);
+    }
+  }
+  void validate_reflection(const ExecutableEntry &entry, const Pipeline &pipeline) const {
+    if (!pipeline.reflection)
+      throw Error(ErrorCode::compilation, "Metal did not return executable argument reflection");
+    std::set<unsigned> reflected;
+    for (id<MTLBinding> binding in pipeline.reflection.bindings) {
+      if (!binding.used) continue;
+      if (binding.type != MTLBindingTypeBuffer)
+        throw Error(ErrorCode::unsupported, "MSL executable profile only accepts buffer/scalar resources");
+      id<MTLBufferBinding> argument = (id<MTLBufferBinding>)binding;
+      const auto found = std::find_if(entry.parameters.begin(), entry.parameters.end(),
+          [&](const auto &parameter) { return parameter.binding == argument.index; });
+      if (found == entry.parameters.end())
+        throw Error(ErrorCode::compilation, "MSL manifest omits active buffer binding " + std::to_string(argument.index));
+      const auto &p = *found;
+      const MTLDataType expected = p.type == ScalarType::I32 ? MTLDataTypeInt :
+                                   p.type == ScalarType::U32 ? MTLDataTypeUInt : MTLDataTypeFloat;
+      if (utf8(argument.name) != p.name || argument.bufferDataType != expected ||
+          argument.bufferDataSize != 4 ||
+          (argument.bufferPointerType && argument.bufferPointerType.elementIsArgumentBuffer))
+        throw Error(ErrorCode::compilation, "MSL manifest argument type/name mismatch at " + p.name);
+      const unsigned actual_access = argument.access == MTLBindingAccessReadOnly ? 1u :
+                                      argument.access == MTLBindingAccessWriteOnly ? 2u : 3u;
+      if ((static_cast<unsigned>(p.access) & actual_access) != actual_access ||
+          (!p.buffer && actual_access != 1))
+        throw Error(ErrorCode::compilation, "MSL manifest understates reflected access at " + p.name);
+      if (!argument.bufferAlignment || p.alignment % argument.bufferAlignment ||
+          p.minimum_bytes < argument.bufferDataSize)
+        throw Error(ErrorCode::compilation, "MSL manifest understates reflected alignment/size at " + p.name);
+      reflected.insert(p.binding);
+    }
+    if (reflected.size() != entry.parameters.size())
+      throw Error(ErrorCode::compilation, "MSL manifest contains missing or inactive buffer arguments");
+    if (pipeline.state.staticThreadgroupMemoryLength > device.maxThreadgroupMemoryLength)
+      throw Error(ErrorCode::unsupported, "MSL static threadgroup memory exceeds device capacity");
+    if (entry.required_block[0])
+      geometry(pipeline.state, {1, 1, 1}, {entry.required_block[0], entry.required_block[1], entry.required_block[2]});
+  }
+  std::shared_ptr<CompiledExecutable> prepare(const ExecutableModule &module) override {
+    std::lock_guard<std::mutex> lock(mutex);
+    @autoreleasepool {
+      healthy();
+      verify_executable(module);
+      auto result = std::make_shared<MetalExecutable>();
+      result->owner = identity;
+      result->description = module;
+      const auto source = std::string("#pragma STDC FP_CONTRACT OFF\n") + module.source;
+      for (const auto &entry : module.entries) {
+        double seconds = 0;
+        auto compiled = pipeline(entry.name, source, seconds);
+        validate_reflection(entry, compiled);
+        result->entries.push_back(compiled);
+      }
+      return result;
+    }
+  }
+  std::shared_ptr<Event> submit(const std::shared_ptr<CompiledExecutable> &value,
+                              std::size_t entry_index, Dim3 grid, Dim3 block,
+                              const std::vector<BoundArgument> &arguments) override {
+    std::lock_guard<std::mutex> lock(mutex);
+    @autoreleasepool {
+      healthy();
+      auto executable = std::dynamic_pointer_cast<MetalExecutable>(value);
+      if (!executable || executable->owner != identity)
+        throw Error(ErrorCode::invalid_handle, "Executable belongs to another context or backend");
+      if (entry_index >= executable->description.entries.size())
+        throw Error(ErrorCode::invalid_value, "Executable entrypoint index is out of range");
+      const auto &entry = executable->description.entries[entry_index];
+      const auto state = executable->entries[entry_index].state;
+      if (arguments.size() != entry.parameters.size())
+        throw Error(ErrorCode::invalid_value, "MSL kernel argument count mismatch");
+      geometry(state, grid, block);
+      if (entry.required_block[0] && (entry.required_block[0] != block.x ||
+          entry.required_block[1] != block.y || entry.required_block[2] != block.z))
+        throw Error(ErrorCode::invalid_value, "Launch block differs from MSL executable's required workgroup shape");
+      std::unordered_map<MetalBuffer *, ResourceAccess> seen;
+      std::vector<std::shared_ptr<MetalBuffer>> retained;
+      for (std::size_t i = 0; i < arguments.size(); ++i) {
+        const auto &a = arguments[i];
+        const auto &p = entry.parameters[i];
+        if (a.is_buffer != p.buffer || a.type != p.type)
+          throw Error(ErrorCode::invalid_value, "MSL argument kind/type mismatch at " + p.name);
+        if (p.buffer) {
+          auto allocation = buffer(a.allocation);
+          range(*allocation, a.offset, a.size);
+          if (a.size < p.minimum_bytes || a.offset % p.alignment || a.size % 4)
+            throw Error(ErrorCode::invalid_value, "MSL view violates descriptor size/alignment at " + p.name);
+          // Multiple read-only bindings cannot observe one another's writes.
+          // Writable aliases require shared-pointer lowering, which arbitrary
+          // MSL source does not provide as generated IR does.
+          const auto inserted = seen.emplace(allocation.get(), p.access);
+          if (!inserted.second && (p.access != ResourceAccess::Read ||
+                                   inserted.first->second != ResourceAccess::Read))
+            throw Error(ErrorCode::unsupported, "MSL repeated-allocation arguments require every binding to be read-only");
+          if (inserted.second) retained.push_back(std::move(allocation));
+        }
+      }
+      log_launch(entry.name, grid, block);
+      id<MTLCommandBuffer> command = [queue commandBuffer];
+      if (!command) throw Error(ErrorCode::execution, "Metal could not create a command buffer");
+      id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+      if (!encoder) throw Error(ErrorCode::execution, "Metal could not create a compute encoder");
+      [encoder setComputePipelineState:state];
+      for (std::size_t i = 0; i < arguments.size(); ++i) {
+        const auto &a = arguments[i];
+        const auto slot = entry.parameters[i].binding;
+        if (a.is_buffer) {
+          auto allocation = buffer(a.allocation);
+          [encoder setBuffer:allocation->metal offset:a.offset atIndex:slot];
+        } else [encoder setBytes:a.bytes.data() length:a.bytes.size() atIndex:slot];
+      }
+      [encoder dispatchThreadgroups:MTLSizeMake(grid.x, grid.y, grid.z)
+              threadsPerThreadgroup:MTLSizeMake(block.x, block.y, block.z)];
+      [encoder endEncoding];
+      const auto source = std::string("#pragma STDC FP_CONTRACT OFF\n") + executable->description.source;
+      const auto source_it = std::find(sources.begin(), sources.end(), source);
+      const std::size_t source_index = std::distance(sources.begin(), source_it);
+      if (source_it == sources.end()) sources.push_back(source);
+      auto work = std::make_shared<Work>();
+      work->command = command;
+      work->executable = executable;
+      work->resources = std::move(retained);
+      work->kernel = entry.name; work->source = source;
+      work->grid = grid; work->block = block;
+      work->source_index = source_index; work->compile_seconds = 0;
+      work->operation_id = next_operation_id++;
+      auto event = std::make_shared<MetalEvent>(shared_from_this(), work);
+      progress("Executing on GPU...\n");
+      runtime_event("submission", "prepared", entry.name, trace_id, work->operation_id);
+      pending.push_back(work);
+      [command commit];
+      return event;
     }
   }
   std::shared_ptr<Event> submit(const Kernel &kernel, Dim3 grid, Dim3 block,
@@ -388,14 +579,13 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       const std::string entrypoint = handwritten ? kernel.name : "uc_kernel_" + kernel.name;
       double compile_seconds = 0;
       auto state = pipeline(entrypoint, source, compile_seconds);
-      geometry(state, grid, block);
-      std::cout << "Kernel: " << kernel.name << "\nGrid: " << grid.x << " × " << grid.y << " × "
-                << grid.z << "\nBlock: " << block.x << " × " << block.y << " × " << block.z << '\n';
+      geometry(state.state, grid, block);
+      log_launch(kernel.name, grid, block);
       id<MTLCommandBuffer> command = [queue commandBuffer];
       if (!command) throw Error(ErrorCode::execution, "Metal could not create a command buffer");
       id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
       if (!encoder) throw Error(ErrorCode::execution, "Metal could not create a compute encoder");
-      [encoder setComputePipelineState:state];
+      [encoder setComputePipelineState:state.state];
       std::vector<bool> bound(31, false);
       for (std::size_t i = 0; i < arguments.size(); ++i) {
         const auto &argument = arguments[i];
@@ -419,9 +609,11 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
       work->kernel = kernel.name; work->source = source;
       work->grid = grid; work->block = block;
       work->source_index = source_index; work->compile_seconds = compile_seconds;
+      work->operation_id = next_operation_id++;
       // Allocate event and pending storage before committing any physical work.
       auto event = std::make_shared<MetalEvent>(shared_from_this(), work);
-      std::cout << "Executing on GPU...\n" << std::flush;
+      progress("Executing on GPU...\n");
+      runtime_event("submission", "prepared", kernel.name, trace_id, work->operation_id);
       // Logging can throw if a host application enables iostream exceptions.
       // Never retain an uncommitted command across a potentially throwing log.
       pending.push_back(work);
@@ -451,6 +643,7 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
     output << std::setprecision(17)
            << "{\n  \"backend\": \"Metal\",\n  \"device\": " << json(utf8(device.name))
            << ",\n  \"registry_id\": " << device.registryID
+           << ",\n  \"stable_device_id\": " << json(describe(device).stable_id)
            << ",\n  \"os\": " << json(utf8(NSProcessInfo.processInfo.operatingSystemVersionString))
            << ",\n  \"physical_memory_bytes\": " << NSProcessInfo.processInfo.physicalMemory
            << ",\n  \"unified_memory\": " << (device.hasUnifiedMemory ? "true" : "false")
@@ -478,6 +671,9 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
              << "], \"command_status\": " << json(e.complete ? "completed" : "failed")
              << ", \"gpu_start_seconds\": " << e.start << ", \"gpu_end_seconds\": " << e.end
              << ", \"gpu_duration_seconds\": " << (e.end - e.start)
+             << ", \"gpu_duration_valid\": " << (e.complete && e.error.empty() ? "true" : "false")
+             << ", \"gpu_timestamps_valid\": " << (e.complete && e.error.empty() ? "true" : "false")
+             << ", \"gpu_clock_domain\": \"metal_system_mach\""
              << ", \"pipeline_compile_seconds\": " << e.compile_seconds
              << ", \"source_file\": " << json("source-" + std::to_string(e.source_index) + ".metal")
              << ", \"error\": " << json(e.error) << '}'
@@ -506,9 +702,7 @@ std::vector<DeviceInfo> devices() {
   @autoreleasepool {
     std::vector<DeviceInfo> result;
     for (id<MTLDevice> device : enumerate_devices())
-      result.push_back({utf8(device.name), "Metal", utf8(NSProcessInfo.processInfo.operatingSystemVersionString),
-                        device.registryID, device.maxBufferLength, bool(device.hasUnifiedMemory),
-                        device.recommendedMaxWorkingSetSize});
+      result.push_back(describe(device));
     return result;
   }
 }

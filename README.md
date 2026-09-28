@@ -1,10 +1,10 @@
 # Paralyn
 
-An independent experimental GPU runtime with a small CUDA source subset and native C/C++ and Python interfaces, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
+An independent experimental GPU runtime with a small CUDA source subset, public Metal modules, native C/C++ interfaces and owned Python/C++ FP32 arrays, beginning with Metal on Apple Silicon. It is not a general CUDA replacement. No CPU kernel fallback exists.
 
 **Paralyn's Gate A passed on the physical Apple M5.** The complete ordinary CUDA vector-add program was parsed, its host launch rewritten, its kernel lowered through verified typed IR to MSL, and all 1,024 GPU results independently checked by its CPU verifier. No CPU kernel fallback was used. **Gate B also passed on Apple M5:** all six tests, 75 correctness launches and 880 benchmark launches have [clean-revision evidence](artifacts/gate-b/README.md). No tagged release has been published.
 
-The fresh [execution record](artifacts/paralyn-gate-a/execution.json), [generated Metal](artifacts/paralyn-gate-a/generated.metal), and [verification transcript](artifacts/paralyn-gate-a/verification.txt) preserve a run from a clean Paralyn revision:
+The historical rename [execution record](artifacts/paralyn-gate-a/execution.json), [generated Metal](artifacts/paralyn-gate-a/generated.metal), and [verification transcript](artifacts/paralyn-gate-a/verification.txt) preserve a run from a clean Paralyn revision:
 
 ```text
 $ build/paralyn run examples/vector_add.cu
@@ -42,11 +42,11 @@ build/paralyn run examples/vector_add.cu
 
 `run` compiles and executes trusted local source as a native program, with the same host access as launching that program yourself. It does not sandbox host C++.
 
-Specify `--device auto` (default) or a listed index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `artifacts/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
+Specify `--device auto` (default), `metal:0`, or a listed numeric index. Pass host arguments after `--`. Each run saves source, `paralyn-ir.txt`, generated Metal, execution metadata, and the real program transcript under `.paralyn/runs/`. Use `--artifacts DIR` to select an empty directory; existing evidence is never overwritten by the CLI. Transformed native host code is preserved as `host.cpp` in each evidence directory, together with every dispatched `source-N.metal` referenced by the launch record.
 
 ## Native C/C++ and Python
 
-The native ABI now exposes devices, contexts, owned buffers, offset views, verified kernel modules, typed launches, ordered queues, events and structured errors. C++ adds move-only ownership wrappers; Python binds the same shared library with standard-library `ctypes`. Both use the shared Metal engine. [Clean evidence](artifacts/stage-b/README.md) records 21 native GPU events and all 14 current CTests passing, with CUDA correctness and the 880-launch benchmark preserved. See the executable examples in `examples/native/` and the [native API contract](docs/native-api.md).
+The native ABI now exposes devices, contexts, owned buffers, offset views, verified kernel modules, typed launches, ordered queues, events and structured errors. C++ adds move-only ownership wrappers; Python binds the same shared library with standard-library `ctypes`. Both use the shared Metal engine. [Clean evidence](artifacts/stage-b/README.md) records 21 native GPU events and all 14 then-current CTests passing, with CUDA correctness and the 880-launch benchmark preserved. See the executable examples in `examples/native/` and the [native API contract](docs/native-api.md).
 
 ```sh
 build/native_c build/native-kernels.prk artifacts/runs/native-c-new
@@ -57,7 +57,33 @@ PYTHONPATH=bindings/python PARALYN_LIBRARY="$PWD/build/libparalyn_native.dylib" 
 python3 scripts/qualify_native.py --build build --output artifacts/runs/native-suite-new
 ```
 
-The examples independently verify GPU vector addition and/or an affine transform. `paralyn compile SOURCE.cu --output NEW.prk` produces a reusable verified kernel module without executing host code. Native clients need the runtime library, not LLVM at execution time. This is an explicit byte-buffer interface; `paralyn.asarray`, tensor operators and arbitrary Python kernel compilation are not implemented.
+The examples independently verify GPU vector addition and/or an affine transform. `paralyn compile SOURCE.cu --output NEW.prk` produces a reusable verified kernel module without executing host code. Native clients need the runtime library, not LLVM at execution time. Owned one-dimensional FP32 `asarray`, `to_host`, `add` and `affine` now extend this interface in Python and C++. Multidimensional tensors, matmul and arbitrary Python kernel compilation remain unimplemented.
+
+## Arrays, installation and terminal reports
+
+```sh
+build/paralyn doctor --device metal:0
+build/paralyn support --json
+build/paralyn run examples/native/arrays.py --device metal:0
+build/paralyn run examples/native/arrays.cpp --device metal:0
+build/paralyn check examples/vector_add.cu --device metal:0 --json
+build/paralyn run examples/vector_add.cu --json
+cmake --install build --prefix "$PWD/build/install"
+```
+
+`run` preserves application stdout/stderr and exit status; JSON runs store application streams separately. Verification remains `not_requested` unless a declared independent reference is actually compared. `doctor` and `verify builtin:vector-add` perform a bundled real GPU comparison. See [terminal semantics](docs/terminal.md) for exact commands and limits.
+
+The [Python package instructions](bindings/python/README.md) build a deterministic, offline-installable macOS arm64 wheel containing the native library and verified operator module. Installed Python/C++ clients execute outside the checkout and do not need LLVM. A runtime-only CMake build uses `-DPARALYN_BUILD_COMPILER=OFF`; optional precompiled modules are deployed separately. This is packaging foundation, not yet a complete multi-platform installer release.
+
+Public MSL source uses an explicit typed resource manifest and bounded `.prx` container:
+
+```sh
+build/paralyn compile examples/metal/kernels.metal \
+  --manifest examples/metal/kernels.json --output build/kernels.prx
+build/paralyn check build/kernels.prx --device metal:0
+```
+
+Load the module with the same C/C++/Python native APIs. Vector addition, shared-memory reduction and tiled transpose have real GPU tests. This path is Metal-specific; see the [exact input and alias contract](docs/executable-artifacts.md). The full [adopted implementation program](docs/complete-platform-program.md) remains required and incomplete.
 
 ## Current boundaries
 

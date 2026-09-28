@@ -1,0 +1,27 @@
+# Public Metal executable profile
+
+The original `PARALYN\0` `.prk` version 1 reader/writer and C ABI 1 remain compatible. A distinct `PARALYNX` version 1 `.prx` source container is implemented in `include/paralyn/executable.hpp` and `compiler/ir/executable.cpp`. It represents an owned public MSL module path; it does not route through the old handwritten-MSL test hook.
+
+The bounded little-endian container stores payload kind, exact target `metal-msl3.1`, numerical policy 1, producer/version, source name/SHA256/source text, and entrypoints. Each entry declares argument name, i32/u32/f32 scalar/pointee type, buffer/scalar kind, explicit slot, read/write access, alignment, minimum bytes, and optional exact workgroup shape. Serialization/deserialization validate counts, UTF-8, ranges, hashes, enums, all bytes/trailing data and source/signature profile. The complete container is bounded at 16MiB, source at 8MiB/200,000 lexical tokens. It is a trusted local native-code interface, not a memory-safety sandbox.
+
+The CLI's JSON resource manifest is strict: unknown or duplicate fields, incorrect collection types, fractional/negative/out-of-range integers and unsupported values fail before conversion. See `examples/metal/kernels.json`. Source hashes are computed from the actual supplied bytes; compile-time Paralyn revision/dirty metadata identifies the producer. Future dependency manifests, other payload kinds and separately pinned compiler workers remain required expansions.
+
+## Entry and resource semantics
+
+The initial MSL profile permits self-contained UTF-8 source and only `#include <metal_stdlib>` preprocessing. Macros, source pragmas, alternate preprocessor spellings and other includes are rejected. Backslashes are unsupported, including line splicing and escapes in strings/comments; raw string literals are also rejected. Entrypoints are explicit top-level `kernel void NAME(...) { ... }` definitions, with no prototypes/overloads/trailing attributes. Every source entrypoint must appear exactly once in the descriptor. Bodies and ordinary device helper functions are compiled by Metal within these source restrictions.
+
+Resource signatures use explicit `device [const] float|int|uint *name [[buffer(N)]]` or `constant [const] T &name [[buffer(N)]]`; a single const qualifier may also precede the address space or follow the type. `N` is a decimal literal from 0 through 30, unique within the entrypoint. Typedef/macro indirection and arbitrary exposed resource types are outside this profile. Supported invocation builtins use uint/uint2/uint3 with `thread_position_in_grid`, `thread_position_in_threadgroup`, `thread_index_in_threadgroup`, `threadgroup_position_in_grid`, `threads_per_threadgroup` or `threadgroups_per_grid`. Textures, samplers, argument buffers and dynamic threadgroup arguments remain unsupported.
+
+The runtime retains compiled pipelines and validates actual Metal reflection against the declared slots, types, access and alignment before launch. Source signature validation additionally distinguishes buffer pointers from inline scalar references: Metal reflection alone reports these identically for some read-only scalar types. Scalars are copied. Explicit byte-offset views are bound at their declared slots, with context/range/alignment/access checks. Declared minimum sizes are not a proof of arbitrary dynamic shader indexing; callers must satisfy the shader's input contract.
+
+Aliases declared read-only may bind the same allocation to multiple slots. Repeated allocations involving a writable MSL parameter are rejected in this initial source profile: arbitrary source cannot yet be rewritten to remove Metal's distinct-pointer alias assumptions. Generated scalar-IR/CUDA kernels continue to support their established same-type writable alias groups. This restriction is specific to the native MSL profile and does not change the existing CUDA/native IR contract.
+
+Declared workgroups must match exactly when provided. Device and compiled-pipeline limits are checked. Shared threadgroup arrays/barriers inside MSL work; the example suite includes 64-lane reduction and a 16x16 tiled transpose. Geometry implements full logical groups, with source bounds checks where required. No CPU kernel fallback exists.
+
+Numerical policy 1 requests Metal3.1 safe math, precise functions and disabled contraction. Explicit source operations preserve MSL semantics; this is not a claim of full CUDA or universal IEEE754 equivalence. The archive preserves actually dispatched MSL. Completion/error/resource retention uses the same engine as native IR and CUDA.
+
+## Implemented evidence boundary
+
+`tests/executable_tests.cpp` checks independent wire bytes, all truncation points, hashes, UTF-8 and schema/source/signature failures. `tests/metal/msl_tests.cpp` loads the public artifact through C ABI, compares real vector-add/read-alias/reduction/transpose results with independent CPU references, checks offsets/canaries, observes valid GPU durations and resource retention, and rejects invalid descriptors and launch arguments without deliberately issuing invalid memory accesses.
+
+This is Metal-source support. SPIR-V, HLSL, GLSL, WGSL, OpenCL and other compiler bridges are still separate required implementations. Public MSL execution does not qualify any of them or any NVIDIA/AMD backend.

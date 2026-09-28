@@ -1,6 +1,6 @@
 # Paralyn engineering instructions
 
-The user adopted [Master Engineering Mandate v1.1](docs/master-mandate-v1.1.md). Read it and the current `docs/status.md`, `docs/architecture.md`, `docs/cuda-compatibility.md`, `ROADMAP.md`, and `docs/portfolio-ledger.json` before extending the system. Mandate version 1.1 is not software version 1.1; the current software remains 0.0.1.
+The user adopted [Master Engineering Mandate v1.1](docs/master-mandate-v1.1.md) and the [complete-platform implementation program](docs/complete-platform-program.md). The latter adds explicit framework, operator, terminal, packaging, function-compilation and automatic-offload requirements; neither document is evidence of implementation. Read it and the current `docs/status.md`, `docs/architecture.md`, `docs/cuda-compatibility.md`, `ROADMAP.md`, and `docs/portfolio-ledger.json` before extending the system. Mandate version 1.1 is not software version 1.1; the current software remains 0.0.1.
 
 - Continue this repository. Preserve existing working code, user changes, acceptance gates, and historical evidence. Do not restart or rewrite the compiler speculatively.
 - All 17 frontend/input families and all three named interoperability clients in the ledger are required phased work. A checkpoint, a placeholder, or one extra frontend does not complete the portfolio. Keep framework adapters, operator providers, frontends, and execution backends distinct.

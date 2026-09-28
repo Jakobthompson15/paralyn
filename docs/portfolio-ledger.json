@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-25",
+  "updated": "2026-09-28",
   "software_version": "0.0.1",
   "mandate": {
     "version": "1.1",
@@ -274,8 +274,8 @@
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
         "version": "Paralyn C ABI 1 / C11 and C++17",
-        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors; no array API yet.",
-        "subset_status": "implemented_first_byte_buffer_launch_slice"
+        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors.  Owned contiguous one-dimensional FP32 asarray/to_host/add/affine now implemented over the same runtime; packaged module discovery.",
+        "subset_status": "implemented_byte_buffer_and_fp32_array_slices"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
@@ -293,7 +293,7 @@
       },
       "execution_path": "C ABI 1 / C++ RAII -> verified artifact IR -> shared Metal engine -> physical GPU",
       "tests": {
-        "positive_negative_integration": "tests/native/native_tests.cpp; examples/native/vector_add.c; examples/native/vector_add.cpp; CTests native_c/native_cpp/native_tests",
+        "positive_negative_integration": "tests/native/native_tests.cpp; examples/native/vector_add.c; examples/native/vector_add.cpp; CTests native_c/native_cpp/native_tests; tests/native/run_arrays.py; arrays_cpp/arrays_python",
         "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
         "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
       },
@@ -360,20 +360,25 @@
         }
       ],
       "blockers": [],
-      "next_task": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required.",
+      "next_task": "Add explicit tensor shapes/strides and qualified FP32 matmul; preserve array ownership, scalar IR/CUDA paths and cross-vendor obligations.",
       "implementation_files": [
         "include/paralyn/native.h",
         "include/paralyn/native.hpp",
         "runtime/native.cpp",
         "backends/metal/engine.mm",
-        "include/paralyn/detail/backend.hpp"
+        "include/paralyn/detail/backend.hpp",
+        "include/paralyn/array.hpp",
+        "examples/native/arrays.cpp",
+        "tests/native/array_tests.cpp"
       ],
       "build_targets": [
         "paralyn_native",
         "native_c",
         "native_cpp",
         "native_tests",
-        "native_kernels"
+        "native_kernels",
+        "array_operators",
+        "array_tests"
       ]
     },
     {
@@ -389,8 +394,8 @@
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
         "version": "Paralyn C ABI 1 / Python stdlib ctypes",
-        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors; no array API yet.",
-        "subset_status": "implemented_first_byte_buffer_launch_slice"
+        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors.  Owned contiguous one-dimensional FP32 asarray/to_host/add/affine now implemented over the same runtime; packaged module discovery.",
+        "subset_status": "implemented_byte_buffer_and_fp32_array_slices"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
@@ -409,7 +414,7 @@
       },
       "execution_path": "Python ctypes -> C ABI 1 -> verified artifact IR -> shared Metal engine -> physical GPU",
       "tests": {
-        "positive_negative_integration": "tests/native/test_python.py; tests/native/run_example.py (python-tests, python-example, python-finalizer)",
+        "positive_negative_integration": "tests/native/test_python.py; tests/native/run_example.py (python-tests, python-example, python-finalizer); tests/native/run_arrays.py; arrays_cpp/arrays_python",
         "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
         "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
       },
@@ -477,13 +482,19 @@
         }
       ],
       "blockers": [],
-      "next_task": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required.",
+      "next_task": "Add explicit tensor shapes/strides and qualified FP32 matmul; preserve array ownership, scalar IR/CUDA paths and cross-vendor obligations.",
       "implementation_files": [
-        "bindings/python/paralyn/__init__.py"
+        "bindings/python/paralyn/__init__.py",
+        "bindings/python/paralyn/array.py",
+        "bindings/python/operators.cu",
+        "bindings/python/build_wheel.py",
+        "bindings/python/test_install.py",
+        "tests/native/test_arrays.py"
       ],
       "build_targets": [
         "paralyn_native",
-        "native_kernels"
+        "native_kernels",
+        "array_operators"
       ]
     },
     {
@@ -1130,31 +1141,35 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "E",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
       "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
       "complete": false,
       "portability": "backend_specific_metal",
       "input_contract": {
-        "version": null,
-        "subset": "Native MSL module compilation, argument contract and runtime execution; backend-specific.",
-        "subset_status": "design_target_not_yet_pinned"
+        "version": "MSL3.1 / PARALYNX source container1",
+        "subset": "Bounded explicit 32-bit buffer/scalar resources, reflected pipelines, retained execution; docs/executable-artifacts.md",
+        "subset_status": "implemented_public_module_profile"
       },
       "workloads": {
-        "reference": "bounds_checked_vector_add",
-        "useful": "Native MSL affine transform module",
-        "useful_status": "proposed_not_qualified"
+        "reference": "vector addition including read-only aliases",
+        "useful": "64-lane threadgroup reduction and 16x16 tiled transpose",
+        "useful_status": "implemented_and_development_tested_pending_clean_archive"
       },
       "dependencies": {
-        "compiler_provider_versions": [],
+        "compiler_provider_versions": [
+          "Metal language3.1 runtime compiler",
+          "macOS26.5.1 SDK26.2",
+          "Apple Clang17.0.0"
+        ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
-        "provenance": "Not yet established for this track."
+        "provenance": "Independently authored native shaders, descriptors and verifier; public Apple Metal runtime."
       },
-      "execution_path": null,
+      "execution_path": "MSL source + strict JSON descriptor -> hashed validated executable container -> public C ABI module -> reflected Metal pipeline -> physical GPU",
       "tests": {
-        "positive_negative_integration": "not_started",
-        "numerical_contract": null,
-        "reproduction": null
+        "positive_negative_integration": "tests/executable_tests.cpp; tests/metal/msl_tests.cpp; tests/cli_tests.py",
+        "numerical_contract": "docs/executable-artifacts.md; numerical policy1",
+        "reproduction": "scripts/qualify_product.py; CTest public_msl"
       },
       "backend_results": [
         {
@@ -1180,12 +1195,20 @@
         }
       ],
       "blockers": [],
-      "next_task": "Turn the test-only handwritten-MSL hook into a scoped real module/reflection/argument API after the native-runtime foundation.",
-      "related_evidence": {
-        "kind": "internal_test_hook_only",
-        "path": "tests/runtime_smoke.cpp",
-        "note": "Handwritten MSL smoke is real backend evidence, but it does not qualify a native-MSL frontend/module API."
-      }
+      "next_task": "Preserve public MSL qualification; extend validated resource/artifact contract for the pinned SPIR-V-to-Metal importer.",
+      "implementation_files": [
+        "include/paralyn/executable.hpp",
+        "compiler/ir/executable.cpp",
+        "runtime/native.cpp",
+        "backends/metal/engine.mm",
+        "examples/metal/kernels.metal"
+      ],
+      "build_targets": [
+        "paralyn_ir",
+        "paralyn_native",
+        "msl_tests",
+        "executable_tests"
+      ]
     },
     {
       "id": "ptx",
@@ -1446,14 +1469,11 @@
   ],
   "framework_requirement_groups": [
     {
-      "id": "first_framework_workload",
+      "id": "pytorch_then_jax_onnx",
       "required": true,
-      "minimum_qualified_surfaces": 1,
-      "stage": "F",
-      "selected_surface": null,
       "implementation": "not_started",
       "qualification": "unavailable",
-      "next_task": "After native/runtime and provider foundations, compare bounded PyTorch, JAX, and ONNX paths and select one useful real workload."
+      "contract": "PyTorch custom operator/device/compiled graph/inference/backward-training, then separate JAX device and ONNX graph profiles; all remain required."
     }
   ],
   "framework_targets": [
@@ -1461,7 +1481,7 @@
       "id": "pytorch_custom_op",
       "framework": "PyTorch",
       "surface": "custom operator",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1492,13 +1512,13 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "pytorch_device",
       "framework": "PyTorch",
       "surface": "accelerator/device backend",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1529,13 +1549,13 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "pytorch_export",
       "framework": "PyTorch",
       "surface": "exported graph",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1566,13 +1586,13 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "pytorch_compile",
       "framework": "PyTorch",
       "surface": "torch.compile backend",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1603,13 +1623,13 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "jax_pjrt",
       "framework": "JAX",
       "surface": "PJRT/compiler integration",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1640,13 +1660,13 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "onnx_import",
       "framework": "ONNX",
       "surface": "tested importer or ONNX Runtime execution provider",
-      "required": false,
+      "required": true,
       "requirement_group": "first_framework_workload",
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1677,7 +1697,7 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     },
     {
       "id": "tensorflow",
@@ -1831,7 +1851,7 @@
       "id": "dlpack",
       "framework": "DLPack",
       "surface": "validated ownership/device/synchronization exchange",
-      "required": false,
+      "required": true,
       "requirement_group": null,
       "implementation": "not_started",
       "qualification": "unavailable",
@@ -1862,7 +1882,7 @@
       ],
       "evidence": [],
       "next_task": "Evaluate this real extension boundary after the native foundation; compare cost/user value before selecting the first required framework workload.",
-      "note": "Candidate/investigation target; naming in the mandate is not a requirement to implement every possible framework surface."
+      "note": "Explicitly required by the 2026-09-28 complete-platform plan; surfaces qualify independently. No implementation is implied."
     }
   ],
   "backend_qualifications": [
@@ -2225,5 +2245,164 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Implement the contiguous one-dimensional FP32 Array/asarray/to_host/add/affine layer over the existing native buffers and module launch; qualify empty/odd lengths, ownership/errors and actual GPU results. Exact scope: docs/handoff.md. Establish authorized NVIDIA/AMD hardware prerequisites separately; all remaining portfolio tracks stay required."
+  "next_acceptance_gap": "Complete clean qualification of the native-product batch; then ready workstreams in docs/handoff.md. Missing Windows inventories/vendor access remain prerequisites, not passing cells.",
+  "complete_platform_program": "docs/complete-platform-program.md",
+  "additional_required_programs": [
+    {
+      "id": "python_function_compilation",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "cpp_function_compilation",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "automatic_region_offload",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "tensor_shapes_strides",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "reductions_scans",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "normalization_softmax",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "convolution_attention",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "fft_rng_sparse",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "backward_training",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "multi_device_collectives",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "cublas_compatibility",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "cufft_compatibility",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "curand_compatibility",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "cusparse_compatibility",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "cudnn_compatibility",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "mlp_inference_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "transformer_block_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "training_gradient_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "scientific_jacobi_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "image_pipeline_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "external_ai_application",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "ptx_provenance_reference",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "sass_provenance_reference",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "full_terminal_command_family",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "project_kernel_case_toml",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    },
+    {
+      "id": "installers_completions_offline_release",
+      "required": true,
+      "implementation": "not_started",
+      "qualification": "unavailable"
+    }
+  ]
 }

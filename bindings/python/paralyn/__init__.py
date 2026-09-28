@@ -161,7 +161,16 @@ def _library(path=None):
     if path is None:
         path = os.environ.get("PARALYN_LIBRARY")
     if path is None:
-        path = Path(__file__).resolve().parents[3] / "build" / "libparalyn_native.dylib"
+        package = Path(__file__).resolve().parent
+        bundled = package / "_native" / "libparalyn_native.dylib"
+        checkout = package.parents[2]
+        if bundled.is_file():
+            path = bundled
+        elif (checkout / "CMakeLists.txt").is_file():
+            path = checkout / "build" / "libparalyn_native.dylib"
+        else:
+            raise FileNotFoundError("Paralyn's installed native library is missing; reinstall the "
+                                    "platform wheel or set PARALYN_LIBRARY explicitly")
     path = str(Path(path).resolve())
     if path not in _libraries:
         if not Path(path).is_file():
@@ -244,7 +253,9 @@ class _Owned:
 
 
 class Context(_Owned):
-    def __init__(self, selector="auto", *, library=None):
+    def __init__(self, selector=None, *, library=None):
+        if selector is None:
+            selector = os.environ.get("PARALYN_DEVICE", "auto")
         self._lib, self._handle = _library(library), 0
         result = _c.c_uint64()
         self._lib.check(self._lib.api.pr_context_create(_cstring(selector, "selector"),
@@ -269,6 +280,23 @@ class Context(_Owned):
     def write_evidence(self, directory):
         self._lib.check(self._lib.api.pr_context_write_evidence(
             self.handle, _cstring(directory, "evidence directory")))
+
+    def close(self):
+        failure = None
+        resources = getattr(self, "_array_resources", None)
+        self._array_resources = None
+        if resources is not None:
+            try:
+                resources.close()
+            except Exception as error:
+                failure = error
+        try:
+            super().close()
+        except Exception as error:
+            if failure is None:
+                failure = error
+        if failure is not None:
+            raise failure
 
 
 class Buffer(_Owned):
@@ -488,3 +516,6 @@ class Event(_Owned):
 __all__ = ["ABI_VERSION", "Access", "Buffer", "Context", "Device", "Error", "Event",
            "EventInfo", "Kernel", "Module", "Parameter", "Queue", "Scalar", "Status", "Type",
            "View", "devices", "f32", "i32", "u32"]
+
+from .array import Array, add, affine, asarray, float32
+__all__ += ["Array", "add", "affine", "asarray", "float32"]

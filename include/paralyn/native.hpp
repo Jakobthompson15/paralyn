@@ -1,6 +1,7 @@
 #pragma once
 #include "paralyn/native.h"
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <stdexcept>
 #include <string>
@@ -160,7 +161,8 @@ public:
 };
 class Context final : public Handle {
 public:
-  explicit Context(const std::string &selector = "auto") {
+  Context() : Context(std::getenv("PARALYN_DEVICE") ? std::getenv("PARALYN_DEVICE") : "auto") {}
+  explicit Context(const std::string &selector) {
     check(pr_context_create(selector.c_str(), &handle_));
   }
   pr_device_info device() const {

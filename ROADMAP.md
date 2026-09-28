@@ -1,3 +1,7 @@
+# Current delivery program
+
+The user adopted the complete M0–M9 platform/terminal program on 2026-09-28. [Its requirements](docs/complete-platform-program.md) extend the stage history below. The first implementation batch now adds actual FP32 arrays, public MSL modules, capabilities/timing, structured CLI reports and installation foundations. Documentation changes do not count as implementation; [handoff](docs/handoff.md) gives exact ready tasks and qualification gaps. All 17 inputs, three clients, three vendors, AI/framework/function/offload/binary/terminal/release obligations remain required.
+
 # Paralyn roadmap — adopted mandate v1.1
 
 The [user-adopted mandate](docs/master-mandate-v1.1.md) expands the required portfolio without restarting the repository or changing software version 0.0.1. Stage letters below are sequencing labels, not release versions or completion claims. The [portfolio ledger](docs/portfolio-ledger.json) retains all 17 frontend/input families, all three required clients, separate framework targets, operator providers, and per-backend evidence. Later required tracks are not optional research ideas.

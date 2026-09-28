@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "paralyn/frontend.hpp"
 
 #include <clang/AST/ASTConsumer.h>
@@ -531,18 +532,17 @@ FrontendResult compile_source(const std::string &path) {
   const std::string source{std::istreambuf_iterator<char>(stream),
                            std::istreambuf_iterator<char>()};
   FrontendResult result;
-  const std::vector<std::string> arguments{"-x",
+  std::vector<std::string> arguments{"-x",
                                            "cuda",
                                            "--cuda-host-only",
                                            "-nocudainc",
                                            "-nocudalib",
                                            "-std=c++17",
                                            "-resource-dir=" PARALYN_RESOURCE_DIR,
-                                           "-isysroot",
-                                           PARALYN_SDK_PATH,
-                                           "-I" PARALYN_INCLUDE_DIR,
+                                           std::string("-I") + (std::getenv("PARALYN_INCLUDE_DIR") ? std::getenv("PARALYN_INCLUDE_DIR") : PARALYN_INCLUDE_DIR),
                                            "-include",
                                            "paralyn/cuda_parse.hpp"};
+  if (std::string(PARALYN_SDK_PATH).size()) { arguments.push_back("-isysroot"); arguments.push_back(PARALYN_SDK_PATH); }
   if (!clang::tooling::runToolOnCodeWithArgs(std::make_unique<Action>(result, source), source,
                                              arguments, absolute, PARALYN_CLANG_PATH))
     throw std::runtime_error(
