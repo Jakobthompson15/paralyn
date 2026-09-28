@@ -10,10 +10,14 @@
 #include "native_internal.hpp"
 #include <array>
 #include <cstring>
+#include <initializer_list>
 #include <limits>
+#include <mutex>
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -175,6 +179,7 @@ void call(pr_status status) {
 template <class F> pr_status boundary(const char *operation, F &&fn) noexcept {
   try {
     fn();
+    paralyn_native_clear_error(); // ABI 1 convention: success clears pr_last_error
     return PR_SUCCESS;
   } catch (const Fail &f) {
     return paralyn_native_report_error(f.code, operation, f.message.c_str());
@@ -290,6 +295,42 @@ void no_alias(const pr_tensor_desc_v1 *out, const Layout &o, const pr_tensor_des
   fail(PR_UNSUPPORTED, std::string("Output shares an allocation with input ") + label +
                            "; the MSL provider profile requires distinct writable allocations");
 }
+// Provider identity: exactly the module handles returned by pr_tensor_operators_load.
+// Handle identities never recycle, so membership cannot pass to an unrelated module;
+// released handles fail as invalid before membership is consulted.
+std::mutex registry_mutex;
+std::unordered_set<pr_module> &providers() {
+  static std::unordered_set<pr_module> value;
+  return value;
+}
+bool is_provider(pr_module module) {
+  std::lock_guard<std::mutex> lock(registry_mutex);
+  return providers().count(module) != 0;
+}
+const void *owner(pr_handle handle, paralyn_native_kind kind, const char *label) {
+  const void *context = nullptr;
+  const auto status = paralyn_native_handle_context(handle, kind, &context);
+  if (status != PR_SUCCESS) {
+    pr_error inner{};
+    pr_last_error(&inner);
+    fail(status, std::string(label) + ": " + inner.message);
+  }
+  return context;
+}
+// Validates the queue and provider handles and one-context ownership of every tensor
+// before any work is submitted or skipped, with the same statuses as pr_launch.
+void same_context(pr_queue queue, pr_module operators,
+                  std::initializer_list<std::pair<const pr_tensor_desc_v1 *, const char *>> tensors) {
+  const void *context = owner(queue, PARALYN_NATIVE_QUEUE, "queue");
+  if (owner(operators, PARALYN_NATIVE_MODULE, "operators") != context)
+    fail(PR_CONTEXT_MISMATCH, "Queue and operator module belong to different contexts");
+  if (!is_provider(operators))
+    fail(PR_INVALID_ARGUMENT,
+         "Module is not the paralyn.msl.tensor provider (load it with pr_tensor_operators_load)");
+  for (const auto &t : tensors)
+    if (t.first && owner(t.first->buffer, PARALYN_NATIVE_BUFFER, t.second) != context)
+      fail(PR_CONTEXT_MISMATCH, std::string(t.second) + ": tensor buffer belongs to a different context");
+}
 void kernel(pr_module operators, const char *name, Owned &out) {
   const auto &list = entries();
   const Entry *entry = nullptr;
@@ -386,6 +427,14 @@ pr_status pr_tensor_operators_load(pr_context context, pr_module *out) {
     *out = 0;
     const auto &value = artifact();
     call(pr_module_load(context, value.data(), value.size(), out));
+    try {
+      std::lock_guard<std::mutex> lock(registry_mutex);
+      providers().insert(*out);
+    } catch (...) {
+      pr_release(*out);
+      *out = 0;
+      throw;
+    }
   });
 }
 pr_status pr_matmul_f32(pr_queue queue, pr_module operators, const pr_matmul_v1 *op,
@@ -410,6 +459,7 @@ pr_status pr_matmul_f32(pr_queue queue, pr_module operators, const pr_matmul_v1 
     expect(op->c, "C [m,n]", m, n);
     no_alias(op->c, c, op->a, a, "A");
     no_alias(op->c, c, op->b, b, "B");
+    same_context(queue, operators, {{op->a, "A"}, {op->b, "B"}, {op->c, "C"}});
     Owned fn;
     kernel(operators, k ? "paralyn_matmul_f32" : "paralyn_fill_f32", fn);
     if (!m || !n)
@@ -457,6 +507,7 @@ pr_status pr_bias_activation_f32(pr_queue queue, pr_module operators,
     }
     no_alias(op->out, o, op->x, x, "x");
     no_alias(op->out, o, op->bias, bias, "bias");
+    same_context(queue, operators, {{op->x, "x"}, {op->bias, "bias"}, {op->out, "out"}});
     Owned fn;
     kernel(operators, op->bias ? "paralyn_bias_activation_f32" : "paralyn_activation_f32", fn);
     const auto count = rows * columns;

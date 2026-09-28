@@ -208,6 +208,53 @@ def main():
             require(p.matmul_into(queue, ops, p.TensorDescriptor(ab, (0, 3)), B,
                                   p.TensorDescriptor(cb, (0, 4)), m=0, n=4, k=3) is None,
                     "empty low-level matmul fabricated an event")
+
+            # Handles and ownership are validated even when there is no GPU work.
+            bogus_queue = p.Queue._adopt(queue._lib, 0xDEADBEEF)  # never released: not a live handle
+            try:
+                A0, C0 = p.TensorDescriptor(ab, (0, 3)), p.TensorDescriptor(cb, (0, 4))
+                for case in ((A, B, C, 2, 4, 3), (A0, B, C0, 0, 4, 3)):  # with work, and m == 0
+                    rejects(lambda case=case: p.matmul_into(bogus_queue, ops, *case[:3], m=case[3], n=case[4],
+                                                            k=case[5]),
+                            p.Error, p.Status.INVALID_HANDLE, "matmul_f32")
+                X0, O0 = p.TensorDescriptor(cb, (0, 4)), p.TensorDescriptor(big, (0, 4))
+                rejects(lambda: p.bias_activation_into(bogus_queue, ops, X0, None, O0), p.Error,
+                        p.Status.INVALID_HANDLE, "bias_activation_f32")
+            finally:
+                bogus_queue._handle = 0
+            with p.Context() as other, other.buffer(8 * 4) as foreign_buffer:
+                foreign_c0 = p.TensorDescriptor(foreign_buffer, (0, 4))
+                rejects(lambda: p.matmul_into(queue, ops, A0, B, foreign_c0, m=0, n=4, k=3), p.Error,
+                        p.Status.CONTEXT_MISMATCH, "matmul_f32")
+                rejects(lambda: p.matmul_into(queue, ops, A, B, p.TensorDescriptor(foreign_buffer, (2, 4)),
+                                              m=2, n=4, k=3), p.Error, p.Status.CONTEXT_MISMATCH, "matmul_f32")
+                rejects(lambda: p.bias_activation_into(queue, ops, X0, None, foreign_c0), p.Error,
+                        p.Status.CONTEXT_MISMATCH, "bias_activation_f32")
+                foreign_bias = p.TensorDescriptor(foreign_buffer, (4,))
+                rejects(lambda: p.bias_activation_into(queue, ops, C, foreign_bias,
+                                                       p.TensorDescriptor(big, (2, 4))),
+                        p.Error, p.Status.CONTEXT_MISMATCH, "bias_activation_f32")
+            # Output aliasing B and bias; dimensions beyond INT32_MAX.
+            wide = owners.enter_context(context.buffer(32 * 4))
+            wide.write(values(32, 4).tobytes())
+            B_shared = p.TensorDescriptor(wide, (3, 4))
+            rejects(lambda: p.matmul_into(queue, ops, A, B_shared, p.TensorDescriptor(wide, (2, 4), 16),
+                                          m=2, n=4, k=3), p.Error, p.Status.INVALID_ARGUMENT, "matmul_f32")
+            rejects(lambda: p.matmul_into(queue, ops, A, B_shared, p.TensorDescriptor(wide, (2, 4), 64),
+                                          m=2, n=4, k=3), p.Error, p.Status.UNSUPPORTED, "matmul_f32")
+            bias_shared = p.TensorDescriptor(big, (4,))
+            rejects(lambda: p.bias_activation_into(queue, ops, C, bias_shared, p.TensorDescriptor(big, (2, 4), 8)),
+                    p.Error, p.Status.INVALID_ARGUMENT, "bias_activation_f32")
+            rejects(lambda: p.bias_activation_into(queue, ops, C, bias_shared, p.TensorDescriptor(big, (2, 4), 32)),
+                    p.Error, p.Status.UNSUPPORTED, "bias_activation_f32")
+            rejects(lambda: p.matmul_into(queue, ops, A, B, C, m=1 << 31, n=4, k=3), p.Error,
+                    p.Status.UNSUPPORTED, "matmul_f32")
+            # Provider identity is the handle from load_tensor_operators, not matching bytes or schema.
+            with p.Module.load(context, p.tensor_operators_artifact()) as plain:
+                before = cb.read()
+                rejects(lambda: p.matmul_into(queue, plain, A, B, C, m=2, n=4, k=3), p.Error,
+                        p.Status.INVALID_ARGUMENT, "matmul_f32")
+                require(cb.read() == before, "non-provider module wrote the output")
         context.write_evidence(args.artifacts)
         device = context.device
 

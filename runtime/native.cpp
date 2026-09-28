@@ -1,4 +1,5 @@
 #include "paralyn/native.h"
+#include "native_internal.hpp"
 #include "paralyn/artifact.hpp"
 #include "paralyn/detail/backend.hpp"
 #include <algorithm>
@@ -645,13 +646,34 @@ pr_status pr_event_cancel(pr_event h) {
 }
 } // extern C
 
-// Library-internal hook (runtime/native_internal.hpp, not a public header). In-library
-// operator providers are ordinary clients of the public C ABI; they report their own
-// validation failures through the same structured error and runtime-event path.
+// Library-internal hooks (runtime/native_internal.hpp: hidden, not installed). In-library
+// operator providers are ordinary clients of the public C ABI; these let them report
+// their own failures through the same structured error/runtime-event path and check
+// handle kinds and context ownership exactly as pr_launch does.
 pr_status paralyn_native_report_error(pr_status code, const char *operation,
                                       const char *message) noexcept {
   return api(operation ? operation : "operator", [&] {
     throw Failure(code == PR_SUCCESS ? PR_INTERNAL_ERROR : code,
                   message ? message : "Operator failure");
+  });
+}
+void paralyn_native_clear_error() noexcept { last_error = {}; }
+pr_status paralyn_native_handle_context(pr_handle h, paralyn_native_kind kind,
+                                        const void **out) noexcept {
+  return api("handle_context", [&] {
+    require(out, PR_INVALID_ARGUMENT, "Missing context identity output");
+    *out = nullptr;
+    switch (kind) {
+    case PARALYN_NATIVE_BUFFER:
+      *out = get<Buffer>(h, Kind::buffer)->owner.get();
+      return;
+    case PARALYN_NATIVE_MODULE:
+      *out = get<Module>(h, Kind::module)->owner.get();
+      return;
+    case PARALYN_NATIVE_QUEUE:
+      *out = get<Queue>(h, Kind::queue)->owner.get();
+      return;
+    }
+    throw Failure(PR_INVALID_ARGUMENT, "Unknown handle kind");
   });
 }

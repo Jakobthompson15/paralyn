@@ -233,6 +233,20 @@ void descriptors(Suite &s) {
   status(pr_tensor_desc_validate(&d, &bytes), PR_SUCCESS, "empty validate");
   require(bytes == 0, "empty extent is not zero");
   status(pr_tensor_desc_contiguous(buffer.get(), 0, PR_F32, 9, shape, &d), PR_INVALID_ARGUMENT, "rank 9");
+  // ABI 1 last-error convention: every successful tensor entry point clears the record,
+  // including those that make no inner pr_* call.
+  auto cleared = [](const std::string &label) {
+    pr_error e{};
+    pr_last_error(&e);
+    require(e.code == PR_SUCCESS && !e.message[0] && !e.operation[0], label + ": pr_last_error not cleared");
+  };
+  status(pr_tensor_desc_validate(nullptr, nullptr), PR_INVALID_ARGUMENT, "null descriptor", "tensor_desc_validate");
+  status(pr_tensor_desc_contiguous(buffer.get(), 0, PR_F32, 3, shape, &d), PR_SUCCESS, "contiguous after failure");
+  cleared("tensor_desc_contiguous");
+  status(pr_tensor_desc_validate(nullptr, nullptr), PR_INVALID_ARGUMENT, "null descriptor", "tensor_desc_validate");
+  std::uint64_t artifact_size = 0;
+  status(pr_tensor_operators_artifact(nullptr, 0, &artifact_size), PR_SUCCESS, "artifact after failure");
+  cleared("tensor_operators_artifact");
   // Artifact query.
   std::uint64_t size = 0;
   status(pr_tensor_operators_artifact(nullptr, 0, &size), PR_SUCCESS, "artifact size");
@@ -324,6 +338,70 @@ void errors(Suite &s) {
   run(valid_op, PR_CONTEXT_MISMATCH, "foreign queue", other_queue.get());
   auto other_ops = t::load_operators(other);
   run(valid_op, PR_CONTEXT_MISMATCH, "foreign module", s.queue.get(), other_ops.get());
+  run(valid_op, PR_INVALID_HANDLE, "queue handle", 0xdeadbeefull);
+  run(valid_op, PR_INVALID_HANDLE, "queue handle of wrong kind", s.ops.get());
+  auto foreign_cb = other.buffer(32);
+  auto foreign_c = t::contiguous(foreign_cb, {2, 4});
+  run(record(2, 4, 3, &a, &b, &foreign_c), PR_CONTEXT_MISMATCH, "foreign C buffer");
+  auto foreign_ab = other.buffer(24);
+  auto foreign_a = t::contiguous(foreign_ab, {2, 3});
+  run(record(2, 4, 3, &foreign_a, &b, &c), PR_CONTEXT_MISMATCH, "foreign A buffer");
+  // Zero-work matmuls (m == 0 or n == 0) validate handles and ownership exactly like work.
+  auto a0 = t::contiguous(ab, {0, 3}), c0 = t::contiguous(cb, {0, 4}), foreign_c0 = t::contiguous(foreign_cb, {0, 4});
+  auto b0 = t::contiguous(bb, {3, 0}), cn0 = t::contiguous(cb, {2, 0});
+  run(record(0, 4, 3, &a0, &b, &c0), PR_SUCCESS, "m == 0");
+  require(e == 0, "m == 0 fabricated an event");
+  run(record(0, 4, 3, &a0, &b, &c0), PR_INVALID_HANDLE, "m == 0 invalid queue", 0xdeadbeefull);
+  run(record(2, 0, 3, &a, &b0, &cn0), PR_INVALID_HANDLE, "n == 0 invalid queue", 0xdeadbeefull);
+  run(record(0, 4, 3, &a0, &b, &c0), PR_INVALID_HANDLE, "m == 0 invalid module", s.queue.get(), 0xffffffffull);
+  run(record(0, 4, 3, &a0, &b, &foreign_c0), PR_CONTEXT_MISMATCH, "m == 0 foreign C buffer");
+  run(record(0, 4, 3, &a0, &b, &c0), PR_CONTEXT_MISMATCH, "m == 0 foreign queue", other_queue.get());
+  run(record(0, 4, 3, &a0, &b, &c0), PR_INVALID_ARGUMENT, "m == 0 wrong provider", s.queue.get(), fake_module);
+  // Dimensions beyond INT32_MAX, non-FP32 and malformed operator inputs.
+  const std::uint64_t huge = 0x80000000ull;
+  run(record(huge, 4, 3, &a, &b, &c), PR_UNSUPPORTED, "m > INT32_MAX");
+  run(record(2, huge, 3, &a, &b, &c), PR_UNSUPPORTED, "n > INT32_MAX");
+  run(record(2, 4, huge, &a, &b, &c), PR_UNSUPPORTED, "k > INT32_MAX");
+  auto a_i32 = a;
+  a_i32.dtype = PR_I32;
+  run(record(2, 4, 3, &a_i32, &b, &c), PR_UNSUPPORTED, "non-FP32 operator input");
+  auto b_unused = b;
+  b_unused.shape[2] = 5;
+  run(record(2, 4, 3, &a, &b_unused, &c), PR_INVALID_ARGUMENT, "nonzero unused dimension");
+  // Output aliasing B: overlap is invalid, a disjoint range of B's allocation unsupported.
+  auto b_shared = s.upload(random(40, 8));
+  auto b_in = t::contiguous(b_shared, {3, 4}), c_over_b = t::contiguous(b_shared, {2, 4}, 16);
+  run(record(2, 4, 3, &a, &b_in, &c_over_b), PR_INVALID_ARGUMENT, "output overlapping B");
+  auto c_disjoint_b = t::contiguous(b_shared, {2, 4}, 64);
+  run(record(2, 4, 3, &a, &b_in, &c_disjoint_b), PR_UNSUPPORTED, "output sharing B's allocation");
+  // Same-schema impostor: identical entry names, parameters and workgroups, different
+  // producer and body. Only modules returned by pr_tensor_operators_load are the provider.
+  const auto genuine = t::operators_artifact();
+  auto impostor = paralyn::deserialize_executable(genuine.data(), genuine.size());
+  const std::string body = "if (row < m && column < n) c[row * n + column] = sum;";
+  const auto at = impostor.source.find(body);
+  require(at != std::string::npos, "impostor source anchor");
+  impostor.source.replace(at, body.size(), "if (row < m && column < n) c[row * n + column] = sum + 42.0f;");
+  impostor.producer = "impostor";
+  impostor.source_sha256 = paralyn::source_sha256(impostor.source);
+  const auto impostor_bytes = paralyn::serialize_executable(impostor);
+  pr_module impostor_module = 0;
+  status(pr_module_load(s.context.get(), impostor_bytes.data(), impostor_bytes.size(), &impostor_module),
+         PR_SUCCESS, "impostor module");
+  n::Module impostor_owner(impostor_module);
+  const auto before = s.read(cb);
+  run(valid_op, PR_INVALID_ARGUMENT, "same-schema impostor module", s.queue.get(), impostor_module);
+  require(s.read(cb) == before, "impostor module wrote the output");
+  // The genuine artifact loaded through plain pr_module_load is not the provider handle either.
+  pr_module plain = 0;
+  status(pr_module_load(s.context.get(), genuine.data(), genuine.size(), &plain), PR_SUCCESS, "plain load");
+  n::Module plain_owner(plain);
+  run(valid_op, PR_INVALID_ARGUMENT, "artifact loaded without pr_tensor_operators_load", s.queue.get(), plain);
+  // A released provider handle is invalid, not silently re-resolved.
+  pr_module released = 0;
+  status(pr_tensor_operators_load(s.context.get(), &released), PR_SUCCESS, "provider load");
+  status(pr_release(released), PR_SUCCESS, "provider release");
+  run(valid_op, PR_INVALID_HANDLE, "released provider", s.queue.get(), released);
   // Bias/activation errors.
   auto bias_buffer = s.upload(random(4, 6));
   auto bias = t::contiguous(bias_buffer, {4}), wrong_bias = t::contiguous(bias_buffer, {3});
@@ -344,6 +422,39 @@ void errors(Suite &s) {
   brun(reserved, PR_INVALID_ARGUMENT, "reserved");
   auto od_wrong = t::contiguous(out, {4, 2});
   brun(bias_record(&c, &bias, &od_wrong, PR_ACTIVATION_NONE), PR_INVALID_ARGUMENT, "output shape");
+  auto bias_out = s.upload(random(16, 9));
+  auto bias_in = t::contiguous(bias_out, {4}), out_over_bias = t::contiguous(bias_out, {2, 4}, 8);
+  brun(bias_record(&c, &bias_in, &out_over_bias, PR_ACTIVATION_NONE), PR_INVALID_ARGUMENT, "output overlapping bias");
+  auto out_disjoint_bias = t::contiguous(bias_out, {2, 4}, 32);
+  brun(bias_record(&c, &bias_in, &out_disjoint_bias, PR_ACTIVATION_NONE), PR_UNSUPPORTED,
+       "output sharing bias allocation");
+  auto foreign_bias_buffer = other.buffer(16);
+  auto foreign_bias = t::contiguous(foreign_bias_buffer, {4});
+  brun(bias_record(&c, &foreign_bias, &od, PR_ACTIVATION_RELU), PR_CONTEXT_MISMATCH, "foreign bias");
+  auto x_i32 = c;
+  x_i32.dtype = PR_I32;
+  brun(bias_record(&x_i32, &bias, &od, PR_ACTIVATION_RELU), PR_UNSUPPORTED, "non-FP32 bias/activation input");
+  auto brun_with = [&](pr_queue q, pr_module m, pr_bias_activation_v1 bop, pr_status expected,
+                       const std::string &label) {
+    e = 99;
+    status(pr_bias_activation_f32(q, m, &bop, &e), expected, label, "bias_activation_f32");
+    require(e == 0, label + ": event output not cleared");
+  };
+  brun_with(0xdeadbeefull, s.ops.get(), bias_record(&c, &bias, &od, PR_ACTIVATION_RELU), PR_INVALID_HANDLE,
+            "bias invalid queue");
+  brun_with(s.queue.get(), impostor_module, bias_record(&c, &bias, &od, PR_ACTIVATION_RELU),
+            PR_INVALID_ARGUMENT, "bias impostor module");
+  // Empty bias/activation validates handles and ownership although no work is submitted.
+  auto ex = t::contiguous(cb, {0, 4}), eo = t::contiguous(out, {0, 4}), foreign_eo = t::contiguous(foreign_cb, {0, 4});
+  brun_with(s.queue.get(), s.ops.get(), bias_record(&ex, &bias, &eo, PR_ACTIVATION_RELU), PR_SUCCESS, "empty bias");
+  brun_with(0xdeadbeefull, s.ops.get(), bias_record(&ex, &bias, &eo, PR_ACTIVATION_RELU), PR_INVALID_HANDLE,
+            "empty bias invalid queue");
+  brun_with(s.queue.get(), s.ops.get(), bias_record(&ex, &bias, &foreign_eo, PR_ACTIVATION_RELU),
+            PR_CONTEXT_MISMATCH, "empty bias foreign output");
+  brun_with(s.queue.get(), s.ops.get(), bias_record(&ex, &foreign_bias, &eo, PR_ACTIVATION_RELU),
+            PR_CONTEXT_MISMATCH, "empty bias foreign bias");
+  brun_with(s.queue.get(), s.ops.get(), bias_record(&ex, nullptr, &foreign_eo, PR_ACTIVATION_RELU),
+            PR_CONTEXT_MISMATCH, "empty activation foreign output");
   s.events += 2; // the valid matmul and valid bias commands above
 }
 
