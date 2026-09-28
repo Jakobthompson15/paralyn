@@ -1,0 +1,32 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "stable_device_id": "metal:registry:0000000100000429",
+  "os": "Version 26.5.1 (Build 25F80)",
+  "physical_memory_bytes": 17179869184,
+  "unified_memory": true,
+  "metal_language_version": "3.1",
+  "thermal_state_at_capture": 0,
+  "low_power_mode_at_capture": false,
+  "paralyn_commit": "87978b1f99dab214565c232a406635f4222a1a65",
+  "paralyn_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "runtime_owned_current_buffer_bytes": 0,
+  "runtime_owned_peak_buffer_bytes": 416,
+  "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+  "launches": [
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3450908754, "gpu_end_seconds": 3264788.3453651667, "gpu_duration_seconds": 0.0002742912620306015, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.00087954199999999998, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3478166671, "gpu_end_seconds": 3264788.3478227919, "gpu_duration_seconds": 6.1248429119586945e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.00017474999999999999, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.350062625, "gpu_end_seconds": 3264788.3500687503, "gpu_duration_seconds": 6.1253085732460022e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.000149333, "source_file": "source-2.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3529887917, "gpu_end_seconds": 3264788.3530405001, "gpu_duration_seconds": 5.170842632651329e-05, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 8.8999999999999995e-05, "source_file": "source-3.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3550036252, "gpu_end_seconds": 3264788.3550098753, "gpu_duration_seconds": 6.2501057982444763e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [1,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3567836666, "gpu_end_seconds": 3264788.3567892504, "gpu_duration_seconds": 5.5837444961071014e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "unsigned_values", "grid": [1,1,1], "block": [8,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3590535419, "gpu_end_seconds": 3264788.3590590418, "gpu_duration_seconds": 5.4999254643917084e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.00010045800000000001, "source_file": "source-4.metal", "error": ""},
+    {"kernel": "const_alias", "grid": [3,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3602356254, "gpu_end_seconds": 3264788.360241042, "gpu_duration_seconds": 5.416572093963623e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 8.3541000000000005e-05, "source_file": "source-5.metal", "error": ""},
+    {"kernel": "alias_steps", "grid": [1,1,1], "block": [7,1,1], "command_status": "completed", "gpu_start_seconds": 3264788.3608632917, "gpu_end_seconds": 3264788.3608690002, "gpu_duration_seconds": 5.7085417211055756e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""}
+  ]
+}

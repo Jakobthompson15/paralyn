@@ -1,0 +1,396 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "run",
+  "status": "completed",
+  "source": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/qualification/xyz_builtins.cu",
+  "source_sha256": "19d34d5dfdec9b30e34bd8236c83138d40336e7f771978ed045d7f230c307fdd",
+  "frontend": "cuda_cpp",
+  "inspection": {
+    "kernels": [
+      {
+        "name": "record_coordinates",
+        "parameters": [
+          {
+            "name": "output",
+            "type": "i32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "guard",
+            "type": "i32",
+            "buffer": false,
+            "read_only": false
+          }
+        ]
+      }
+    ],
+    "launches": [
+      {
+        "kernel": "record_coordinates",
+        "line": 56,
+        "grid_expression": "grid",
+        "block_expression": "block",
+        "runtime_dimensions_known": false
+      }
+    ],
+    "ir": "paralyn.ir v0\nkernel record_coordinates(output: read_write buffer<i32>, guard: i32) {\n  let x:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))\n  let y:i32 = i32(((blockIdx.y * blockDim.y) + threadIdx.y))\n  let z:i32 = i32(((blockIdx.z * blockDim.z) + threadIdx.z))\n  let width:i32 = i32((gridDim.x * blockDim.x))\n  let height:i32 = i32((gridDim.y * blockDim.y))\n  let base:i32 = ((((((z * height) + y) * width) + x) * 12:i32) + guard)\n  store output[(base + 0:i32)] = i32(threadIdx.x)\n  store output[(base + 1:i32)] = i32(threadIdx.y)\n  store output[(base + 2:i32)] = i32(threadIdx.z)\n  store output[(base + 3:i32)] = i32(blockIdx.x)\n  store output[(base + 4:i32)] = i32(blockIdx.y)\n  store output[(base + 5:i32)] = i32(blockIdx.z)\n  store output[(base + 6:i32)] = i32(blockDim.x)\n  store output[(base + 7:i32)] = i32(blockDim.y)\n  store output[(base + 8:i32)] = i32(blockDim.z)\n  store output[(base + 9:i32)] = i32(gridDim.x)\n  store output[(base + 10:i32)] = i32(gridDim.y)\n  store output[(base + 11:i32)] = i32(gridDim.z)\n}\n\n"
+  },
+  "run_id": "1790632129764327-78098",
+  "artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins",
+  "device_selector": "auto",
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "build_dirty": false,
+  "llvm_version": "21.1.8",
+  "verification": {
+    "status": "not_requested"
+  },
+  "application": {
+    "arguments": [],
+    "stdout": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins/application.stdout",
+    "stderr": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins/application.stderr",
+    "command": [
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins/program"
+    ],
+    "exit_code": 0,
+    "interrupted": false
+  },
+  "runtime_log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins/runtime.log",
+  "events": [
+    {
+      "stage": "executable prepared",
+      "status": "completed"
+    },
+    {
+      "stage": "application exited successfully",
+      "status": "completed"
+    }
+  ],
+  "selected_device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 3,
+    "scalar_types": 7
+  },
+  "runtime_artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins",
+  "limitations": [
+    "Host I/O inputs are not automatically traced",
+    "run does not verify results",
+    "Native applications may explicitly select a different context; runtime events identify observed work"
+  ],
+  "runtime_evidence_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/xyz_builtins/execution.json",
+  "runtime_evidence": {
+    "backend": "Metal",
+    "device": "Apple M5",
+    "registry_id": 4294968361,
+    "stable_device_id": "metal:registry:0000000100000429",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "physical_memory_bytes": 17179869184,
+    "unified_memory": true,
+    "metal_language_version": "3.1",
+    "thermal_state_at_capture": 0,
+    "low_power_mode_at_capture": false,
+    "paralyn_commit": "87978b1f99dab214565c232a406635f4222a1a65",
+    "paralyn_dirty": false,
+    "llvm_version": "21.1.8",
+    "math_mode": "safe",
+    "floating_point_functions": "precise",
+    "cpu_fallback": false,
+    "runtime_owned_current_buffer_bytes": 0,
+    "runtime_owned_peak_buffer_bytes": 34688,
+    "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+    "launches": [
+      {
+        "kernel": "record_coordinates",
+        "grid": [
+          2,
+          3,
+          2
+        ],
+        "block": [
+          3,
+          2,
+          2
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264784.286471792,
+        "gpu_end_seconds": 3264784.2865175004,
+        "gpu_duration_seconds": 4.570838063955307e-05,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0.001046666,
+        "source_file": "source-0.metal",
+        "error": ""
+      },
+      {
+        "kernel": "record_coordinates",
+        "grid": [
+          3,
+          2,
+          4
+        ],
+        "block": [
+          5,
+          3,
+          2
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264784.2883304167,
+        "gpu_end_seconds": 3264784.288338125,
+        "gpu_duration_seconds": 7.708556950092316e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      },
+      {
+        "kernel": "record_coordinates",
+        "grid": [
+          1,
+          1,
+          1
+        ],
+        "block": [
+          2,
+          3,
+          5
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264784.2896131254,
+        "gpu_end_seconds": 3264784.28962025,
+        "gpu_duration_seconds": 7.124617695808411e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      }
+    ]
+  },
+  "runtime_events": [
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 1,
+      "category": "context",
+      "status": "created",
+      "detail": "metal:registry:0000000100000429",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.531575333
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 2,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 7040,
+      "host_monotonic_seconds": 7106278.531708458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 3,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_record_coordinates",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.532025541
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 4,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_record_coordinates",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.533044458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 5,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 1,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.533301416
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 6,
+      "category": "completion",
+      "status": "completed",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 1,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.534774125
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 7,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 7040,
+      "host_monotonic_seconds": 7106278.535181375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 8,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 34688,
+      "host_monotonic_seconds": 7106278.535969458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 9,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_record_coordinates",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.536117291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 10,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 2,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.536204291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 11,
+      "category": "completion",
+      "status": "completed",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 2,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.536575666
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 12,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 34688,
+      "host_monotonic_seconds": 7106278.536872708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 13,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 1568,
+      "host_monotonic_seconds": 7106278.53742025
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 14,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_record_coordinates",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.537567208
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 15,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 3,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.537639708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 16,
+      "category": "completion",
+      "status": "completed",
+      "detail": "record_coordinates",
+      "context_id": 1,
+      "operation_id": 3,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106278.5378475
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 17,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 1568,
+      "host_monotonic_seconds": 7106278.538091875
+    }
+  ],
+  "runtime_errors_observed": false,
+  "exit_code": 0,
+  "failure_origin": null
+}

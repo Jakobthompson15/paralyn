@@ -1,0 +1,2 @@
+Device: Apple M5
+Verification: PASS native C++ arrays (1003 values, add + affine)

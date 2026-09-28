@@ -1,0 +1,5 @@
+Paralyn: executable prepared
+HOST_MAIN_EXECUTED
+Verification: PASS aliases_and_host cases=5 const_alias=1 launches=9 runtime_errors=14
+Paralyn: application exited successfully
+Paralyn: execution completed; report /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/aliases_and_host/report.json

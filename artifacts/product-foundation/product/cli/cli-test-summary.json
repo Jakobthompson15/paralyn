@@ -1,0 +1,6 @@
+{
+  "verification": "PASS",
+  "commands": 60,
+  "physical_gpu_probe": true,
+  "cli_sha256": "f71314937e16ec8b5dbb66ce11a056d7482eeee07ba0a933f8bbf8a7206ca37e"
+}

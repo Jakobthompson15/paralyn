@@ -1,6 +1,6 @@
 # Native-product batch audit — 2026-09-28
 
-Baseline local and remote main were both `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`, clean, with14passing CTests reproduced. The user's first requested batch is implemented in these actual files/targets:
+Baseline local and remote main were both `f3c6c9955daf5a81d764fd0e634eb786a8489bcd`, clean, with 14 passing CTests reproduced. The implemented native-product portion of the first batch passed clean qualification at `87978b1f99dab214565c232a406635f4222a1a65`: **23 of 23 CTests**, 53 product GPU events, a repeated 21-event native qualification, CUDA Gates A/B and the full 880-event benchmark. [Build validation](../artifacts/product-foundation/build-validation.json), [product qualification](../artifacts/product-foundation/product/qualification.json) and [installation validation](../artifacts/product-foundation/installation-validation.json) retain the actual commands, identities and evidence. The SPIR-V fixture and Windows inventory remain outstanding. The implementation is in these files/targets:
 
 | Area | Implementation files | Build/tests |
 |---|---|---|
@@ -9,13 +9,17 @@ Baseline local and remote main were both `f3c6c9955daf5a81d764fd0e634eb786a8489b
 | Native MSL input | `include/paralyn/executable.hpp`, `compiler/ir/executable.cpp`, `examples/metal/kernels.*` | executable_tests, msl_tests/public_msl,13structured negatives |
 | Arrays/operators | `include/paralyn/array.hpp`, `bindings/python/paralyn/array.py`, `bindings/python/operators.cu` | array_operators, array_tests/arrays_cpp, arrays_python |
 | Packaging | `bindings/python/build_wheel.py`, `bindings/python/test_install.py`, conditional/install CMake targets | deterministic wheel, offline isolated Python installs and relocated C++ |
-| Terminal/process | `cli/main.cpp`, `cli/process_*`, pinned third_party CLI11/json | terminal_contract, process_execution, native_compile, preserved GatesA/B |
+| Terminal/process | `cli/main.cpp`, `cli/process_*`, `tests/native/cli_arrays.py`, pinned third_party CLI11/json | terminal_contract (60 command cases), process_execution, native_compile, native_cli_arrays, preserved Gates A/B |
 | Inventory | `scripts/windows-inventory.ps1` | read-only script only; Windows not yet qualified |
-| Qualification | `scripts/qualify_product.py` | source-linked main records, separately identified retained-output events, independent references and hashes |
+| Qualification | `scripts/qualify_product.py`, `tests/product_audit_tests.py` | 50 source-linked main records plus three retained-output events, independent references, relocated readback audit and corruption rejection |
 
 Versioned additions preserve ABI1 struct layouts and old artifact bytes. Native MSL pipeline objects and their resource contract are production code distinct from the old test hook. Runtime-only builds have noLLVM dependency. A no-backend build is explicitly unavailable execution, not CPU fallback or a vendor backend.
 
-Other13 input tracks, all three clients and NVIDIA/AMD backends are still unimplemented. Full arrays/tensor/function/offload/framework/library/application/terminal/release obligations remain in the adopted program. New source files and passing realGPU tests constitute the progress here; updated ledgers do not.
+The 53-event product capture comprises C++ arrays (19 source-linked plus two parent-lifetime events), Python arrays (19 plus one post-context-close event), public MSL (ten events and 13 rejection checks), and two doctor probes. The MSL workloads are four vector-add executions including a read-only alias, three 64-lane reductions and three tiled transposes. The backend's retained dispatched MSL includes its explicit contraction-policy prelude; the audit verifies that exact transformation against the input source. Four additional native CLI array events are captured separately. Application verifier output remains distinct from the CLI's own verification status.
+
+Installation evidence retains reproducible wheel hashes, offline Python 3.9.6/3.14.5 installs with two GPU events each, a relocated installed C++/Python CLI run with four events, an installed doctor event, and a compiler-free runtime doctor event. The two directly invoked doctors retain unknown/null revision fields in their original execution JSON; [installation build provenance](../artifacts/product-foundation/installation-builds.json) establishes their revision and binary identities instead. The no-backend configuration passes host tests and rejects doctor execution as expected. All execution was on the same Apple M5/macOS 26.5.1 host; these are scoped packaging and portability checks, not a multi-platform release qualification.
+
+The other 13 input tracks, all three clients and NVIDIA/AMD backends are still unimplemented. Full arrays/tensor/function/offload/framework/library/application/terminal/release obligations remain in the adopted program. New source files and passing real GPU tests constitute the progress here; updated ledgers do not.
 
 The following prior audit is retained as history.
 

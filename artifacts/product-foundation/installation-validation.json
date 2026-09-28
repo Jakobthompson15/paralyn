@@ -1,0 +1,249 @@
+{
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "steps": [
+    {
+      "name": "wheel",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "bindings/python/build_wheel.py",
+        "--compiler",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--library",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/libparalyn_native.dylib",
+        "--module",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/operators.prk",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/package"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.769720458
+    },
+    {
+      "name": "wheel-repeat",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "bindings/python/build_wheel.py",
+        "--compiler",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--library",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/libparalyn_native.dylib",
+        "--module",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/operators.prk",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/wheel-repeat"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.4424821660000001
+    },
+    {
+      "name": "install-python314",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "bindings/python/test_install.py",
+        "--wheel",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/package/paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/python314"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 1.942940416
+    },
+    {
+      "name": "install-python39",
+      "command": [
+        "/usr/bin/python3",
+        "bindings/python/test_install.py",
+        "--wheel",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/package/paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/python39"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 1.7612387089999997
+    },
+    {
+      "name": "cmake-install",
+      "command": [
+        "cmake",
+        "--install",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "--prefix",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-original"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.07905004200000043
+    },
+    {
+      "name": "installed-cli",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "tests/native/cli_arrays.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/bin/paralyn",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/installed-cli"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 1.9345366249999998
+    },
+    {
+      "name": "installed-doctor",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/bin/paralyn",
+        "doctor",
+        "--json",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/installations/relocated-doctor"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.08188766700000016
+    },
+    {
+      "name": "installed-linkage",
+      "command": [
+        "otool",
+        "-L",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/bin/paralyn"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.00746525000000009
+    },
+    {
+      "name": "runtime-only-configure",
+      "command": [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1",
+        "-G",
+        "Ninja",
+        "-DPARALYN_BUILD_COMPILER=OFF",
+        "-DBUILD_TESTING=OFF"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.5364703330000005
+    },
+    {
+      "name": "runtime-only-build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1",
+        "-j4"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 2.4186462090000003
+    },
+    {
+      "name": "runtime-only-linkage",
+      "command": [
+        "otool",
+        "-L",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/paralyn"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.007316833999999162
+    },
+    {
+      "name": "runtime-only-doctor",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/paralyn",
+        "doctor",
+        "--json",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/runtime-only-doctor"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.5962842080000001
+    },
+    {
+      "name": "no-backend-configure",
+      "command": [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1",
+        "-G",
+        "Ninja",
+        "-DPARALYN_BUILD_COMPILER=OFF",
+        "-DPARALYN_ENABLE_METAL=OFF"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.3526877500000012
+    },
+    {
+      "name": "no-backend-build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1",
+        "-j4"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 2.407768709000001
+    },
+    {
+      "name": "no-backend-linkage",
+      "command": [
+        "otool",
+        "-L",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/paralyn"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.007913458999999179
+    },
+    {
+      "name": "no-backend-ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1",
+        "--output-on-failure",
+        "-j1"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 1.090418833000001
+    },
+    {
+      "name": "no-backend-devices",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/paralyn",
+        "devices",
+        "--json"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "wall_seconds": 0.3817165839999994
+    },
+    {
+      "name": "no-backend-doctor",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/paralyn",
+        "doctor",
+        "--json"
+      ],
+      "expected_exit_code": 1,
+      "exit_code": 1,
+      "wall_seconds": 0.009903208000000774
+    }
+  ],
+  "installed_execution_is_outside_checkout": true
+}

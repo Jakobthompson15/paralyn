@@ -1,0 +1,6 @@
+/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/bin/paralyn:
+	@rpath/libparalyn_native.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/opt/homebrew/opt/llvm@21/lib/libclang-cpp.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/opt/homebrew/opt/llvm@21/lib/libLLVM.dylib (compatibility version 1.0.0, current version 21.1.8)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)

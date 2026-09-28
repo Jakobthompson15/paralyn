@@ -1,0 +1,267 @@
+{
+  "schema": "paralyn.product.qualification",
+  "schema_version": 1,
+  "status": "verified",
+  "started_utc": "2026-09-28T21:48:38.803338+00:00",
+  "provenance": {
+    "paralyn_commit": "87978b1f99dab214565c232a406635f4222a1a65",
+    "paralyn_dirty": false,
+    "paralyn_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+    "llvm_version": "21.1.8",
+    "repository": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+    "build": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+    "python_version": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "python_executable": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "host_platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+    "build_configuration": {
+      "CMAKE_BUILD_TYPE": "Debug",
+      "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+      "CMAKE_CXX_FLAGS": "",
+      "CMAKE_C_COMPILER": "/usr/bin/cc",
+      "CMAKE_OBJCXX_COMPILER": "/usr/bin/clang++",
+      "CMAKE_OSX_DEPLOYMENT_TARGET": "26.0"
+    },
+    "host_compiler_versions": {
+      "CMAKE_C_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_CXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_OBJCXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+    },
+    "source_sha256": {
+      "CMakeLists.txt": "97eec4dfb4c4666004bd9901fe3c8076f03a8806fb4e5bcb79f3c22b4e021a91",
+      "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "THIRD_PARTY_LICENSES.md": "a0187efdd43e1d7a539467de4555eef76704be2343d42d0ec3e7e3594c283c09",
+      "backends/metal/engine.mm": "f6550b442b97581788dbbafb2f2f11dbcc58db0567cf13b01736a90a2caa1972",
+      "backends/metal/runtime.mm": "09c1ec31ce7815ec1dbb01c1be97417ce2fb4e16238e94ec55d036e9f965c0da",
+      "backends/unavailable.cpp": "f2d04a5929107e54c57f0927a9f3f370bfb8997a23b597a24e17dc7c4395a7af",
+      "bindings/python/README.md": "1e3796fdb44de9c4cd2c41b3e5a6354d5d2b0f220ac7e54a374a075d93ecc947",
+      "bindings/python/build_wheel.py": "f3b8386155608d009f4b8c33591d609c127e83aa7b762ef4082e16ee4ac81f6d",
+      "bindings/python/operators.cu": "985acdfa19a4cadf2e7bdf4ee1079f5eb38b9cc1b00064038d09c5d5e2a304ac",
+      "bindings/python/paralyn/__init__.py": "113210c7b619cca924a34916cbe8f3daf8830aa7c5a2c9330ffedb639626f337",
+      "bindings/python/paralyn/array.py": "2d87e1a2529e9287ae5611abbd05946ecc5d44b5c619541305098120a88cad65",
+      "bindings/python/test_install.py": "3b883f437f433323531ef9232f597bf70572081789b67b02fa89c5f28313b12f",
+      "cli/main.cpp": "90df62a75e9a9905866533feaae7f8a9cfdf24b5340966473e03a52a4e73b71a",
+      "cli/process.hpp": "297be981cba5480029f29d517a9a11228da3f9b63491e70f7de9bee475d2a21e",
+      "cli/process_posix.cpp": "be3ee19b90e75962a9984ecac1506c13889cb893f458fdf9909e9ec9cd4348de",
+      "cli/process_windows.cpp": "47ea781b25b0e9f26810468d30d0592efb432acb6fabaac623496e9b281f32fa",
+      "compiler/codegen/metal.cpp": "e865c468dfb66f57c03574b8eb5e9731666effe594bcb680b4d6e642507833a9",
+      "compiler/frontend/frontend.cpp": "3fb0f657b7a67d346fead393952c54df3fdd35e20227739a4951c55a8d70f221",
+      "compiler/ir/artifact.cpp": "863208c9c4ffb0d7f24c474e384e4996f7428ca84c56874c9f46cd394bbe171e",
+      "compiler/ir/executable.cpp": "0abed16afda7aa4d9c0b744c6289a3b2220ad144d90e21de83c8202b92aab21f",
+      "compiler/ir/ir.cpp": "e4ba0a60de30760aa644afed935e507d5a55c2136b2d6e8872697af3a3a31876",
+      "examples/metal/kernels.json": "01a7032d3608ce7389cb1c12a0893a0f753a6ca18ade7622426ea595eba26437",
+      "examples/metal/kernels.metal": "96d063d9270ca83a928165d7aa4d8db2de2f9097bebad784d808a3d91619f930",
+      "examples/native/arrays.cpp": "ff824ac5fde8b20faad1bde5dc13094bfca9df4720225d927713e6769b4d451d",
+      "examples/native/arrays.py": "6e3a608cfcb8d9210a0ff0dbb60f19caa23e669cfe76b1fc085a71702475c190",
+      "examples/native/kernels.cu": "d1f6c234945f0b5da4dbb20696a3610664eb7ba810bb9bd6438b7a20e14547dc",
+      "examples/native/vector_add.c": "d03b0f96e30e2baca774130499695b8fc7e664d2279b5c46ff3fccfa55652749",
+      "examples/native/vector_add.cpp": "1db3ec553941fd66058705b6f5e94a598a109893a0e8e937f777126c8d9dbbfb",
+      "examples/native/vector_add.py": "aca68d86886bbcf763ffccff07107433346aeaccc38aea24d16b4b33bcebd631",
+      "include/cuda_runtime.h": "433940f25472200bd82a488ebdf5eec7f016c9ecd7667ba1ceea8b3c48636a5a",
+      "include/paralyn/array.hpp": "1491528d73a0544644d8ded65806769f164c2d479df292d4ff3cc38d434636c1",
+      "include/paralyn/artifact.hpp": "da9f549acb3973e4b43214e336cfd76a7fe53d98266b29fe05096255ede6e843",
+      "include/paralyn/cuda_parse.hpp": "1106361e086e25ad347dbb3b7c00419c444df7c940fd7ef1b08d287022c5d35c",
+      "include/paralyn/detail/backend.hpp": "08fbdae2b76ea5ae7b118c311ee82e1c96a4afe8262ecec03c3906b47efb500e",
+      "include/paralyn/executable.hpp": "3620c3392737528551cf352a1442314e89f3fdcdfdb22c521565e1d70a94c54d",
+      "include/paralyn/frontend.hpp": "029da381df237b29699cc2c7c62182bbd17d9ff7b3795b547ed60712c4288f3c",
+      "include/paralyn/ir.hpp": "705ff88cdd2ee2297ae1b7f723738c894859c46bbeb50b6a4db1c1c66c9dafed",
+      "include/paralyn/native.h": "01197277d60858e58c00c7771c29097a845f410bf720cc1545d88dbc79b81049",
+      "include/paralyn/native.hpp": "ec4d1d90aba373e225a05fb9a9b5002975460fe12e23aa62571db95001a8080f",
+      "include/paralyn/runtime.hpp": "b56a022b45dc1dbaa1d54800d96a355970cd6c85f23e808e2ae8ffb9ebe17c53",
+      "include/unicuda/cuda_parse.hpp": "50511e85666d997c8ad91e6c8ce95dc653f81e01622425d49cb1f902d810e681",
+      "include/unicuda/frontend.hpp": "8d845e77aff676842c9143fdb31db991d6257594550cc4f6469618ac55e571fc",
+      "include/unicuda/ir.hpp": "bb68fe72e764c44976061b14bec238b8af791f53c2313a015f47a9ca082d230a",
+      "include/unicuda/namespace.hpp": "315303525e96fee23e70fed407de4d0b363fb53dfeaacfaf50b12a39a4ea1fb8",
+      "include/unicuda/runtime.hpp": "f014939c7b1ab3fcb324c33a14262e39ae817619c842108ac874d14a14459550",
+      "runtime/native.cpp": "efba07112344149431bcfba28e74859f671b7119c9d567843359716b220f46df",
+      "runtime/telemetry.cpp": "844bd4f25bb90f831fe605de6b0a42d48c7420ac57ae5fc2f297db51d1c04fa0",
+      "scripts/qualify_product.py": "118027e06ed56eb164f89ae87fd3a31c2bce790aa950cce4cb37129598561005",
+      "tests/cli_tests.py": "5f4d84c5294d27910d27de6b23ada11a5cd32836d35ca7990ee6cfebc5580ff8",
+      "tests/metal/msl_tests.cpp": "9cb026dd45eee46086f09133900e932076d634dc2c5e6a2b2d9f681bc5500cb4",
+      "tests/metal/run_msl.py": "3dfe8d38d9c1dc92cc96fc3f74763211d55a2be3a4edc64d7bb65d6844ebcabd",
+      "tests/native/array_tests.cpp": "eef03ac7aeb0a3f52b73dae36548f3a5e5fae37ed11413cf1caa034b1e660a0c",
+      "tests/native/cli_arrays.py": "c358d0310d6865c9ce7a70e8f6f7bf3a38f1092654545c368f949161497684b9",
+      "tests/native/native_tests.cpp": "bc0b32c8bfdc7da37fe5c9e3a080ae45c14e7ce9089ec9a669baefa82a464448",
+      "tests/native/query_tests.cpp": "6ab90c4b32a68ca649a77c136a24b3e5a49b52446bb206d5083963cad5013ee2",
+      "tests/native/run_arrays.py": "f0861da489a0d1508b6a73ba092a656c589a8d6167890e0edec7b28371427057",
+      "tests/native/run_example.py": "1673201cfb6426af625d034159a224f55bae39b22f72ecfe8ca09dea5553d1b0",
+      "tests/native/test_arrays.py": "72de4d812f6a511a60c4b0a89842e8d72ba6247c53848b5a3db7c446eed2117a",
+      "tests/native/test_python.py": "538df61c51f0a90a56fb47633880710a444b77b774acbadd7e414fe4724d8064",
+      "tests/product_audit_tests.py": "10abd8abb338cad53b4669c1afc6548d794827a74b6735c2fb825670716352ef",
+      "third_party/README.md": "97654dea55f16d1b82f737c13b2edb2afb00e6109245105495a5128b41b00c9e",
+      "third_party/SHA256SUMS.json": "e7827e0eda0d35c58c4c213f0761a9c965a8aa30eca53fb34d2cefba8cb38a0d",
+      "third_party/cli11/CLI11.hpp": "3935283e4c9db7089ed304476dbab2805c9311c41b125a55e92da4659df0d660",
+      "third_party/cli11/LICENSE": "3ee4a90b05dd076b70a36a0330be8bdfecbe75bbd0fc3343a4f289c86e2063aa",
+      "third_party/nlohmann/LICENSE.MIT": "86b998c792894ccb911a1cb7994f7a9652894e7a094c0b5e45be2f553f45cf14",
+      "third_party/nlohmann/json.hpp": "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
+    },
+    "binary_sha256": {
+      "paralyn": "f71314937e16ec8b5dbb66ce11a056d7482eeee07ba0a933f8bbf8a7206ca37e",
+      "libparalyn_native.dylib": "317a90386367b61a8a1e746291712d46c83c278aebaa2516179e7aa7c333d82e",
+      "array_tests": "697eaa72c78b9cea983816e7365b2649a60f0bffb032c9832bd40423a69f5906",
+      "msl_tests": "e5dd37d191fff494ccf233b668faadaff47f7a897d4cee692bf24b5d0ddbdf75"
+    },
+    "build_metadata_sha256": {
+      "CMakeCache.txt": "1cf92f6aac0536d1b0f0b1f4a54e5162cd08288e85e468f7aca38f87d89bf24d",
+      "build.ninja": "5cb7c231406ea5ff135f8e2b1ec8864f7d9bf10c09ea5fccffd4feccd7f2e22e",
+      "compile_commands.json": "49384990ab2d146b5030933fd8f1d5a8e510d13e8e58a09735c23da9eeb49965"
+    }
+  },
+  "processes": [
+    {
+      "label": "compile-arrays",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "compile",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/operators.cu",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/operators.prk",
+        "--json"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:38.822591+00:00",
+      "finished_utc": "2026-09-28T21:48:39.111907+00:00",
+      "stdout": "logs/compile-arrays.stdout",
+      "stderr": "logs/compile-arrays.stderr"
+    },
+    {
+      "label": "compile-msl",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "compile",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/kernels.metal",
+        "--manifest",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/kernels.json",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/kernels.prx",
+        "--json"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.112176+00:00",
+      "finished_utc": "2026-09-28T21:48:39.162567+00:00",
+      "stdout": "logs/compile-msl.stdout",
+      "stderr": "logs/compile-msl.stderr"
+    },
+    {
+      "label": "inspect-arrays",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "inspect",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/operators.cu",
+        "--json"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.162786+00:00",
+      "finished_utc": "2026-09-28T21:48:39.446264+00:00",
+      "stdout": "logs/inspect-arrays.stdout",
+      "stderr": "logs/inspect-arrays.stderr"
+    },
+    {
+      "label": "inspect-msl",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "inspect",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/kernels.prx",
+        "--json"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.446640+00:00",
+      "finished_utc": "2026-09-28T21:48:39.496772+00:00",
+      "stdout": "logs/inspect-msl.stdout",
+      "stderr": "logs/inspect-msl.stderr"
+    },
+    {
+      "label": "arrays-cpp",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/array_tests",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/operators.prk",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/arrays-cpp"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.497371+00:00",
+      "finished_utc": "2026-09-28T21:48:39.564630+00:00",
+      "stdout": "logs/arrays-cpp.stdout",
+      "stderr": "logs/arrays-cpp.stderr"
+    },
+    {
+      "label": "arrays-python",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/native/test_arrays.py",
+        "--module",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/operators.prk",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/arrays-python"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.564867+00:00",
+      "finished_utc": "2026-09-28T21:48:39.800853+00:00",
+      "stdout": "logs/arrays-python.stdout",
+      "stderr": "logs/arrays-python.stderr"
+    },
+    {
+      "label": "msl",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/msl_tests",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/inputs/kernels.prx",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/msl"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.801079+00:00",
+      "finished_utc": "2026-09-28T21:48:39.849302+00:00",
+      "stdout": "logs/msl.stdout",
+      "stderr": "logs/msl.stderr"
+    },
+    {
+      "label": "cli",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/cli_tests.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--source-root",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:39.849587+00:00",
+      "finished_utc": "2026-09-28T21:48:45.646988+00:00",
+      "stdout": "logs/cli.stdout",
+      "stderr": "logs/cli.stderr"
+    },
+    {
+      "label": "doctor",
+      "command": [
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "doctor",
+        "--device",
+        "metal:0",
+        "--json",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/doctor"
+      ],
+      "exit_status": 0,
+      "started_utc": "2026-09-28T21:48:45.647322+00:00",
+      "finished_utc": "2026-09-28T21:48:45.708316+00:00",
+      "stdout": "logs/doctor.stdout",
+      "stderr": "logs/doctor.stderr"
+    }
+  ],
+  "module_sha256": {
+    "operators.prk": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07",
+    "kernels.prx": "e3119e78647afb5830154d88beb300fc19a8b9f5ebfc00afa35962873ccafb9d"
+  },
+  "scope": "FP32 arrays, public MSL workloads, CLI contracts and built-in GPU probe; not full portfolio qualification",
+  "finished_utc": "2026-09-28T21:48:45.762123+00:00",
+  "summary": {
+    "source_linked_gpu_commands": 50,
+    "retained_output_gpu_events": 3,
+    "verified_gpu_events": 53,
+    "device": "Apple M5",
+    "registry_id": 4294968361,
+    "os": "Version 26.5.1 (Build 25F80)",
+    "cpu_fallback": false,
+    "cli_commands": 60
+  },
+  "observation": "50 source-linked native command records plus 3 retained-output events after parent-handle release; drivers independently compare arrays/MSL results, and the recorder independently recomputes saved doctor outputs"
+}

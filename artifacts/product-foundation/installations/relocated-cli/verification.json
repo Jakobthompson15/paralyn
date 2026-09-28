@@ -1,0 +1,20 @@
+{
+  "verification": "PASS",
+  "gpu_events": 4,
+  "cases": [
+    {
+      "language": "cpp",
+      "gpu_events": 2,
+      "device": "Apple M5",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "report": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/installed-cli/cpp/report.json"
+    },
+    {
+      "language": "py",
+      "gpu_events": 2,
+      "device": "Apple M5",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "report": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/installed-cli/py/report.json"
+    }
+  ]
+}

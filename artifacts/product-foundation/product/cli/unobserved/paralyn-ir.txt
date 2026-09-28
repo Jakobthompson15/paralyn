@@ -1,0 +1,5 @@
+paralyn.ir v0
+kernel unused(p: read_write buffer<f32>) {
+  store p[threadIdx.x] = 1.0E+0:f32
+}
+

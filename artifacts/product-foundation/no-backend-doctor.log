@@ -1,0 +1,1 @@
+{"schema":"paralyn.report","schema_version":1,"paralyn_version":"0.0.1","command":"doctor","status":"failed","failure_origin":"paralyn","exit_code":1,"diagnostic":{"id":"P-RUNTIME","stage":"runtime","message":"This build contains no GPU execution backend. CUDA/NVIDIA and HIP/ROCm backends are not implemented; installing an SDK alone cannot enable them.","device_selector":"auto"}}

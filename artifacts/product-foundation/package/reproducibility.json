@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "wheel": "paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+  "sha256": "77a205f38fcef374a5fff009bc7b6aae9e55ed90c68596835e738cc10a803f8e",
+  "repeat_sha256": "77a205f38fcef374a5fff009bc7b6aae9e55ed90c68596835e738cc10a803f8e",
+  "byte_identical": true
+}

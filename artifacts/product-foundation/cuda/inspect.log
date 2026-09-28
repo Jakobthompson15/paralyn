@@ -1,0 +1,50 @@
+Detected kernels:
+  alias_steps(f32* a, f32* b, f32* c, i32 n, f32 scale)
+  const_alias(const f32* input, f32* output, i32 n)
+  mixed_pointees(f32* a, i32* b)
+  unsigned_values(u32* output, u32 bias)
+
+Launches (expressions; runtime values are not evaluated):
+  alias_steps at line 114: grid=3, block=7
+  alias_steps at line 128: grid=grid_expression(), block=block_expression()
+  alias_steps at line 143: grid=1, block=1
+  alias_steps at line 147: grid=1, block=1
+  alias_steps at line 152: grid=0, block=1
+  alias_steps at line 154: grid=1, block=0
+  alias_steps at line 156: grid=1, block=1048576
+  mixed_pointees at line 158: grid=1, block=1
+  alias_steps at line 160: grid=1, block=1
+  unsigned_values at line 174: grid=1, block=8
+  const_alias at line 189: grid=3, block=7
+  alias_steps at line 198: grid=1, block=7
+
+Paralyn IR:
+paralyn.ir v0
+kernel alias_steps(a: read_write buffer<f32>, b: read_write buffer<f32>, c: read_write buffer<f32>, n: i32, scale: f32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store a[i] = (load a[i] + load b[i])
+    store c[i] = ((load a[i] * scale) + load b[i])
+  }
+}
+
+paralyn.ir v0
+kernel const_alias(input: read buffer<f32>, output: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store output[i] = (load input[i] + 1.0E+0:f32)
+    store output[i] = (load input[i] + 2.0E+0:f32)
+  }
+}
+
+paralyn.ir v0
+kernel mixed_pointees(a: read_write buffer<f32>, b: read_write buffer<i32>) {
+  store b[0:i32] = 1:i32
+}
+
+paralyn.ir v0
+kernel unsigned_values(output: read_write buffer<u32>, bias: u32) {
+  let i:i32 = i32(threadIdx.x)
+  store output[i] = (threadIdx.x + bias)
+}
+

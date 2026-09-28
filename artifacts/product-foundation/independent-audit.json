@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "PASS_WITH_DISCLOSED_PROVENANCE_LIMIT",
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "method": "Independent read-only review by a separate agent of retained records, hashes, sources, numerical references, sample pairing and original installation paths; no GPU execution.",
+  "checks": {
+    "product_artifact_hashes_verified": 250,
+    "product_source_snapshots_verified": 66,
+    "all_source_linked_gpu_command_records": 1040,
+    "separately_recorded_retained_lifetime_events": 4,
+    "gpu_events_in_named_captures_excluding_ctest_repeats": 1044,
+    "all_source_linked_commands_completed": true,
+    "all_recorded_gpu_durations_valid_positive": true,
+    "all_dispatched_sources_retained": true,
+    "msl_exact_prelude_bytes": 29,
+    "msl_raw_source_bytes": 2101,
+    "msl_add_launches": 4,
+    "msl_reduction_launches": 3,
+    "msl_transpose_launches": 3,
+    "benchmark_rows": 880,
+    "benchmark_warmups": 80,
+    "benchmark_measurements": 800,
+    "benchmark_compilation_samples": 2,
+    "benchmark_sample_order_and_command_pairing_verified": true,
+    "doctor_reference_outputs_independently_recomputed": 1028,
+    "wheel_record_hashes_lengths_verified": true,
+    "repeat_wheel_byte_equality_verified": true,
+    "installed_python39_python314_package_library_module_hashes_verified": true
+  },
+  "limitations": [
+    "Installed and runtime-only doctor inner execution.json records have unknown commit/null dirty metadata; use installation-builds.json, recorded build definitions and exact snapshots for outer provenance.",
+    "Protocol and numerical qualification does not assert a speedup or absence of a performance regression; no timing threshold was applied.",
+    "Physical execution is Metal/Apple M5 only; no unavailable vendor or full-portfolio claim."
+  ]
+}

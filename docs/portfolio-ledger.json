@@ -121,6 +121,38 @@
       "cuda_correctness_gpu_launches": 75,
       "benchmark_gpu_launches": 880,
       "cpu_fallback": false
+    },
+    "verified_clean_product_foundation_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+    "product_foundation_evidence_record": {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "native_product_foundation_metal_batch",
+      "capture": "artifacts/product-foundation/build-validation.json",
+      "product_capture": "artifacts/product-foundation/product/qualification.json",
+      "installation_capture": "artifacts/product-foundation/installation-validation.json",
+      "validation": {
+        "ctest_passed": 23,
+        "ctest_skipped": 0,
+        "product_gpu_events": 53,
+        "product_source_linked_command_records": 50,
+        "product_retained_output_gpu_events": 3,
+        "cli_command_cases": 60,
+        "separate_native_cli_gpu_events": 4,
+        "repeated_native_api_gpu_events": 21,
+        "repeated_native_api_source_linked_records": 20,
+        "cuda_gate_a_repeated": true,
+        "cuda_gate_b_correctness_gpu_launches": 75,
+        "benchmark_gpu_launches": 880,
+        "cpu_fallback": false
+      },
+      "limits": "Counts describe separate captures and must not be added to repeated CTest executions. Scoped Metal foundation only; all full portable tracks, remaining operators/integrations and vendor backends remain incomplete."
     }
   },
   "frontend_tracks": [
@@ -269,18 +301,18 @@
       "stage": "B",
       "implementation": "implementing",
       "qualification": "unavailable",
-      "qualification_scope": "Full native track including later operator surface and independent Metal/CUDA/ROCm qualification; implemented byte-buffer/launch slice is verified separately.",
+      "qualification_scope": "Full native portable track remains incomplete; clean Metal byte-buffer/launch and contiguous FP32 array subsets are verified separately.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
         "version": "Paralyn C ABI 1 / C11 and C++17",
-        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors.  Owned contiguous one-dimensional FP32 asarray/to_host/add/affine now implemented over the same runtime; packaged module discovery.",
-        "subset_status": "implemented_byte_buffer_and_fp32_array_slices"
+        "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors.  C++ adds owned contiguous one-dimensional FP32 asarray/to_host/add/affine over the same runtime; packaged module discovery.",
+        "subset_status": "verified_metal_byte_buffer_and_contiguous_fp32_array_slices"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
         "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
-        "useful_status": "verified_initial_metal_byte_buffer_subset"
+        "useful_status": "verified_metal_byte_buffer_and_contiguous_fp32_array_subsets"
       },
       "dependencies": {
         "compiler_provider_versions": [
@@ -295,14 +327,14 @@
       "tests": {
         "positive_negative_integration": "tests/native/native_tests.cpp; examples/native/vector_add.c; examples/native/vector_add.cpp; CTests native_c/native_cpp/native_tests; tests/native/run_arrays.py; arrays_cpp/arrays_python",
         "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
-        "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
+        "reproduction": "docs/native-api.md; bindings/python/README.md; scripts/qualify_native.py; scripts/qualify_product.py; ctest --test-dir build --output-on-failure"
       },
       "backend_results": [
         {
           "backend": "metal",
           "required": true,
           "qualification": "verified",
-          "reason": "Clean hardware qualification passed for the explicit ABI 1 byte-buffer/launch subset; later operators and other vendor cells remain unqualified.",
+          "reason": "Clean physical-M5 qualification passed for ABI 1 byte-buffer/launch and contiguous FP32 add/affine arrays; broader operators and other vendor cells remain unqualified.",
           "verified_subsets": [
             {
               "backend": "metal",
@@ -340,9 +372,61 @@
                 "python_version": null,
                 "hardware_fault_injection": "unqualified"
               }
+            },
+            {
+              "backend": "metal",
+              "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "scope": "native_cpp_contiguous_fp32_arrays_metal",
+              "frontend": "native_c_cpp",
+              "input_contract": "C++17 owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+              "operations": [
+                "copied_fp32_asarray_to_host",
+                "fp32_add",
+                "fp32_affine",
+                "ordered_dependent_array_operations",
+                "same_input_alias",
+                "retained_output_lifetimes"
+              ],
+              "validation": {
+                "gpu_events": 21,
+                "source_linked_command_records": 19,
+                "retained_output_gpu_events": 2,
+                "ctest_passed_total": 23,
+                "tested_lengths": [
+                  0,
+                  1,
+                  17,
+                  256,
+                  257,
+                  1003,
+                  1000003
+                ],
+                "empty_operation_gpu_dispatches": 0,
+                "cpu_fallback": false,
+                "python_version": null
+              },
+              "artifacts": [
+                "artifacts/product-foundation/build-validation.json",
+                "artifacts/product-foundation/ctest.log",
+                "artifacts/product-foundation/product/qualification.json",
+                "artifacts/product-foundation/product/artifact-sha256.json",
+                "artifacts/product-foundation/product/arrays-cpp/execution.json",
+                "artifacts/product-foundation/product/arrays-cpp/lifetimes.json",
+                "artifacts/product-foundation/product/inputs/operators.prk",
+                "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+              ],
+              "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+              "event_evidence_note": "Nineteen source-linked records plus two actual retained-output events after explicit parent close and parent-wrapper destruction."
             }
           ],
-          "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
+          "qualification_scope": "Documented byte-buffer/launch and one-dimensional contiguous FP32 array subsets on physical Apple M5; full native track incomplete."
         },
         {
           "backend": "cuda",
@@ -378,7 +462,8 @@
         "native_tests",
         "native_kernels",
         "array_operators",
-        "array_tests"
+        "array_tests",
+        "native_arrays"
       ]
     },
     {
@@ -389,25 +474,26 @@
       "stage": "B",
       "implementation": "implementing",
       "qualification": "unavailable",
-      "qualification_scope": "Full native track including later operator surface and independent Metal/CUDA/ROCm qualification; implemented byte-buffer/launch slice is verified separately.",
+      "qualification_scope": "Full native portable track remains incomplete; clean Metal byte-buffer/launch and contiguous FP32 array subsets are verified separately.",
       "complete": false,
       "portability": "required_common_subset_metal_cuda_rocm",
       "input_contract": {
         "version": "Paralyn C ABI 1 / Python stdlib ctypes",
         "subset": "Explicit device/context, owned buffers and offset views, verified .prk modules, typed launch, ordered queue/events and structured errors.  Owned contiguous one-dimensional FP32 asarray/to_host/add/affine now implemented over the same runtime; packaged module discovery.",
-        "subset_status": "implemented_byte_buffer_and_fp32_array_slices"
+        "subset_status": "verified_metal_byte_buffer_and_contiguous_fp32_array_slices"
       },
       "workloads": {
         "reference": "bounds_checked_vector_add",
         "useful": "FP32 affine transform with copied scalars, dependent queued launches and offset/alias views",
-        "useful_status": "verified_initial_metal_byte_buffer_subset"
+        "useful_status": "verified_metal_byte_buffer_and_contiguous_fp32_array_subsets"
       },
       "dependencies": {
         "compiler_provider_versions": [
           "LLVM/Clang 21.1.8 (artifact compiler only)",
           "Apple Clang 17.0.0",
           "macOS SDK 26.2",
-          "CPython 3.14.5 / standard-library ctypes"
+          "CPython 3.14.5 / standard-library ctypes",
+          "CPython 3.9.6 / isolated installed FP32 array example"
         ],
         "licenses": "See THIRD_PARTY_LICENSES.md; exact new dependencies require review before import.",
         "provenance": "Independent implementation; no new third-party runtime package; shared Metal engine."
@@ -416,14 +502,14 @@
       "tests": {
         "positive_negative_integration": "tests/native/test_python.py; tests/native/run_example.py (python-tests, python-example, python-finalizer); tests/native/run_arrays.py; arrays_cpp/arrays_python",
         "numerical_contract": "docs/numerics.md; artifact numerical policy 1",
-        "reproduction": "docs/native-api.md; scripts/qualify_native.py; ctest --test-dir build --output-on-failure"
+        "reproduction": "docs/native-api.md; bindings/python/README.md; scripts/qualify_native.py; scripts/qualify_product.py; ctest --test-dir build --output-on-failure"
       },
       "backend_results": [
         {
           "backend": "metal",
           "required": true,
           "qualification": "verified",
-          "reason": "Clean hardware qualification passed for the explicit ABI 1 byte-buffer/launch subset; later operators and other vendor cells remain unqualified.",
+          "reason": "Clean physical-M5 qualification passed for ABI 1 byte-buffer/launch and contiguous FP32 add/affine arrays; broader operators and other vendor cells remain unqualified.",
           "verified_subsets": [
             {
               "backend": "metal",
@@ -462,9 +548,61 @@
                 "hardware_fault_injection": "unqualified"
               },
               "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
+            },
+            {
+              "backend": "metal",
+              "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "scope": "native_python_contiguous_fp32_arrays_metal",
+              "frontend": "native_python",
+              "input_contract": "Python stdlib ctypes owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+              "operations": [
+                "copied_fp32_asarray_to_host",
+                "fp32_add",
+                "fp32_affine",
+                "ordered_dependent_array_operations",
+                "same_input_alias",
+                "retained_output_lifetimes"
+              ],
+              "validation": {
+                "gpu_events": 20,
+                "source_linked_command_records": 19,
+                "retained_output_gpu_events": 1,
+                "ctest_passed_total": 23,
+                "tested_lengths": [
+                  0,
+                  1,
+                  17,
+                  256,
+                  257,
+                  1003,
+                  1000003
+                ],
+                "empty_operation_gpu_dispatches": 0,
+                "cpu_fallback": false,
+                "python_version": "3.14.5"
+              },
+              "artifacts": [
+                "artifacts/product-foundation/build-validation.json",
+                "artifacts/product-foundation/ctest.log",
+                "artifacts/product-foundation/product/qualification.json",
+                "artifacts/product-foundation/product/artifact-sha256.json",
+                "artifacts/product-foundation/product/arrays-python/execution.json",
+                "artifacts/product-foundation/product/arrays-python/array-qualification.json",
+                "artifacts/product-foundation/product/inputs/operators.prk",
+                "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+              ],
+              "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+              "event_evidence_note": "Nineteen source-linked records plus one actual retained-output event after explicit context close."
             }
           ],
-          "qualification_scope": "First native byte-buffer/launch subset on physical Apple M5; broader native contract incomplete."
+          "qualification_scope": "Documented byte-buffer/launch and one-dimensional contiguous FP32 array subsets on physical Apple M5; full native track incomplete."
         },
         {
           "backend": "cuda",
@@ -1149,12 +1287,12 @@
       "input_contract": {
         "version": "MSL3.1 / PARALYNX source container1",
         "subset": "Bounded explicit 32-bit buffer/scalar resources, reflected pipelines, retained execution; docs/executable-artifacts.md",
-        "subset_status": "implemented_public_module_profile"
+        "subset_status": "verified_bounded_public_module_metal_profile"
       },
       "workloads": {
         "reference": "vector addition including read-only aliases",
         "useful": "64-lane threadgroup reduction and 16x16 tiled transpose",
-        "useful_status": "implemented_and_development_tested_pending_clean_archive"
+        "useful_status": "verified_clean_metal_subset"
       },
       "dependencies": {
         "compiler_provider_versions": [
@@ -1175,9 +1313,54 @@
         {
           "backend": "metal",
           "required": true,
-          "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
-          "verified_subsets": []
+          "qualification": "verified",
+          "reason": "Clean physical-M5 execution passed ten source-linked events and thirteen rejection checks for the documented public module profile.",
+          "verified_subsets": [
+            {
+              "backend": "metal",
+              "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+              "source_dirty": false,
+              "hardware": "Apple M5",
+              "os": "macOS 26.5.1 (25F80)",
+              "llvm": "21.1.8",
+              "host_compiler": "Apple Clang 17.0.0",
+              "sdk": "26.2",
+              "qualification": "verified",
+              "scope": "public_msl31_explicit_resource_modules_metal",
+              "frontend": "metal_source",
+              "input_contract": "MSL 3.1 source + strict JSON explicit resource descriptor; PARALYNX container 1/numerical policy 1; actual Metal pipeline reflection",
+              "operations": [
+                "fp32_vector_add",
+                "read_only_buffer_alias",
+                "threadgroup_partial_reduction_64_lanes",
+                "tiled_transpose_16x16"
+              ],
+              "validation": {
+                "gpu_events": 10,
+                "source_linked_command_records": 10,
+                "vector_add_events": 4,
+                "reduction_events": 3,
+                "transpose_events": 3,
+                "structured_negative_checks": 13,
+                "ctest_passed_total": 23,
+                "cpu_fallback": false
+              },
+              "artifacts": [
+                "artifacts/product-foundation/build-validation.json",
+                "artifacts/product-foundation/ctest.log",
+                "artifacts/product-foundation/product/qualification.json",
+                "artifacts/product-foundation/product/artifact-sha256.json",
+                "artifacts/product-foundation/product/msl/verification.json",
+                "artifacts/product-foundation/product/msl/evidence/execution.json",
+                "artifacts/product-foundation/product/inputs/kernels.metal",
+                "artifacts/product-foundation/product/inputs/kernels.json",
+                "artifacts/product-foundation/product/inputs/kernels.prx",
+                "artifacts/product-foundation/product/inputs/artifact-metadata.json"
+              ],
+              "limits": "Trusted-local, backend-specific native MSL subset. Exact dispatched source is the input plus the documented contraction-policy prelude. Writable same-allocation aliases are rejected. This is not arbitrary MSL, a sandbox, CUDA shared-memory lowering, a portable reduction operator, or cross-vendor support."
+            }
+          ],
+          "qualification_scope": "Bounded MSL 3.1 explicit resource module profile and the three recorded workloads; full native Metal track incomplete."
         },
         {
           "backend": "cuda",
@@ -1892,7 +2075,7 @@
       "required": true,
       "implementation": "implemented",
       "qualification": "verified",
-      "qualification_scope": "Documented CUDA Gates A/B, native C ABI 1/C++/Python byte-buffer launch subsets, and runtime smoke on Apple M5; not all frontend/operator cells.",
+      "qualification_scope": "Documented CUDA Gates A/B, native C ABI 1/C++/Python byte-buffer launch and contiguous FP32 array subsets, bounded public MSL workloads, builtin probes and runtime smoke on Apple M5; not full frontend/operator/client coverage.",
       "hardware_availability": "available_Apple_M5",
       "verified_subsets": [
         {
@@ -2042,10 +2225,244 @@
             "hardware_fault_injection": "unqualified"
           },
           "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "native_cpp_contiguous_fp32_arrays_metal",
+          "frontend": "native_c_cpp",
+          "input_contract": "C++17 owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+          "operations": [
+            "copied_fp32_asarray_to_host",
+            "fp32_add",
+            "fp32_affine",
+            "ordered_dependent_array_operations",
+            "same_input_alias",
+            "retained_output_lifetimes"
+          ],
+          "validation": {
+            "gpu_events": 21,
+            "source_linked_command_records": 19,
+            "retained_output_gpu_events": 2,
+            "ctest_passed_total": 23,
+            "tested_lengths": [
+              0,
+              1,
+              17,
+              256,
+              257,
+              1003,
+              1000003
+            ],
+            "empty_operation_gpu_dispatches": 0,
+            "cpu_fallback": false,
+            "python_version": null
+          },
+          "artifacts": [
+            "artifacts/product-foundation/build-validation.json",
+            "artifacts/product-foundation/ctest.log",
+            "artifacts/product-foundation/product/qualification.json",
+            "artifacts/product-foundation/product/artifact-sha256.json",
+            "artifacts/product-foundation/product/arrays-cpp/execution.json",
+            "artifacts/product-foundation/product/arrays-cpp/lifetimes.json",
+            "artifacts/product-foundation/product/inputs/operators.prk",
+            "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+          ],
+          "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+          "event_evidence_note": "Nineteen source-linked records plus two actual retained-output events after explicit parent close and parent-wrapper destruction."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "native_python_contiguous_fp32_arrays_metal",
+          "frontend": "native_python",
+          "input_contract": "Python stdlib ctypes owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+          "operations": [
+            "copied_fp32_asarray_to_host",
+            "fp32_add",
+            "fp32_affine",
+            "ordered_dependent_array_operations",
+            "same_input_alias",
+            "retained_output_lifetimes"
+          ],
+          "validation": {
+            "gpu_events": 20,
+            "source_linked_command_records": 19,
+            "retained_output_gpu_events": 1,
+            "ctest_passed_total": 23,
+            "tested_lengths": [
+              0,
+              1,
+              17,
+              256,
+              257,
+              1003,
+              1000003
+            ],
+            "empty_operation_gpu_dispatches": 0,
+            "cpu_fallback": false,
+            "python_version": "3.14.5"
+          },
+          "artifacts": [
+            "artifacts/product-foundation/build-validation.json",
+            "artifacts/product-foundation/ctest.log",
+            "artifacts/product-foundation/product/qualification.json",
+            "artifacts/product-foundation/product/artifact-sha256.json",
+            "artifacts/product-foundation/product/arrays-python/execution.json",
+            "artifacts/product-foundation/product/arrays-python/array-qualification.json",
+            "artifacts/product-foundation/product/inputs/operators.prk",
+            "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+          ],
+          "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+          "event_evidence_note": "Nineteen source-linked records plus one actual retained-output event after explicit context close."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "public_msl31_explicit_resource_modules_metal",
+          "frontend": "metal_source",
+          "input_contract": "MSL 3.1 source + strict JSON explicit resource descriptor; PARALYNX container 1/numerical policy 1; actual Metal pipeline reflection",
+          "operations": [
+            "fp32_vector_add",
+            "read_only_buffer_alias",
+            "threadgroup_partial_reduction_64_lanes",
+            "tiled_transpose_16x16"
+          ],
+          "validation": {
+            "gpu_events": 10,
+            "source_linked_command_records": 10,
+            "vector_add_events": 4,
+            "reduction_events": 3,
+            "transpose_events": 3,
+            "structured_negative_checks": 13,
+            "ctest_passed_total": 23,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/product-foundation/build-validation.json",
+            "artifacts/product-foundation/ctest.log",
+            "artifacts/product-foundation/product/qualification.json",
+            "artifacts/product-foundation/product/artifact-sha256.json",
+            "artifacts/product-foundation/product/msl/verification.json",
+            "artifacts/product-foundation/product/msl/evidence/execution.json",
+            "artifacts/product-foundation/product/inputs/kernels.metal",
+            "artifacts/product-foundation/product/inputs/kernels.json",
+            "artifacts/product-foundation/product/inputs/kernels.prx",
+            "artifacts/product-foundation/product/inputs/artifact-metadata.json"
+          ],
+          "limits": "Trusted-local, backend-specific native MSL subset. Exact dispatched source is the input plus the documented contraction-policy prelude. Writable same-allocation aliases are rejected. This is not arbitrary MSL, a sandbox, CUDA shared-memory lowering, a portable reduction operator, or cross-vendor support."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "terminal_process_builtin_probe_and_native_array_applications_metal",
+          "input_contract": "Implemented single-file CLI commands and structured reports; builtin vector-add verification; complete C++/Python native applications",
+          "operations": [
+            "builtin_gpu_probe",
+            "structured_cli_reports_and_rejections",
+            "literal_program_argument_forwarding",
+            "separate_application_streams",
+            "application_exit_propagation",
+            "posix_interrupt_forwarding",
+            "complete_native_array_application_run"
+          ],
+          "validation": {
+            "cli_command_cases": 60,
+            "product_probe_gpu_events": 2,
+            "separate_native_cli_gpu_events": 4,
+            "ctest_passed_total": 23,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/product-foundation/product/cli/cli-test-summary.json",
+            "artifacts/product-foundation/product/cli/doctor/execution.json",
+            "artifacts/product-foundation/product/doctor/execution.json",
+            "artifacts/product-foundation/native-cli/verification.json",
+            "artifacts/product-foundation/ctest.log"
+          ],
+          "limits": "Sixty CLI command cases include only one GPU doctor dispatch; a second standalone doctor belongs to product qualification. Four complete native CLI application events are separate from the product total of 53. Arbitrary application stdout is not CLI verification. Full command family, project/kernel-case TOML, general verification, completions and Windows process qualification remain incomplete."
+        },
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "macos_arm64_offline_wheel_relocated_install_and_build_modes",
+          "input_contract": "Local macOS arm64 wheel with bundled native library and validated operator artifact; Python 3.9.6 and 3.14.5; relocated CMake installation; runtime-only and no-backend configurations",
+          "operations": [
+            "installed_fp32_array_add_affine",
+            "relocated_complete_native_array_applications",
+            "installed_builtin_gpu_probe",
+            "runtime_only_builtin_gpu_probe"
+          ],
+          "validation": {
+            "wheel_bytes_reproducible": true,
+            "offline_install": true,
+            "installed_execution_outside_checkout": true,
+            "python_versions": [
+              "3.9.6",
+              "3.14.5"
+            ],
+            "gpu_events_per_python_version": 2,
+            "relocated_cli_gpu_events": 4,
+            "installed_doctor_gpu_events": 1,
+            "runtime_only_doctor_gpu_events": 1,
+            "runtime_only_llvm_linkage": false,
+            "no_backend_host_ctests_passed": 5,
+            "no_backend_doctor_expected_exit": 1,
+            "no_backend_gpu_events": 0,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/product-foundation/installation-validation.json",
+            "artifacts/product-foundation/installations/python39/installation.json",
+            "artifacts/product-foundation/installations/python314/installation.json",
+            "artifacts/product-foundation/installations/relocated-cli/verification.json",
+            "artifacts/product-foundation/installations/relocated-doctor/execution.json",
+            "artifacts/product-foundation/runtime-only-doctor/execution.json",
+            "artifacts/product-foundation/no-backend-ctest.log",
+            "artifacts/product-foundation/no-backend-doctor.log",
+            "artifacts/product-foundation/installation-builds.json"
+          ],
+          "limits": "One macOS 26.5.1 Apple M5 host with existing dependencies. No Windows/Linux, other Python/macOS versions, full installer/completion/release, fresh-machine setup-time or vendor-backend qualification. The no-backend build rejects execution and is not a CPU backend.",
+          "provenance_note": "The two directly invoked installed/runtime-only doctor execution JSON files retain unknown/null revision fields. installation-builds.json records the clean build revision and binary identities; original execution evidence is unchanged."
         }
       ],
       "full_portfolio_qualification": "unavailable",
-      "next_task": "Preserve CUDA/native Metal regression gates while adding the bounded native array/operator surface, then qualify each required additional frontend/operator separately."
+      "next_task": "Preserve the clean CUDA/native/array/MSL/terminal Metal gates while implementing FP32 tensor/matmul, the pinned SPIR-V bridge and each remaining required frontend/operator separately."
     },
     {
       "id": "cuda",
@@ -2234,6 +2651,240 @@
         "hardware_fault_injection": "unqualified"
       },
       "event_evidence_note": "One of nine Python test events occurs after original context-handle release; actual pr_event_wait completion/timestamps and independently verified output are captured separately from eight native command records. Python example adds one full native record."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "native_cpp_contiguous_fp32_arrays_metal",
+      "frontend": "native_c_cpp",
+      "input_contract": "C++17 owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+      "operations": [
+        "copied_fp32_asarray_to_host",
+        "fp32_add",
+        "fp32_affine",
+        "ordered_dependent_array_operations",
+        "same_input_alias",
+        "retained_output_lifetimes"
+      ],
+      "validation": {
+        "gpu_events": 21,
+        "source_linked_command_records": 19,
+        "retained_output_gpu_events": 2,
+        "ctest_passed_total": 23,
+        "tested_lengths": [
+          0,
+          1,
+          17,
+          256,
+          257,
+          1003,
+          1000003
+        ],
+        "empty_operation_gpu_dispatches": 0,
+        "cpu_fallback": false,
+        "python_version": null
+      },
+      "artifacts": [
+        "artifacts/product-foundation/build-validation.json",
+        "artifacts/product-foundation/ctest.log",
+        "artifacts/product-foundation/product/qualification.json",
+        "artifacts/product-foundation/product/artifact-sha256.json",
+        "artifacts/product-foundation/product/arrays-cpp/execution.json",
+        "artifacts/product-foundation/product/arrays-cpp/lifetimes.json",
+        "artifacts/product-foundation/product/inputs/operators.prk",
+        "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+      ],
+      "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+      "event_evidence_note": "Nineteen source-linked records plus two actual retained-output events after explicit parent close and parent-wrapper destruction."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "native_python_contiguous_fp32_arrays_metal",
+      "frontend": "native_python",
+      "input_contract": "Python stdlib ctypes owned arrays; explicit context, one-dimensional contiguous FP32 storage; C ABI 1 and typed IR artifact 1/numerical policy 1",
+      "operations": [
+        "copied_fp32_asarray_to_host",
+        "fp32_add",
+        "fp32_affine",
+        "ordered_dependent_array_operations",
+        "same_input_alias",
+        "retained_output_lifetimes"
+      ],
+      "validation": {
+        "gpu_events": 20,
+        "source_linked_command_records": 19,
+        "retained_output_gpu_events": 1,
+        "ctest_passed_total": 23,
+        "tested_lengths": [
+          0,
+          1,
+          17,
+          256,
+          257,
+          1003,
+          1000003
+        ],
+        "empty_operation_gpu_dispatches": 0,
+        "cpu_fallback": false,
+        "python_version": "3.14.5"
+      },
+      "artifacts": [
+        "artifacts/product-foundation/build-validation.json",
+        "artifacts/product-foundation/ctest.log",
+        "artifacts/product-foundation/product/qualification.json",
+        "artifacts/product-foundation/product/artifact-sha256.json",
+        "artifacts/product-foundation/product/arrays-python/execution.json",
+        "artifacts/product-foundation/product/arrays-python/array-qualification.json",
+        "artifacts/product-foundation/product/inputs/operators.prk",
+        "artifacts/product-foundation/product/inputs/operators.prk.inspect.json"
+      ],
+      "limits": "One-dimensional contiguous FP32 add/affine on Metal only; no broadcasting, multidimensional tensors, matmul, arbitrary function compilation, vendor portability or hardware-fault injection qualification.",
+      "event_evidence_note": "Nineteen source-linked records plus one actual retained-output event after explicit context close."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "public_msl31_explicit_resource_modules_metal",
+      "frontend": "metal_source",
+      "input_contract": "MSL 3.1 source + strict JSON explicit resource descriptor; PARALYNX container 1/numerical policy 1; actual Metal pipeline reflection",
+      "operations": [
+        "fp32_vector_add",
+        "read_only_buffer_alias",
+        "threadgroup_partial_reduction_64_lanes",
+        "tiled_transpose_16x16"
+      ],
+      "validation": {
+        "gpu_events": 10,
+        "source_linked_command_records": 10,
+        "vector_add_events": 4,
+        "reduction_events": 3,
+        "transpose_events": 3,
+        "structured_negative_checks": 13,
+        "ctest_passed_total": 23,
+        "cpu_fallback": false
+      },
+      "artifacts": [
+        "artifacts/product-foundation/build-validation.json",
+        "artifacts/product-foundation/ctest.log",
+        "artifacts/product-foundation/product/qualification.json",
+        "artifacts/product-foundation/product/artifact-sha256.json",
+        "artifacts/product-foundation/product/msl/verification.json",
+        "artifacts/product-foundation/product/msl/evidence/execution.json",
+        "artifacts/product-foundation/product/inputs/kernels.metal",
+        "artifacts/product-foundation/product/inputs/kernels.json",
+        "artifacts/product-foundation/product/inputs/kernels.prx",
+        "artifacts/product-foundation/product/inputs/artifact-metadata.json"
+      ],
+      "limits": "Trusted-local, backend-specific native MSL subset. Exact dispatched source is the input plus the documented contraction-policy prelude. Writable same-allocation aliases are rejected. This is not arbitrary MSL, a sandbox, CUDA shared-memory lowering, a portable reduction operator, or cross-vendor support."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "terminal_process_builtin_probe_and_native_array_applications_metal",
+      "input_contract": "Implemented single-file CLI commands and structured reports; builtin vector-add verification; complete C++/Python native applications",
+      "operations": [
+        "builtin_gpu_probe",
+        "structured_cli_reports_and_rejections",
+        "literal_program_argument_forwarding",
+        "separate_application_streams",
+        "application_exit_propagation",
+        "posix_interrupt_forwarding",
+        "complete_native_array_application_run"
+      ],
+      "validation": {
+        "cli_command_cases": 60,
+        "product_probe_gpu_events": 2,
+        "separate_native_cli_gpu_events": 4,
+        "ctest_passed_total": 23,
+        "cpu_fallback": false
+      },
+      "artifacts": [
+        "artifacts/product-foundation/product/cli/cli-test-summary.json",
+        "artifacts/product-foundation/product/cli/doctor/execution.json",
+        "artifacts/product-foundation/product/doctor/execution.json",
+        "artifacts/product-foundation/native-cli/verification.json",
+        "artifacts/product-foundation/ctest.log"
+      ],
+      "limits": "Sixty CLI command cases include only one GPU doctor dispatch; a second standalone doctor belongs to product qualification. Four complete native CLI application events are separate from the product total of 53. Arbitrary application stdout is not CLI verification. Full command family, project/kernel-case TOML, general verification, completions and Windows process qualification remain incomplete."
+    },
+    {
+      "backend": "metal",
+      "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+      "source_dirty": false,
+      "hardware": "Apple M5",
+      "os": "macOS 26.5.1 (25F80)",
+      "llvm": "21.1.8",
+      "host_compiler": "Apple Clang 17.0.0",
+      "sdk": "26.2",
+      "qualification": "verified",
+      "scope": "macos_arm64_offline_wheel_relocated_install_and_build_modes",
+      "input_contract": "Local macOS arm64 wheel with bundled native library and validated operator artifact; Python 3.9.6 and 3.14.5; relocated CMake installation; runtime-only and no-backend configurations",
+      "operations": [
+        "installed_fp32_array_add_affine",
+        "relocated_complete_native_array_applications",
+        "installed_builtin_gpu_probe",
+        "runtime_only_builtin_gpu_probe"
+      ],
+      "validation": {
+        "wheel_bytes_reproducible": true,
+        "offline_install": true,
+        "installed_execution_outside_checkout": true,
+        "python_versions": [
+          "3.9.6",
+          "3.14.5"
+        ],
+        "gpu_events_per_python_version": 2,
+        "relocated_cli_gpu_events": 4,
+        "installed_doctor_gpu_events": 1,
+        "runtime_only_doctor_gpu_events": 1,
+        "runtime_only_llvm_linkage": false,
+        "no_backend_host_ctests_passed": 5,
+        "no_backend_doctor_expected_exit": 1,
+        "no_backend_gpu_events": 0,
+        "cpu_fallback": false
+      },
+      "artifacts": [
+        "artifacts/product-foundation/installation-validation.json",
+        "artifacts/product-foundation/installations/python39/installation.json",
+        "artifacts/product-foundation/installations/python314/installation.json",
+        "artifacts/product-foundation/installations/relocated-cli/verification.json",
+        "artifacts/product-foundation/installations/relocated-doctor/execution.json",
+        "artifacts/product-foundation/runtime-only-doctor/execution.json",
+        "artifacts/product-foundation/no-backend-ctest.log",
+        "artifacts/product-foundation/no-backend-doctor.log",
+        "artifacts/product-foundation/installation-builds.json"
+      ],
+      "limits": "One macOS 26.5.1 Apple M5 host with existing dependencies. No Windows/Linux, other Python/macOS versions, full installer/completion/release, fresh-machine setup-time or vendor-backend qualification. The no-backend build rejects execution and is not a CPU backend.",
+      "provenance_note": "The two directly invoked installed/runtime-only doctor execution JSON files retain unknown/null revision fields. installation-builds.json records the clean build revision and binary identities; original execution evidence is unchanged."
     }
   ],
   "deferred_systems": [
@@ -2245,7 +2896,7 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Complete clean qualification of the native-product batch; then ready workstreams in docs/handoff.md. Missing Windows inventories/vendor access remain prerequisites, not passing cells.",
+  "next_acceptance_gap": "Preserve clean product-foundation qualification at 87978b1 and continue the exact ready workstreams in docs/handoff.md: vendor inventory/backend prerequisites, pinned SPIR-V bridge, FP32 tensor/matmul and project/kernel-case terminal contracts. Missing hardware remains an incomplete prerequisite, not passing qualification.",
   "complete_platform_program": "docs/complete-platform-program.md",
   "additional_required_programs": [
     {
@@ -2389,8 +3040,48 @@
     {
       "id": "full_terminal_command_family",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "qualification_scope": "Full required program remains incomplete; the bounded first-batch qualification is recorded separately.",
+      "verified_subsets": [
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "terminal_process_builtin_probe_and_native_array_applications_metal",
+          "input_contract": "Implemented single-file CLI commands and structured reports; builtin vector-add verification; complete C++/Python native applications",
+          "operations": [
+            "builtin_gpu_probe",
+            "structured_cli_reports_and_rejections",
+            "literal_program_argument_forwarding",
+            "separate_application_streams",
+            "application_exit_propagation",
+            "posix_interrupt_forwarding",
+            "complete_native_array_application_run"
+          ],
+          "validation": {
+            "cli_command_cases": 60,
+            "product_probe_gpu_events": 2,
+            "separate_native_cli_gpu_events": 4,
+            "ctest_passed_total": 23,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/product-foundation/product/cli/cli-test-summary.json",
+            "artifacts/product-foundation/product/cli/doctor/execution.json",
+            "artifacts/product-foundation/product/doctor/execution.json",
+            "artifacts/product-foundation/native-cli/verification.json",
+            "artifacts/product-foundation/ctest.log"
+          ],
+          "limits": "Sixty CLI command cases include only one GPU doctor dispatch; a second standalone doctor belongs to product qualification. Four complete native CLI application events are separate from the product total of 53. Arbitrary application stdout is not CLI verification. Full command family, project/kernel-case TOML, general verification, completions and Windows process qualification remain incomplete."
+        }
+      ]
     },
     {
       "id": "project_kernel_case_toml",
@@ -2401,8 +3092,61 @@
     {
       "id": "installers_completions_offline_release",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "qualification_scope": "Full required program remains incomplete; the bounded first-batch qualification is recorded separately.",
+      "verified_subsets": [
+        {
+          "backend": "metal",
+          "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+          "source_dirty": false,
+          "hardware": "Apple M5",
+          "os": "macOS 26.5.1 (25F80)",
+          "llvm": "21.1.8",
+          "host_compiler": "Apple Clang 17.0.0",
+          "sdk": "26.2",
+          "qualification": "verified",
+          "scope": "macos_arm64_offline_wheel_relocated_install_and_build_modes",
+          "input_contract": "Local macOS arm64 wheel with bundled native library and validated operator artifact; Python 3.9.6 and 3.14.5; relocated CMake installation; runtime-only and no-backend configurations",
+          "operations": [
+            "installed_fp32_array_add_affine",
+            "relocated_complete_native_array_applications",
+            "installed_builtin_gpu_probe",
+            "runtime_only_builtin_gpu_probe"
+          ],
+          "validation": {
+            "wheel_bytes_reproducible": true,
+            "offline_install": true,
+            "installed_execution_outside_checkout": true,
+            "python_versions": [
+              "3.9.6",
+              "3.14.5"
+            ],
+            "gpu_events_per_python_version": 2,
+            "relocated_cli_gpu_events": 4,
+            "installed_doctor_gpu_events": 1,
+            "runtime_only_doctor_gpu_events": 1,
+            "runtime_only_llvm_linkage": false,
+            "no_backend_host_ctests_passed": 5,
+            "no_backend_doctor_expected_exit": 1,
+            "no_backend_gpu_events": 0,
+            "cpu_fallback": false
+          },
+          "artifacts": [
+            "artifacts/product-foundation/installation-validation.json",
+            "artifacts/product-foundation/installations/python39/installation.json",
+            "artifacts/product-foundation/installations/python314/installation.json",
+            "artifacts/product-foundation/installations/relocated-cli/verification.json",
+            "artifacts/product-foundation/installations/relocated-doctor/execution.json",
+            "artifacts/product-foundation/runtime-only-doctor/execution.json",
+            "artifacts/product-foundation/no-backend-ctest.log",
+            "artifacts/product-foundation/no-backend-doctor.log",
+            "artifacts/product-foundation/installation-builds.json"
+          ],
+          "limits": "One macOS 26.5.1 Apple M5 host with existing dependencies. No Windows/Linux, other Python/macOS versions, full installer/completion/release, fresh-machine setup-time or vendor-backend qualification. The no-backend build rejects execution and is not a CPU backend.",
+          "provenance_note": "The two directly invoked installed/runtime-only doctor execution JSON files retain unknown/null revision fields. installation-builds.json records the clean build revision and binary identities; original execution evidence is unchanged."
+        }
+      ]
     }
   ]
 }

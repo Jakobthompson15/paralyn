@@ -1,0 +1,24 @@
+paralyn.ir v0
+kernel numeric_add(a: read buffer<f32>, b: read buffer<f32>, out: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store out[i] = (load a[i] + load b[i])
+  }
+}
+
+paralyn.ir v0
+kernel numeric_mul(a: read buffer<f32>, b: read buffer<f32>, out: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store out[i] = (load a[i] * load b[i])
+  }
+}
+
+paralyn.ir v0
+kernel numeric_separate(a: read buffer<f32>, b: read buffer<f32>, c: read buffer<f32>, out: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store out[i] = ((load a[i] * load b[i]) + load c[i])
+  }
+}
+

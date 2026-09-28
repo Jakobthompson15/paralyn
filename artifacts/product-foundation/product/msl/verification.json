@@ -1,0 +1,8 @@
+{
+  "verification": "PASS",
+  "gpu_events": 10,
+  "negative_checks": 13,
+  "cpu_fallback": false,
+  "workloads": ["vector_add", "block_reduce", "tiled_transpose"],
+  "events": [{"gpu_start_seconds":3264773.777594625,"gpu_end_seconds":3264773.7776007503},{"gpu_start_seconds":3264773.7781636668,"gpu_end_seconds":3264773.7783333752},{"gpu_start_seconds":3264773.7788595418,"gpu_end_seconds":3264773.7788656671},{"gpu_start_seconds":3264773.779403042,"gpu_end_seconds":3264773.7794092917},{"gpu_start_seconds":3264773.7798685003,"gpu_end_seconds":3264773.7798760002},{"gpu_start_seconds":3264773.7803091253,"gpu_end_seconds":3264773.7803165419},{"gpu_start_seconds":3264773.7806830001,"gpu_end_seconds":3264773.7806904167},{"gpu_start_seconds":3264773.7810409167,"gpu_end_seconds":3264773.78104675},{"gpu_start_seconds":3264773.7813842501,"gpu_end_seconds":3264773.781390375},{"gpu_start_seconds":3264773.7817476252,"gpu_end_seconds":3264773.7817537501}]
+}

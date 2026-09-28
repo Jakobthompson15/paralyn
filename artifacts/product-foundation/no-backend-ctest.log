@@ -1,0 +1,15 @@
+Test project /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1
+    Start 1: ir_and_codegen
+1/5 Test #1: ir_and_codegen ...................   Passed    0.19 sec
+    Start 2: kernel_artifacts
+2/5 Test #2: kernel_artifacts .................   Passed    0.23 sec
+    Start 3: executable_artifacts
+3/5 Test #3: executable_artifacts .............   Passed    0.24 sec
+    Start 4: runtime_telemetry
+4/5 Test #4: runtime_telemetry ................   Passed    0.19 sec
+    Start 5: process_execution
+5/5 Test #5: process_execution ................   Passed    0.21 sec
+
+100% tests passed out of 5
+
+Total Test time (real) =   1.07 sec

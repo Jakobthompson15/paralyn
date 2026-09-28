@@ -1,0 +1,1537 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "run",
+  "status": "failed",
+  "source": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/qualification/aliases_and_host.cu",
+  "source_sha256": "f529ca9576775a26a182d4e9549d947d9e939ca8812fe6b6bbc4c41059b7cdad",
+  "frontend": "cuda_cpp",
+  "inspection": {
+    "kernels": [
+      {
+        "name": "alias_steps",
+        "parameters": [
+          {
+            "name": "a",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "b",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "c",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "n",
+            "type": "i32",
+            "buffer": false,
+            "read_only": false
+          },
+          {
+            "name": "scale",
+            "type": "f32",
+            "buffer": false,
+            "read_only": false
+          }
+        ]
+      },
+      {
+        "name": "const_alias",
+        "parameters": [
+          {
+            "name": "input",
+            "type": "f32",
+            "buffer": true,
+            "read_only": true
+          },
+          {
+            "name": "output",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "n",
+            "type": "i32",
+            "buffer": false,
+            "read_only": false
+          }
+        ]
+      },
+      {
+        "name": "mixed_pointees",
+        "parameters": [
+          {
+            "name": "a",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "b",
+            "type": "i32",
+            "buffer": true,
+            "read_only": false
+          }
+        ]
+      },
+      {
+        "name": "unsigned_values",
+        "parameters": [
+          {
+            "name": "output",
+            "type": "u32",
+            "buffer": true,
+            "read_only": false
+          },
+          {
+            "name": "bias",
+            "type": "u32",
+            "buffer": false,
+            "read_only": false
+          }
+        ]
+      }
+    ],
+    "launches": [
+      {
+        "kernel": "alias_steps",
+        "line": 114,
+        "grid_expression": "3",
+        "block_expression": "7",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 128,
+        "grid_expression": "grid_expression()",
+        "block_expression": "block_expression()",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 143,
+        "grid_expression": "1",
+        "block_expression": "1",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 147,
+        "grid_expression": "1",
+        "block_expression": "1",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 152,
+        "grid_expression": "0",
+        "block_expression": "1",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 154,
+        "grid_expression": "1",
+        "block_expression": "0",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 156,
+        "grid_expression": "1",
+        "block_expression": "1048576",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "mixed_pointees",
+        "line": 158,
+        "grid_expression": "1",
+        "block_expression": "1",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 160,
+        "grid_expression": "1",
+        "block_expression": "1",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "unsigned_values",
+        "line": 174,
+        "grid_expression": "1",
+        "block_expression": "8",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "const_alias",
+        "line": 189,
+        "grid_expression": "3",
+        "block_expression": "7",
+        "runtime_dimensions_known": false
+      },
+      {
+        "kernel": "alias_steps",
+        "line": 198,
+        "grid_expression": "1",
+        "block_expression": "7",
+        "runtime_dimensions_known": false
+      }
+    ],
+    "ir": "paralyn.ir v0\nkernel alias_steps(a: read_write buffer<f32>, b: read_write buffer<f32>, c: read_write buffer<f32>, n: i32, scale: f32) {\n  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))\n  if (i < n) {\n    store a[i] = (load a[i] + load b[i])\n    store c[i] = ((load a[i] * scale) + load b[i])\n  }\n}\n\nparalyn.ir v0\nkernel const_alias(input: read buffer<f32>, output: read_write buffer<f32>, n: i32) {\n  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))\n  if (i < n) {\n    store output[i] = (load input[i] + 1.0E+0:f32)\n    store output[i] = (load input[i] + 2.0E+0:f32)\n  }\n}\n\nparalyn.ir v0\nkernel mixed_pointees(a: read_write buffer<f32>, b: read_write buffer<i32>) {\n  store b[0:i32] = 1:i32\n}\n\nparalyn.ir v0\nkernel unsigned_values(output: read_write buffer<u32>, bias: u32) {\n  let i:i32 = i32(threadIdx.x)\n  store output[i] = (threadIdx.x + bias)\n}\n\n"
+  },
+  "run_id": "1790632133820508-78150",
+  "artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit",
+  "device_selector": "auto",
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "build_dirty": false,
+  "llvm_version": "21.1.8",
+  "verification": {
+    "status": "not_requested"
+  },
+  "application": {
+    "arguments": [
+      "exit37"
+    ],
+    "stdout": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit/application.stdout",
+    "stderr": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit/application.stderr",
+    "command": [
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit/program",
+      "exit37"
+    ],
+    "exit_code": 37,
+    "interrupted": false
+  },
+  "runtime_log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit/runtime.log",
+  "events": [
+    {
+      "stage": "executable prepared",
+      "status": "completed"
+    }
+  ],
+  "selected_device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 3,
+    "scalar_types": 7
+  },
+  "runtime_artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit",
+  "limitations": [
+    "Host I/O inputs are not automatically traced",
+    "run does not verify results",
+    "Native applications may explicitly select a different context; runtime events identify observed work"
+  ],
+  "runtime_evidence_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/host_exit/execution.json",
+  "runtime_evidence": {
+    "backend": "Metal",
+    "device": "Apple M5",
+    "registry_id": 4294968361,
+    "stable_device_id": "metal:registry:0000000100000429",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "physical_memory_bytes": 17179869184,
+    "unified_memory": true,
+    "metal_language_version": "3.1",
+    "thermal_state_at_capture": 0,
+    "low_power_mode_at_capture": false,
+    "paralyn_commit": "87978b1f99dab214565c232a406635f4222a1a65",
+    "paralyn_dirty": false,
+    "llvm_version": "21.1.8",
+    "math_mode": "safe",
+    "floating_point_functions": "precise",
+    "cpu_fallback": false,
+    "runtime_owned_current_buffer_bytes": 0,
+    "runtime_owned_peak_buffer_bytes": 416,
+    "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+    "launches": [
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.3450908754,
+        "gpu_end_seconds": 3264788.3453651667,
+        "gpu_duration_seconds": 0.0002742912620306015,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0.000879542,
+        "source_file": "source-0.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.347816667,
+        "gpu_end_seconds": 3264788.347822792,
+        "gpu_duration_seconds": 6.1248429119586945e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0.00017475,
+        "source_file": "source-1.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.350062625,
+        "gpu_end_seconds": 3264788.3500687503,
+        "gpu_duration_seconds": 6.125308573246002e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0.000149333,
+        "source_file": "source-2.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.3529887917,
+        "gpu_end_seconds": 3264788.3530405,
+        "gpu_duration_seconds": 5.170842632651329e-05,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 8.9e-05,
+        "source_file": "source-3.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.355003625,
+        "gpu_end_seconds": 3264788.3550098753,
+        "gpu_duration_seconds": 6.250105798244476e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          1,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.3567836666,
+        "gpu_end_seconds": 3264788.3567892504,
+        "gpu_duration_seconds": 5.5837444961071014e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      },
+      {
+        "kernel": "unsigned_values",
+        "grid": [
+          1,
+          1,
+          1
+        ],
+        "block": [
+          8,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.359053542,
+        "gpu_end_seconds": 3264788.359059042,
+        "gpu_duration_seconds": 5.499925464391708e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0.000100458,
+        "source_file": "source-4.metal",
+        "error": ""
+      },
+      {
+        "kernel": "const_alias",
+        "grid": [
+          3,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.3602356254,
+        "gpu_end_seconds": 3264788.360241042,
+        "gpu_duration_seconds": 5.416572093963623e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 8.3541e-05,
+        "source_file": "source-5.metal",
+        "error": ""
+      },
+      {
+        "kernel": "alias_steps",
+        "grid": [
+          1,
+          1,
+          1
+        ],
+        "block": [
+          7,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3264788.3608632917,
+        "gpu_end_seconds": 3264788.360869,
+        "gpu_duration_seconds": 5.7085417211055756e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      }
+    ]
+  },
+  "runtime_events": [
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 1,
+      "category": "context",
+      "status": "created",
+      "detail": "metal:registry:0000000100000429",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.59036475
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 2,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.59054725
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 3,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.5905945
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 4,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.590634958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 5,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.590911583
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 6,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.591763083
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 7,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 1,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.59202575
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 8,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 1,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.593613708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 9,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.594044875
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 10,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.594324041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 11,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.594562
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 12,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.59477525
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 13,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.595037375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 14,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.595294875
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 15,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.595429958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 16,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.595581125
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 17,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 2,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.595682416
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 18,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 2,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.596057166
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 19,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.596339708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 20,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.59668375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 21,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.596939375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 22,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.597170166
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 23,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.597411208
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 24,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.597631708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 25,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.597741291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 26,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.597868
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 27,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 3,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.597958166
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 28,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 3,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.598305083
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 29,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.598631541
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 30,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.599014833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 31,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.599471333
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 32,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.600305041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 33,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.600590375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 34,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.60077975
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 35,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.600872208
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 36,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.600944916
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 37,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 4,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.601013833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 38,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 4,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.601279291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 39,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.601532625
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 40,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.601743333
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 41,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.602021125
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 42,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.602288458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 43,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.602515583
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 44,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.602739958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 45,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.602838291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 46,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 5,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.602904041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 47,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 5,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.60323775
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 48,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.603505833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 49,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.603730958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 50,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.603951375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 51,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.604198833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 52,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.604428166
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 53,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.604642958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 54,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.604746708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 55,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 6,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.604815583
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 56,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 6,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605046541
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 57,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.605288041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 58,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Only zero dynamic shared memory and the default null stream are supported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605324833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 59,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Only zero dynamic shared memory and the default null stream are supported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605363
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 60,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605461666
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 61,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Grid and block dimensions must be positive",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605517041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 62,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605658708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 63,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Grid and block dimensions must be positive",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605705583
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 64,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605804708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 65,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Block dimension exceeds Metal device limits",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605847875
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 66,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Mixed pointee types for aliased allocation at parameter b",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605898041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 67,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.605947208
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 68,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: cudaMemcpy byte count exceeds allocation",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606182833
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 69,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: cudaMemcpy byte count exceeds allocation",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606408375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 70,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Only explicit H2D and D2H copies are supported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606448125
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 71,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: cudaMalloc requires an output pointer",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606488458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 72,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606734041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 73,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_unsigned_values",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606811375
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 74,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_unsigned_values",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.606895041
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 75,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "unsigned_values",
+      "context_id": 1,
+      "operation_id": 7,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.60696275
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 76,
+      "category": "completion",
+      "status": "completed",
+      "detail": "unsigned_values",
+      "context_id": 1,
+      "operation_id": 7,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.607290708
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 77,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 32,
+      "host_monotonic_seconds": 7106282.607586291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 78,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "host_to_device",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.608078666
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 79,
+      "category": "compilation",
+      "status": "started",
+      "detail": "uc_kernel_const_alias",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608166208
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 80,
+      "category": "compilation",
+      "status": "completed",
+      "detail": "uc_kernel_const_alias",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608233458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 81,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "const_alias",
+      "context_id": 1,
+      "operation_id": 8,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608294458
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 82,
+      "category": "completion",
+      "status": "completed",
+      "detail": "const_alias",
+      "context_id": 1,
+      "operation_id": 8,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608459541
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 83,
+      "category": "transfer",
+      "status": "completed",
+      "detail": "device_to_host",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 128,
+      "host_monotonic_seconds": 7106282.608757958
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 84,
+      "category": "compilation",
+      "status": "reused",
+      "detail": "uc_kernel_alias_steps",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608846083
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 85,
+      "category": "submission",
+      "status": "prepared",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 9,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.608907666
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 86,
+      "category": "completion",
+      "status": "completed",
+      "detail": "alias_steps",
+      "context_id": 1,
+      "operation_id": 9,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.609087541
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 87,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.609816291
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 88,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7106282.610203708
+    }
+  ],
+  "runtime_errors_observed": true,
+  "exit_code": 37,
+  "failure_origin": "application"
+}

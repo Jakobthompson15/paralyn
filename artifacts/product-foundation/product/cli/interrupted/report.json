@@ -1,0 +1,64 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "run",
+  "status": "failed",
+  "source": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupt.py",
+  "source_sha256": "1347f3dc153009de359f0fd2f88b6daa21861f101ee8b4b05aafed5c6c3b8b5b",
+  "run_id": "1790632125605151-78048",
+  "artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupted",
+  "device_selector": "auto",
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "build_dirty": false,
+  "llvm_version": "21.1.8",
+  "verification": {
+    "status": "not_requested"
+  },
+  "application": {
+    "arguments": [],
+    "stdout": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupted/application.stdout",
+    "stderr": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupted/application.stderr",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupt.py"
+    ],
+    "exit_code": 77,
+    "interrupted": true
+  },
+  "runtime_log": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupted/runtime.log",
+  "events": [
+    {
+      "stage": "executable prepared",
+      "status": "completed"
+    }
+  ],
+  "selected_device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 3,
+    "scalar_types": 7
+  },
+  "runtime_artifacts": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product/cli/interrupted/native",
+  "limitations": [
+    "Host I/O inputs are not automatically traced",
+    "run does not verify results",
+    "Native applications may explicitly select a different context; runtime events identify observed work"
+  ],
+  "interruption": "Interruption forwarded to process group; GPU cancellation is not claimed",
+  "runtime_evidence": null,
+  "runtime_errors_observed": false,
+  "exit_code": 77,
+  "failure_origin": "application"
+}

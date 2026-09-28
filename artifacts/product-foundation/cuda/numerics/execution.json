@@ -1,0 +1,26 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "stable_device_id": "metal:registry:0000000100000429",
+  "os": "Version 26.5.1 (Build 25F80)",
+  "physical_memory_bytes": 17179869184,
+  "unified_memory": true,
+  "metal_language_version": "3.1",
+  "thermal_state_at_capture": 0,
+  "low_power_mode_at_capture": false,
+  "paralyn_commit": "87978b1f99dab214565c232a406635f4222a1a65",
+  "paralyn_dirty": false,
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "runtime_owned_current_buffer_bytes": 0,
+  "runtime_owned_peak_buffer_bytes": 131072,
+  "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+  "launches": [
+    {"kernel": "numeric_add", "grid": [64,1,1], "block": [128,1,1], "command_status": "completed", "gpu_start_seconds": 3264787.1313781668, "gpu_end_seconds": 3264787.1313852919, "gpu_duration_seconds": 7.1250833570957184e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.0011158749999999999, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "numeric_mul", "grid": [64,1,1], "block": [128,1,1], "command_status": "completed", "gpu_start_seconds": 3264787.1328713754, "gpu_end_seconds": 3264787.1328782919, "gpu_duration_seconds": 6.9164671003818512e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.00013774999999999999, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "numeric_separate", "grid": [1,1,1], "block": [32,1,1], "command_status": "completed", "gpu_start_seconds": 3264787.134379542, "gpu_end_seconds": 3264787.1343858754, "gpu_duration_seconds": 6.3334591686725616e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0.00029775, "source_file": "source-2.metal", "error": ""}
+  ]
+}

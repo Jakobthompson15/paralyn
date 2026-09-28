@@ -1,0 +1,1 @@
+error[P-RUNTIME]: /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/tests/qualification/unsupported_shared.cu:2:20: ParalynError: CUDA feature "shared_memory" is not currently supported.

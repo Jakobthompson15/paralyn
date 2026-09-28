@@ -1,0 +1,6 @@
+Verified native-c: 2 physical GPU events
+Verified native-cpp: 1 physical GPU events
+Verified native-tests: 8 physical GPU events
+Verified python-tests: 9 physical GPU events
+Verified python-example: 1 physical GPU events
+Native qualification: PASS (21 GPU events); /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/native

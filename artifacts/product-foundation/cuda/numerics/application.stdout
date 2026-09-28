@@ -1,0 +1,2 @@
+Numerics: normal_max_ulp=0 subnormal_flush_variations=4 contraction=off signed_zero=preserved exceptional_classes=matched
+Verification: PASS (FP32 add/multiply, exceptional values, subnormals and contraction)

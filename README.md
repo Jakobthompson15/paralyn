@@ -61,6 +61,8 @@ The examples independently verify GPU vector addition and/or an affine transform
 
 ## Arrays, installation and terminal reports
 
+The [clean product-foundation capture](artifacts/product-foundation/README.md) at `87978b1` passed all 23 CTests, 53 new product GPU events, and separate native/installed-application tests on Apple M5. CUDA Gates A/B and the full benchmark passed again. It establishes the documented Metal profiles below; the complete platform remains unfinished.
+
 ```sh
 build/paralyn doctor --device metal:0
 build/paralyn support --json

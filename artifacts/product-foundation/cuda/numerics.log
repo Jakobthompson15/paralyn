@@ -1,0 +1,5 @@
+Paralyn: executable prepared
+Numerics: normal_max_ulp=0 subnormal_flush_variations=4 contraction=off signed_zero=preserved exceptional_classes=matched
+Verification: PASS (FP32 add/multiply, exceptional values, subnormals and contraction)
+Paralyn: application exited successfully
+Paralyn: execution completed; report /Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda/numerics/report.json

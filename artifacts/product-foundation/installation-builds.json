@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "source_dirty_at_configuration": false,
+  "recording_scope": "Post-run readback of the exact build/install paths in installation-validation.json; original probe records retained unchanged.",
+  "records": [
+    {
+      "profile": "relocated-cli",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/bin/paralyn",
+      "snapshot": "installation-builds/relocated-cli/bin/paralyn",
+      "sha256": "8d383709471b0ba3ba1b8412b0fd357efa01ca8fe5a407d003fa2398057d6eda"
+    },
+    {
+      "profile": "relocated-cli",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/lib/libparalyn_native.dylib",
+      "snapshot": "installation-builds/relocated-cli/lib/libparalyn_native.dylib",
+      "sha256": "317a90386367b61a8a1e746291712d46c83c278aebaa2516179e7aa7c333d82e"
+    },
+    {
+      "profile": "relocated-cli",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/work/installed-87978b1/prefix-relocated/share/paralyn/operators.prk",
+      "snapshot": "installation-builds/relocated-cli/share/paralyn/operators.prk",
+      "sha256": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/paralyn",
+      "snapshot": "installation-builds/runtime-only/paralyn",
+      "sha256": "165306cd035ed46bace23e8ea09e9306f2abd6191cf4d179b0324f459b7b8eb7"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/libparalyn_native.dylib",
+      "snapshot": "installation-builds/runtime-only/libparalyn_native.dylib",
+      "sha256": "4780732871e602d6811ea9830baa5c8912b57a69537298d8bf92825e04e32609"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/CMakeCache.txt",
+      "snapshot": "installation-builds/runtime-only/CMakeCache.txt",
+      "sha256": "304498bf18cf14bceee6d827ade0f8e0795280624fb6cc329afb0fba8de3295f"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/runtime-only-87978b1/build.ninja",
+      "snapshot": "installation-builds/runtime-only/build.ninja",
+      "sha256": "8727731ae5b8cb640dca1e1fa525f61f3be6a1b8ac1d0de322ce302a68c04fa8"
+    },
+    {
+      "profile": "no-backend",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/paralyn",
+      "snapshot": "installation-builds/no-backend/paralyn",
+      "sha256": "cdbd63711b60610a81604770080a5aed7a9b807bdb87c1c39e9aa1bb95f945fc"
+    },
+    {
+      "profile": "no-backend",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/libparalyn_native.dylib",
+      "snapshot": "installation-builds/no-backend/libparalyn_native.dylib",
+      "sha256": "16a63f490946c280bb79bece6b088149f249e21eb34f9f9044c7a966d0f0f989"
+    },
+    {
+      "profile": "no-backend",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/CMakeCache.txt",
+      "snapshot": "installation-builds/no-backend/CMakeCache.txt",
+      "sha256": "e78a6260e21ccf6c341cd7bd9e1b2cf784c3549dd124307389e45476941872c7"
+    },
+    {
+      "profile": "no-backend",
+      "original_path": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/no-backend-87978b1/build.ninja",
+      "snapshot": "installation-builds/no-backend/build.ninja",
+      "sha256": "a943d70f631bbaa3b9b135127a9614976b71f9fea6df1b1700baa91adf0f4c1f"
+    }
+  ],
+  "limitations": [
+    "The relocated and runtime-only doctor execution.json records have unknown commit/null dirty metadata because the direct doctor command does not populate those fields without environment values. Clean source identity is supplied by the recorded build commands, configuration definitions and executable/library snapshots; the inner records are not self-contained for revision provenance.",
+    "Installed compiler-enabled CLI depends on the selected system LLVM; the runtime-only CLI and Python wheel have no LLVM linkage."
+  ]
+}

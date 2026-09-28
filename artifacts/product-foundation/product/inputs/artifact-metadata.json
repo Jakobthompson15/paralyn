@@ -1,0 +1,21 @@
+{
+  "operators.prk": {
+    "container_version": 1,
+    "numerical_policy": 1,
+    "kernel_count": 2,
+    "sha256": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07",
+    "inspection_scope": "CUDA source and typed IR; public .prk inspection unavailable"
+  },
+  "kernels.prx": {
+    "container_version": 1,
+    "format": 1,
+    "target": "metal-msl3.1",
+    "numerical_policy": 1,
+    "producer": "paralyn",
+    "producer_version": "0.0.1+87978b1f99dab214565c232a406635f4222a1a65.dirty=false",
+    "source_name": "kernels.metal",
+    "source_sha256": "96d063d9270ca83a928165d7aa4d8db2de2f9097bebad784d808a3d91619f930",
+    "entry_count": 3,
+    "sha256": "e3119e78647afb5830154d88beb300fc19a8b9f5ebfc00afa35962873ccafb9d"
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "support",
+  "status": "completed",
+  "support": {
+    "inputs": [
+      {
+        "name": "CUDA C++",
+        "required": true,
+        "implementation": "partial",
+        "backend": "metal",
+        "available_in_this_build": true,
+        "scope": "documented scalar source profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "Native C/C++",
+        "required": true,
+        "implementation": "partial",
+        "backend": "metal",
+        "available_in_this_build": true,
+        "scope": "ABI1 buffers/modules/launch and contiguous FP32 arrays",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "Native Python",
+        "required": true,
+        "implementation": "partial",
+        "backend": "metal",
+        "available_in_this_build": true,
+        "scope": "ABI1 buffers/modules/launch and contiguous FP32 arrays",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "HIP C++",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "Triton",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "OpenCL C",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "SYCL C++",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "OpenMP target",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "Slang",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "HLSL compute",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "GLSL compute",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "WGSL",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "SPIR-V",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "MLIR",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "Metal source",
+        "required": true,
+        "implementation": "partial",
+        "backend": "metal",
+        "available_in_this_build": true,
+        "scope": "declared 32-bit buffer/scalar resources; Metal-specific",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "PTX",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      },
+      {
+        "name": "SASS",
+        "required": true,
+        "implementation": "not_implemented",
+        "backend": null,
+        "available_in_this_build": false,
+        "scope": "no executable profile",
+        "full_profile_qualified": false
+      }
+    ],
+    "clients": {
+      "Numba CUDA": "not_implemented",
+      "CuPy": "not_implemented",
+      "CUDA Python": "not_implemented"
+    },
+    "backends": {
+      "metal": "implemented_subset",
+      "cuda": "not_implemented",
+      "rocm": "not_implemented"
+    },
+    "complete_portfolio": false
+  }
+}

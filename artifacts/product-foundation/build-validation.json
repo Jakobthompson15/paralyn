@@ -1,0 +1,158 @@
+{
+  "source_revision": "87978b1f99dab214565c232a406635f4222a1a65",
+  "build_directory": "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+  "sdk": "26.2",
+  "steps": [
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.896702791
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "-j4"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 6.487167583999999
+    },
+    {
+      "name": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "--output-on-failure",
+        "-j1"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 23.199048875000003
+    },
+    {
+      "name": "product",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/qualify_product.py",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 7.153983374999999
+    },
+    {
+      "name": "product-audit",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/qualify_product.py",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product",
+        "--audit-only"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06965008400000272
+    },
+    {
+      "name": "audit-corruption",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "tests/product_audit_tests.py",
+        "--capture",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/product"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.15605725000000348
+    },
+    {
+      "name": "native",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/qualify_native.py",
+        "--build",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1",
+        "--output",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/native",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.1060596660000002
+    },
+    {
+      "name": "gate-a",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/verify_gate_a.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/gate-a",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.2934682080000002
+    },
+    {
+      "name": "cuda",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/qualify_gate_b.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/cuda",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 6.873993749999997
+    },
+    {
+      "name": "benchmark",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "scripts/verify_benchmark.py",
+        "--benchmark",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/gate_b_benchmark",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--source",
+        "examples/vector_add.cu",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/benchmark",
+        "--require-clean"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.9679359169999984
+    },
+    {
+      "name": "native-cli",
+      "command": [
+        "/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "tests/native/cli_arrays.py",
+        "--paralyn",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/build/product-87978b1/paralyn",
+        "--artifacts",
+        "/Users/jakob/Documents/Codex/2026-09-25/files-pasted-by-the-user-unicuda/outputs/paralyn/artifacts/runs/product-87978b1/native-cli"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.9656642500000032
+    }
+  ]
+}

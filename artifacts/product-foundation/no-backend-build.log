@@ -1,0 +1,24 @@
+[1/24] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o
+[2/24] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o
+[3/24] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o
+[4/24] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o
+[5/24] Linking CXX static library libparalyn_ir.a
+[6/24] Building CXX object CMakeFiles/paralyn_runtime.dir/backends/unavailable.cpp.o
+[7/24] Building CXX object CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o
+[8/24] Linking CXX static library libparalyn_runtime.a
+[9/24] Building CXX object CMakeFiles/paralyn.dir/cli/process_posix.cpp.o
+[10/24] Building CXX object CMakeFiles/paralyn_native.dir/runtime/native.cpp.o
+[11/24] Linking CXX shared library libparalyn_native.dylib
+[12/24] Building CXX object CMakeFiles/ir_tests.dir/tests/ir_tests.cpp.o
+[13/24] Building CXX object CMakeFiles/artifact_tests.dir/tests/artifact_tests.cpp.o
+[14/24] Building CXX object CMakeFiles/executable_tests.dir/tests/executable_tests.cpp.o
+[15/24] Building CXX object CMakeFiles/process_tests.dir/tests/process_tests.cpp.o
+[16/24] Linking CXX executable ir_tests
+[17/24] Linking CXX executable artifact_tests
+[18/24] Linking CXX executable executable_tests
+[19/24] Building CXX object CMakeFiles/process_tests.dir/cli/process_posix.cpp.o
+[20/24] Building CXX object CMakeFiles/telemetry_tests.dir/tests/telemetry_tests.cpp.o
+[21/24] Linking CXX executable process_tests
+[22/24] Linking CXX executable telemetry_tests
+[23/24] Building CXX object CMakeFiles/paralyn.dir/cli/main.cpp.o
+[24/24] Linking CXX executable paralyn

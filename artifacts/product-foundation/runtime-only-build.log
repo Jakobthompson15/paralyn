@@ -1,0 +1,14 @@
+[1/14] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o
+[2/14] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o
+[3/14] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o
+[4/14] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o
+[5/14] Linking CXX static library libparalyn_ir.a
+[6/14] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/runtime.mm.o
+[7/14] Building CXX object CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o
+[8/14] Building CXX object CMakeFiles/paralyn_native.dir/runtime/native.cpp.o
+[9/14] Building CXX object CMakeFiles/paralyn.dir/cli/process_posix.cpp.o
+[10/14] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/engine.mm.o
+[11/14] Linking CXX static library libparalyn_runtime.a
+[12/14] Linking CXX shared library libparalyn_native.dylib
+[13/14] Building CXX object CMakeFiles/paralyn.dir/cli/main.cpp.o
+[14/14] Linking CXX executable paralyn
