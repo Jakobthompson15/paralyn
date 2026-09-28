@@ -9,6 +9,7 @@
 #endif
 #include "kernel_case.hpp"
 #include "paralyn_build_info.h" // Generated at build time by cmake/build_info.cmake.
+#include "platform.hpp"
 #include "process.hpp"
 #include <algorithm>
 #include <cctype>
@@ -30,7 +31,9 @@
 #include <mach-o/dyld.h>
 #endif
 #ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -141,9 +144,14 @@ fs::path includes() {
   auto path = prefix / "include";
   return fs::exists(path / "paralyn/native.h") ? path : fs::path(PARALYN_INCLUDE_DIR);
 }
-fs::path library(const char *name, const char *fallback) {
-  auto p = prefix / "lib" / name;
-  return fs::exists(p) ? p : fs::path(fallback);
+fs::path library(const std::string &name, const char *fallback) {
+  // Installed layout: shared/import/static libraries in lib/; Windows DLLs in bin/.
+  for (const char *dir : {"lib", "bin"}) {
+    auto p = prefix / dir / name;
+    if (fs::exists(p))
+      return p;
+  }
+  return fs::path(fallback);
 }
 std::string run_id() {
   return std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -198,9 +206,41 @@ Json devices(const Options &options) {
       continue;
     if (options.requires == "fp32" && !(c.scalar_types & PR_SCALAR_F32))
       continue;
-    result.push_back(device_info(d, c, "metal:" + std::to_string(i)));
+    // Selectors are backend-qualified with per-backend ordinals (metal:N, cuda:N).
+    const std::string backend = d.backend;
+    const std::string prefix = backend == "CUDA" ? "cuda" : "metal";
+    uint32_t ordinal = 0;
+    for (uint32_t j = 0; j < i; ++j) {
+      pr_device_info earlier{};
+      paralyn::native::check(pr_device_get(j, &earlier));
+      ordinal += backend == earlier.backend;
+    }
+    result.push_back(device_info(d, c, prefix + ":" + std::to_string(ordinal)));
   }
   return result;
+}
+Json backend_status(const char *name) {
+  pr_backend_status_v1 s{};
+  s.struct_size = sizeof(s);
+  s.version = PR_QUERY_VERSION_1;
+  paralyn::native::check(pr_backend_status_get(name, &s));
+  Json result{{"implemented", s.implemented != 0},
+              {"available", s.available != 0},
+              {"device_count", s.device_count},
+              {"reason", s.reason}};
+  if (std::string(name) == "cuda") {
+    result["driver_library"] = s.driver_library;
+    result["nvrtc_library"] = s.compiler_library;
+    result["driver_version"] = s.driver_version ? Json(s.driver_version) : Json(nullptr);
+    result["nvrtc_version"] = s.compiler_version ? Json(s.compiler_version) : Json(nullptr);
+    // Availability is not qualification: no NVIDIA hardware evidence exists yet.
+    result["qualification"] = "unavailable";
+  }
+  return result;
+}
+Json backends() {
+  return Json{{"metal", backend_status("metal")}, {"cuda", backend_status("cuda")},
+              {"hip", backend_status("hip")}};
 }
 Json context_info(const paralyn::native::Context &context, const std::string &selector) {
   pr_device_capabilities_v1 c{};
@@ -251,6 +291,7 @@ int doctor(const Options &options) {
   if (!std::getenv("PARALYN_LLVM_VERSION")) // Identify this CLI's toolchain in execution.json.
     set_environment("PARALYN_LLVM_VERSION", PARALYN_LLVM_VERSION);
   result["devices"] = devices(options);
+  result["backends"] = backends();
   auto context = paralyn::native::Context(options.device);
   result["device"] = context_info(context, options.device);
   auto bytes = paralyn::serialize_module({probe_kernel()});
@@ -300,8 +341,8 @@ int doctor(const Options &options) {
   result["artifacts"] = artifact.string();
   write(artifact / "report.json", result.dump(2) + "\n");
   output(options, result,
-         "Paralyn\nDevice       " + std::string(context.device().name) +
-             " / Metal\nGPU probe    completed\nVerification PASS (257 independently compared FP32 "
+         "Paralyn\nDevice       " + std::string(context.device().name) + " / " +
+             std::string(context.device().backend) + "\nGPU probe    completed\nVerification PASS (257 independently compared FP32 "
              "values)\nReport       " +
              (artifact / "report.json").string() + "\n");
   return 0;
@@ -1118,7 +1159,12 @@ int source_command(const Options &options) {
   try {
     if (extension == ".py") {
       const char *python = std::getenv("PARALYN_PYTHON");
-      command = {python ? python : "python3", source.string()};
+#ifdef _WIN32
+      const char *default_python = "python"; // python.org/Store installs; py launcher is optional
+#else
+      const char *default_python = "python3";
+#endif
+      command = {python ? python : default_python, source.string()};
     } else {
       auto input = source;
       if (!native) {
@@ -1126,31 +1172,37 @@ int source_command(const Options &options) {
         write(artifact / "paralyn-ir.txt", ir);
         input = artifact / "host.cpp";
       }
-      auto program = artifact / "program";
-      std::vector<std::string> compile{extension == ".c" ? PARALYN_HOST_CC : PARALYN_HOST_CXX,
-                                       extension == ".c" ? "-std=c11" : "-std=c++17",
-                                       "-O0",
-                                       "-g",
-                                       "-fno-fast-math",
-                                       "-ffp-contract=off",
-                                       "-I",
-                                       includes().string(),
-                                       "-iquote",
-                                       source.parent_path().string(),
-                                       input.string()};
+      namespace platform = paralyn::cli::platform;
+      auto program = artifact / (std::string("program") + platform::executable_suffix);
+      platform::HostCompile host;
+      host.c_language = extension == ".c";
+      host.compiler = host.c_language ? PARALYN_HOST_CC : PARALYN_HOST_CXX;
+      host.style = platform::compiler_style(PARALYN_HOST_CXX_VARIANT, PARALYN_HOST_CXX_ID);
+      host.include_dir = includes().string();
+      host.quote_dir = source.parent_path().string();
+      host.input = input.string();
+      host.output = program.string();
+      host.object_dir = artifact.string();
       if (native) {
-        auto lib = library("libparalyn_native.dylib", PARALYN_NATIVE_LIBRARY);
-        compile.push_back(lib.string());
-        compile.push_back("-Wl,-rpath," + lib.parent_path().string());
+        // Link the import library on Windows; the DLL is found at run time via PATH.
+        auto lib = library(platform::native_link_library, PARALYN_NATIVE_LINK_LIBRARY);
+        host.link_inputs.push_back(lib.string());
+        host.runtime_dirs.push_back(
+            library(platform::native_library, PARALYN_NATIVE_LIBRARY).parent_path().string());
       } else {
-        compile.push_back(library("libparalyn_runtime.a", PARALYN_RUNTIME_ARCHIVE).string());
-        compile.push_back(library("libparalyn_ir.a", PARALYN_IR_ARCHIVE).string());
+        host.link_inputs.push_back(
+            library(platform::static_library("paralyn_runtime"), PARALYN_RUNTIME_ARCHIVE).string());
+        host.link_inputs.push_back(
+            library(platform::static_library("paralyn_ir"), PARALYN_IR_ARCHIVE).string());
+#if !defined(_WIN32) && !defined(__APPLE__)
+        host.extra.push_back("-ldl"); // runtime dynamically loads the CUDA driver/NVRTC
+#endif
       }
 #if PARALYN_HAS_METAL
-      compile.insert(compile.end(), {"-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
-                                     "-framework", "Metal", "-framework", "Foundation"});
+      host.extra.insert(host.extra.end(), {"-mmacosx-version-min=" PARALYN_DEPLOYMENT_TARGET,
+                                           "-framework", "Metal", "-framework", "Foundation"});
 #endif
-      compile.insert(compile.end(), {"-o", program.string()});
+      auto compile = platform::host_compile_command(host);
       auto compiled = execute(compile);
       write(artifact / "compiler.stdout", compiled.out);
       write(artifact / "compiler.stderr", compiled.err);
@@ -1166,6 +1218,10 @@ int source_command(const Options &options) {
       command = {program.string()};
     }
     // Resolve the requested backend before running arbitrary application code.
+    if (!native && options.device.rfind("cuda:", 0) == 0)
+      throw Diagnostic("P-BACKEND-PROFILE", "device",
+                       "CUDA-source programs currently execute through the Metal compatibility "
+                       "runtime; cuda:INDEX applies to native C/C++/Python modules only");
     {
       auto context = paralyn::native::Context(options.device);
       result["selected_device"] = context_info(context, options.device);
@@ -1187,12 +1243,20 @@ int source_command(const Options &options) {
       installed_python = fs::path(PARALYN_SOURCE_DIR) / "bindings/python";
     if (fs::exists(installed_python / "paralyn")) {
       const char *old = std::getenv("PYTHONPATH");
-      environment.emplace_back("PYTHONPATH",
-                               installed_python.string() + (old ? std::string(":") + old : ""));
+      environment.emplace_back("PYTHONPATH", paralyn::cli::platform::prepend_path_list(
+                                                 installed_python.string(), old));
     }
+    const auto native_library =
+        library(paralyn::cli::platform::native_library, PARALYN_NATIVE_LIBRARY);
     if (native && !std::getenv("PARALYN_LIBRARY"))
-      environment.emplace_back("PARALYN_LIBRARY",
-                               library("libparalyn_native.dylib", PARALYN_NATIVE_LIBRARY).string());
+      environment.emplace_back("PARALYN_LIBRARY", native_library.string());
+#ifdef _WIN32
+    // Windows has no rpath: make the native DLL's directory visible to the child.
+    if (native)
+      environment.emplace_back("PATH", paralyn::cli::platform::prepend_path_list(
+                                           native_library.parent_path().string(),
+                                           std::getenv("PATH")));
+#endif
     if (native && !std::getenv("PARALYN_OPERATORS")) {
       auto operators = prefix / "share/paralyn/operators.prk";
       if (!fs::exists(operators))
@@ -1310,8 +1374,12 @@ Json support() {
                 {"CUDA Python", "not_implemented"}}},
               {"backends",
                {{"metal", PARALYN_HAS_METAL ? "implemented_subset" : "not_built"},
-                {"cuda", "not_implemented"},
+                {"cuda", "implemented_unqualified"},
                 {"rocm", "not_implemented"}}},
+              {"backend_availability", backends()},
+              {"cuda_backend_scope",
+               "CUDA Driver API + NVRTC, dynamically loaded; verified-IR modules (native C/C++/"
+               "Python) only; no NVIDIA hardware qualification evidence"},
               {"complete_portfolio", false}};
 }
 // Single-file TARGETs keep working without any manifest. A project is used only
@@ -1394,7 +1462,8 @@ int main(int argc, char **argv) {
       sub->add_option("--requires", options.requires, "Filter by fp32 or fp64");
     if (command == "doctor" || command == "run" || command == "check" || command == "explain" ||
         command == "verify")
-      sub->add_option("--device", options.device, "auto, metal:INDEX, or legacy numeric index");
+      sub->add_option("--device", options.device,
+                      "auto, metal:INDEX, cuda:INDEX, or legacy numeric (Metal) index");
     if (command == "doctor" || command == "run" || command == "verify")
       sub->add_option("--artifacts", options.artifacts, "New/empty evidence directory");
     if (command == "run") {
@@ -1432,16 +1501,25 @@ int main(int argc, char **argv) {
   }
   try {
     app.parse(static_cast<int>(cli_args.size()), cli_args.data());
-    if (options.device.rfind("cuda:", 0) == 0 || options.device.rfind("rocm:", 0) == 0)
+    if (options.device.rfind("rocm:", 0) == 0 || options.device.rfind("hip:", 0) == 0)
       throw Diagnostic("P-BACKEND-UNIMPLEMENTED", "device",
                        "The requested vendor backend is not implemented. Installing its SDK alone "
                        "cannot enable this path. Run paralyn support for current profiles.");
+    if (options.device.rfind("cuda:", 0) == 0) {
+      const auto cuda = backend_status("cuda");
+      if (!cuda["available"].get<bool>())
+        throw Diagnostic("P-BACKEND-UNAVAILABLE", "device",
+                         "CUDA backend unavailable on this machine: " +
+                             cuda["reason"].get<std::string>() +
+                             ". Hardware or driver absence is reported, never emulated.");
+    }
     if (!options.report.empty() && fs::exists(options.report))
       throw Diagnostic("P-OUTPUT-EXISTS", "report",
                        "Report already exists; existing files are never overwritten");
     if (options.command == "devices") {
       auto result = report("devices");
       result["devices"] = devices(options);
+      result["backends"] = backends();
       result["status"] = "completed";
       std::ostringstream text;
       for (const auto &d : result["devices"])
@@ -1450,6 +1528,9 @@ int main(int argc, char **argv) {
              << ")\n";
       if (result["devices"].empty())
         text << "No matching GPU devices available. Run paralyn doctor for diagnostics.\n";
+      const auto &cuda = result["backends"]["cuda"];
+      if (!cuda["available"].get<bool>())
+        text << "CUDA backend: unavailable — " << cuda["reason"].get<std::string>() << "\n";
       output(options, result, text.str());
       return 0;
     }
@@ -1461,8 +1542,12 @@ int main(int argc, char **argv) {
       for (const auto &row : result["support"]["inputs"])
         text << row["name"].get<std::string>() << ": " << row["implementation"].get<std::string>()
              << " — " << row["scope"].get<std::string>() << "\n";
-      text << "\nNVIDIA/CUDA and AMD/HIP backends, Numba CUDA, CuPy and CUDA Python: not "
-              "implemented.\nAll tracks remain required. No complete-portfolio claim.\n";
+      const auto &cuda = result["support"]["backend_availability"]["cuda"];
+      text << "\nCUDA backend (Driver API + NVRTC, verified-IR modules): implemented, unqualified; "
+           << (cuda["available"].get<bool>() ? std::string("available")
+                                             : "unavailable — " + cuda["reason"].get<std::string>())
+           << "\nAMD/HIP backend, Numba CUDA, CuPy and CUDA Python: not implemented.\nAll tracks "
+              "remain required. No complete-portfolio claim.\n";
       output(options, result, text.str());
       return 0;
     }
