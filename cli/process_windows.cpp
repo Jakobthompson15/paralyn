@@ -180,6 +180,13 @@ Process execute(const std::vector<std::string> &args, bool live,
   startup.StartupInfo.hStdOutput = out_write.h;
   startup.StartupInfo.hStdError = err_write.h;
   startup.lpAttributeList = attributes.list;
+  // Everything the reader threads touch (output strings, error slots) is
+  // declared BEFORE the guard: locals are destroyed in reverse order, so on any
+  // exception ~ChildGuard terminates the child and joins the readers while
+  // these targets are still alive. (The pipe read handles above outlive the
+  // guard for the same reason.)
+  Process result;
+  DWORD read_errors[2]{};
   ChildGuard guard;
   // A job lets an unwinding caller terminate the child's whole process tree.
   guard.job.h = CreateJobObjectW(nullptr, nullptr);
@@ -199,8 +206,6 @@ Process execute(const std::vector<std::string> &args, bool live,
   input.reset();
   active.store(process.dwProcessId);
   guard.handler = SetConsoleCtrlHandler(interrupted, TRUE) != FALSE;
-  Process result;
-  DWORD read_errors[2]{};
   auto reader = [&](HANDLE handle, std::string &target, std::ostream &output, unsigned index) {
     try {
       char buffer[8192];
