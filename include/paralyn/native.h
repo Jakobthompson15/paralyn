@@ -113,6 +113,15 @@ typedef struct pr_backend_status_v1 {
 uint32_t pr_abi_version(void);
 pr_status pr_backend_status_get(const char *backend, pr_backend_status_v1 *out);
 pr_status pr_last_error(pr_error *out);
+/* Device enumeration lists every available device across backends: Metal
+ * devices first (unchanged order), then CUDA devices in driver ordinal order.
+ * An enumeration index is NOT a context selector. The legacy numeric selector
+ * "N" (and "metal:N") addresses Metal device N only; CUDA device K is selected
+ * with "cuda:K", where K counts CUDA entries only. "auto" prefers Metal.
+ * pr_device_info.registry_id is backend-specific: the Metal registry ID on
+ * Metal; on CUDA a nonzero, backend-tagged enumeration value
+ * (0x4355444100000000 | (K + 1)) that is not a hardware identity. Compare
+ * devices by pr_device_capabilities_v1.stable_id, not by registry_id. */
 pr_status pr_device_count(uint32_t *out);
 pr_status pr_device_get(uint32_t index, pr_device_info *out);
 pr_status pr_device_capabilities_get(uint32_t index, pr_device_capabilities_v1 *out);

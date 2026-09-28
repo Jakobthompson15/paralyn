@@ -200,6 +200,13 @@ class Device:
 
 
 def devices(library=None):
+    """Available devices: Metal first, then CUDA (see pr_device_get in native.h).
+
+    A position in this tuple is not a context selector: "N" selects Metal
+    device N only; CUDA devices are selected with "cuda:K" (K counts CUDA
+    entries). registry_id is backend-specific and, for CUDA, not a hardware
+    identity.
+    """
     lib = _library(library)
     count = _c.c_uint32()
     lib.check(lib.api.pr_device_count(_c.byref(count)))
