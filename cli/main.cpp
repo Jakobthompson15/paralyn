@@ -4,7 +4,11 @@
 #if PARALYN_HAS_COMPILER
 #include "paralyn/frontend.hpp"
 #endif
+#if PARALYN_HAS_SPIRV
+#include "paralyn/spirv.hpp"
+#endif
 #include "process.hpp"
+#include <cctype>
 #include <chrono>
 #include <cli11/CLI11.hpp>
 #include <cstdlib>
@@ -382,6 +386,69 @@ paralyn::ExecutableModule msl_module(const fs::path &source, const Options &opti
   paralyn::verify_executable(module);
   return module;
 }
+const char *access_name(paralyn::ResourceAccess access) {
+  return access == paralyn::ResourceAccess::Read    ? "read"
+         : access == paralyn::ResourceAccess::Write ? "write"
+                                                    : "read_write";
+}
+// Reflection added for SPIR-V-derived modules (container version 2).
+void describe_spirv(Json &result, const paralyn::ExecutableModule &module) {
+  result["frontend"] = "spirv_vulkan_compute";
+  result["profile"] = "SPIR-V 1.0-1.3 / Vulkan 1.1 GLCompute, Logical addressing, fixed LocalSize";
+  result["lowering"] = "SPIRV-Cross MSL 3.1 (Metal only; no CUDA/HIP lowering)";
+  result["toolchain"] = module.toolchain;
+  result["spirv_sha256"] = module.spirv_sha256;
+  result["spirv_bytes"] = module.spirv.size();
+  result["generated_msl_sha256"] = module.source_sha256;
+  static const char *builtin_names[] = {"GlobalInvocationId", "LocalInvocationId",
+                                        "LocalInvocationIndex", "WorkgroupId",
+                                        "NumWorkgroups", "WorkgroupSize"};
+  static const char *origins[] = {"none", "storage_buffer", "uniform_member",
+                                  "push_constant_member"};
+  for (std::size_t i = 0; i < module.entries.size(); ++i) {
+    const auto &e = module.entries[i];
+    auto &entry = result["entries"][i];
+    entry["builtins"] = Json::array();
+    for (unsigned b = 0; b < 6; ++b)
+      if (e.builtins & (1u << b))
+        entry["builtins"].push_back(builtin_names[b]);
+    for (std::size_t j = 0; j < e.parameters.size(); ++j) {
+      const auto &p = e.parameters[j];
+      auto &parameter = entry["parameters"][j];
+      parameter["access_name"] = access_name(p.access);
+      parameter["origin"] = origins[static_cast<unsigned>(p.origin)];
+      parameter["descriptor_set"] = p.source_set;
+      parameter["descriptor_binding"] = p.source_binding;
+      parameter["metal_slot"] = p.binding;
+      parameter["block_offset"] = p.block_offset;
+      parameter["minimum_bytes"] = p.minimum_bytes;
+    }
+  }
+}
+paralyn::ExecutableModule spirv_module(const fs::path &source, bool assembly) {
+#if PARALYN_HAS_SPIRV
+  try {
+    const auto input = read(source, paralyn::executable_max_spirv_bytes * 4);
+    const auto words = assembly ? paralyn::spirv::assemble(input)
+                                : paralyn::spirv::binary_words(input.data(), input.size());
+    paralyn::spirv::ImportOptions options;
+    options.source_name = source.filename().string();
+    options.producer_version = "0.0.1+" PARALYN_BUILD_COMMIT ".dirty=" PARALYN_BUILD_DIRTY;
+    return paralyn::spirv::import_module(words, options);
+  } catch (const paralyn::spirv::ImportError &error) {
+    std::string id = "P-SPIRV-";
+    for (char c : error.code.substr(error.code.find('.') + 1))
+      id += c == '-' ? '-' : static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    throw Diagnostic(id, "import", error.what());
+  }
+#else
+  (void)source;
+  (void)assembly;
+  throw Diagnostic("P-SPIRV-UNAVAILABLE", "input",
+                   "This build does not include the optional SPIR-V importer. Reconfigure with "
+                   "-DPARALYN_ENABLE_SPIRV=ON (see docs/spirv-import.md).");
+#endif
+}
 #if PARALYN_HAS_COMPILER
 std::string ir_text(const paralyn::FrontendResult &frontend) {
   std::string s;
@@ -420,15 +487,20 @@ int source_command(const Options &options) {
   result["source"] = source.string();
   result["source_sha256"] = paralyn::source_sha256(read(source));
   const bool msl = extension == ".metal", container = extension == ".prx",
+             spirv = extension == ".spvasm" || extension == ".spv",
              native = extension == ".py" || extension == ".cpp" || extension == ".cc" ||
                       extension == ".c";
+  bool spirv_payload = spirv;
   std::vector<unsigned char> module_bytes;
   std::string host_source, ir;
-  if (msl || container) {
-    auto module = msl ? msl_module(source, options) : [&] {
-      auto b = read(source);
-      return paralyn::deserialize_executable(b.data(), b.size());
-    }();
+  if (msl || container || spirv) {
+    auto module = msl     ? msl_module(source, options)
+                  : spirv ? spirv_module(source, extension == ".spvasm")
+                          : [&] {
+                              auto b = read(source);
+                              return paralyn::deserialize_executable(b.data(), b.size());
+                            }();
+    spirv_payload = module.format == paralyn::ExecutableFormat::SpirvMsl;
     result["frontend"] = "metal_source";
     result["target"] = module.target;
     result["entries"] = Json::array();
@@ -443,6 +515,8 @@ int source_command(const Options &options) {
       result["entries"].push_back(
           {{"name", e.name}, {"parameters", params}, {"required_block", e.required_block}});
     }
+    if (spirv_payload)
+      describe_spirv(result, module);
     module_bytes = paralyn::serialize_executable(module);
     if (options.command == "run")
       throw Diagnostic("P-KERNEL-CASE-REQUIRED", "input",
@@ -477,17 +551,21 @@ int source_command(const Options &options) {
                 std::string(module_bytes.begin(), module_bytes.end()));
     result["status"] = "compiled";
     result["output"] = fs::absolute(options.output).string();
-    auto count =
-        (msl || container) ? result["entries"].size() : result["inspection"]["kernels"].size();
-    result["payload_validation"] = (msl || container)
-                                       ? "resource contract and source profile; Metal "
-                                         "compilation/reflection occurs on check or load"
-                                       : "verified scalar IR";
-    output(
-        options, result,
-        (msl || container ? "Packaged " : "Compiled ") + std::to_string(count) +
-            (msl || container ? " declared Metal entrypoint(s) to " : " verified kernel(s) to ") +
-            options.output + "\n");
+    auto count = (msl || container || spirv) ? result["entries"].size()
+                                             : result["inspection"]["kernels"].size();
+    result["payload_validation"] =
+        spirv_payload ? "spirv-val (Vulkan 1.1), Paralyn SPIR-V profile and reflected descriptor; "
+                        "Metal compilation/reflection occurs on check or load"
+        : (msl || container) ? "resource contract and source profile; Metal "
+                               "compilation/reflection occurs on check or load"
+                             : "verified scalar IR";
+    output(options, result,
+           (spirv_payload ? "Imported " : (msl || container) ? "Packaged " : "Compiled ") +
+               std::to_string(count) +
+               (spirv_payload ? " validated SPIR-V GLCompute entrypoint(s) to "
+                : (msl || container) ? " declared Metal entrypoint(s) to "
+                                     : " verified kernel(s) to ") +
+               options.output + "\n");
     return 0;
   }
   if (options.command == "inspect" || options.command == "check" || options.command == "explain") {
@@ -505,7 +583,29 @@ int source_command(const Options &options) {
     result["gpu_work_submitted"] = false;
     std::ostringstream text;
     text << "Detected kernels:\n";
-    if (msl || container)
+    if (spirv_payload)
+      for (const auto &e : result["entries"]) {
+        text << "  " << e["name"].get<std::string>() << " (SPIR-V GLCompute, workgroup "
+             << e["required_block"][0] << "x" << e["required_block"][1] << "x"
+             << e["required_block"][2] << ", lowered to MSL by SPIRV-Cross)\n";
+        for (const auto &p : e["parameters"])
+          text << "    " << p["name"].get<std::string>() << ": " << p["type"].get<std::string>()
+               << (p["buffer"].get<bool>() ? "[] " : " ") << p["access_name"].get<std::string>()
+               << " " << p["origin"].get<std::string>()
+               << (p["origin"] == "push_constant_member"
+                       ? std::string()
+                       : " set " + p["descriptor_set"].dump() + " binding " +
+                             p["descriptor_binding"].dump())
+               << " -> metal slot " << p["metal_slot"]
+               << (p["buffer"].get<bool>() ? std::string()
+                                           : " offset " + p["block_offset"].dump())
+               << "\n";
+        std::string builtins;
+        for (const auto &b : e["builtins"])
+          builtins += (builtins.empty() ? "" : ", ") + b.get<std::string>();
+        text << "    builtins: " << (builtins.empty() ? "none" : builtins) << "\n";
+      }
+    else if (msl || container)
       for (const auto &e : result["entries"])
         text << "  " << e["name"].get<std::string>()
              << " (Metal source, reflected resources checked on module load)\n";
@@ -718,7 +818,8 @@ Json support() {
                     "SPIR-V", "MLIR", "Metal source", "PTX", "SASS"}) {
     std::string n = name;
     bool implemented = n == "Native C/C++" || n == "Native Python" || n == "Metal source" ||
-                       (n == "CUDA C++" && PARALYN_HAS_COMPILER);
+                       (n == "CUDA C++" && PARALYN_HAS_COMPILER) ||
+                       (n == "SPIR-V" && PARALYN_HAS_SPIRV);
     rows.push_back(
         {{"name", n},
          {"required", true},
@@ -727,6 +828,9 @@ Json support() {
          {"available_in_this_build", implemented && bool(PARALYN_HAS_METAL)},
          {"scope", n == "CUDA C++"       ? "documented scalar source profile"
                    : n == "Metal source" ? "declared 32-bit buffer/scalar resources; Metal-specific"
+                   : n == "SPIR-V" && implemented
+                       ? "SPIR-V 1.3/Vulkan 1.1 GLCompute buffer/scalar profile via SPIRV-Cross to "
+                         "Metal; Kernel model rejected; no CUDA/HIP lowering"
                    : n == "Native C/C++" || n == "Native Python"
                        ? "ABI1 buffers/modules/launch and contiguous FP32 arrays"
                        : "no executable profile"},
