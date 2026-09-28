@@ -1,0 +1,92 @@
+; Hand-written SPIR-V 1.3 assembly (Vulkan 1.1 GLCompute profile): regression
+; fixture for access reflection through extended-instruction pointer operands.
+; For every i < n: s = a[i] + b[i]; c[i] = s; and GLSL.std.450 Modf(s, &b[i])
+; stores the whole-number part of s into b[i] through its pointer operand.
+;   set 0 binding 0: a  (StorageBuffer, NonWritable f32 runtime array)
+;   set 0 binding 1: b  (StorageBuffer, writable f32 runtime array; only Modf writes it)
+;   set 0 binding 2: c  (StorageBuffer, writable f32 runtime array)
+;   push constant  : n  (u32 element count)
+; No OpStore targets b, yet b must reflect as read_write.
+               OpCapability Shader
+        %std = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %main "modf_write" %gid
+               OpExecutionMode %main LocalSize 64 1 1
+               OpName %main "modf_write"
+               OpName %gid "gid"
+               OpName %In "In"
+               OpMemberName %In 0 "data"
+               OpName %InOut "InOut"
+               OpMemberName %InOut 0 "data"
+               OpName %Out "Out"
+               OpMemberName %Out 0 "data"
+               OpName %Params "Params"
+               OpMemberName %Params 0 "n"
+               OpName %a "a"
+               OpName %b "b"
+               OpName %c "c"
+               OpName %params "params"
+               OpDecorate %gid BuiltIn GlobalInvocationId
+               OpDecorate %floats ArrayStride 4
+               OpDecorate %In Block
+               OpMemberDecorate %In 0 Offset 0
+               OpMemberDecorate %In 0 NonWritable
+               OpDecorate %InOut Block
+               OpMemberDecorate %InOut 0 Offset 0
+               OpDecorate %Out Block
+               OpMemberDecorate %Out 0 Offset 0
+               OpDecorate %Params Block
+               OpMemberDecorate %Params 0 Offset 0
+               OpDecorate %a DescriptorSet 0
+               OpDecorate %a Binding 0
+               OpDecorate %b DescriptorSet 0
+               OpDecorate %b Binding 1
+               OpDecorate %c DescriptorSet 0
+               OpDecorate %c Binding 2
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+       %bool = OpTypeBool
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+        %int = OpTypeInt 32 1
+     %v3uint = OpTypeVector %uint 3
+     %floats = OpTypeRuntimeArray %float
+         %In = OpTypeStruct %floats
+      %InOut = OpTypeStruct %floats
+        %Out = OpTypeStruct %floats
+     %Params = OpTypeStruct %uint
+  %ptr_in_sb = OpTypePointer StorageBuffer %In
+ %ptr_io_sb = OpTypePointer StorageBuffer %InOut
+ %ptr_out_sb = OpTypePointer StorageBuffer %Out
+   %ptr_f_sb = OpTypePointer StorageBuffer %float
+  %ptr_param = OpTypePointer PushConstant %Params
+   %ptr_u_pc = OpTypePointer PushConstant %uint
+ %ptr_v3_in = OpTypePointer Input %v3uint
+      %int_0 = OpConstant %int 0
+          %a = OpVariable %ptr_in_sb StorageBuffer
+          %b = OpVariable %ptr_io_sb StorageBuffer
+          %c = OpVariable %ptr_out_sb StorageBuffer
+     %params = OpVariable %ptr_param PushConstant
+        %gid = OpVariable %ptr_v3_in Input
+       %main = OpFunction %void None %func
+      %entry = OpLabel
+     %global = OpLoad %v3uint %gid
+          %i = OpCompositeExtract %uint %global 0
+      %n_ptr = OpAccessChain %ptr_u_pc %params %int_0
+          %n = OpLoad %uint %n_ptr
+     %inside = OpULessThan %bool %i %n
+               OpSelectionMerge %done None
+               OpBranchConditional %inside %body %done
+       %body = OpLabel
+      %a_ptr = OpAccessChain %ptr_f_sb %a %int_0 %i
+      %b_ptr = OpAccessChain %ptr_f_sb %b %int_0 %i
+         %av = OpLoad %float %a_ptr
+         %bv = OpLoad %float %b_ptr
+        %sum = OpFAdd %float %av %bv
+         %fr = OpExtInst %float %std Modf %sum %b_ptr
+      %c_ptr = OpAccessChain %ptr_f_sb %c %int_0 %i
+               OpStore %c_ptr %sum
+               OpBranch %done
+       %done = OpLabel
+               OpReturn
+               OpFunctionEnd

@@ -41,3 +41,15 @@ The CLI vendors CLI11 2.4.2 (BSD-3-Clause) and nlohmann/json 3.11.3 (MIT). Exact
 ## Project and kernel-case TOML
 
 The CLI vendors toml++ (tomlplusplus) **3.4.0** by Mark Gillard, MIT license, single header `third_party/tomlplusplus/toml.hpp` with its license in `third_party/tomlplusplus/LICENSE`. Source: tag `v3.4.0` (commit `30172438cee64926dc41fdd9c11fb3ba5b2ba9de`) of <https://github.com/marzer/tomlplusplus>. The checked-in bytes are pinned by SHA256 in `third_party/SHA256SUMS.json`; their Git blob identities (`toml.hpp` `0599bf5ed502caa77a5359da68f2b10c2d9dddde`, `LICENSE` `261cd6158738041e15adb526423d05075b060fcb`) were cross-checked against that tag when imported on 2026-09-28. It is used only by the CLI to parse `paralyn.toml` projects and kernel-case files; the native runtime and Python binding do not include it.
+
+## Optional SPIR-V import toolchain
+
+Only builds configured with `-DPARALYN_ENABLE_SPIRV=ON` compile and statically link these into the `paralyn` CLI (the `paralyn_spirv` importer). The native runtime, Python binding and runtime-only builds do not link them; `.prx` modules they produce execute without them. Exact archives, commits and checksums are in `third_party/README.md` and `third_party/SHA256SUMS.json`; the upstream license texts are retained unmodified in `third_party/spirv/licenses/`.
+
+| Component | Pinned identity | Use | License |
+|---|---|---|---|
+| SPIRV-Headers | vulkan-sdk-1.4.363.0, commit `496543121ce6419f23d6fa5d7194ba66c36212d2` | SPIR-V grammar/headers for SPIRV-Tools | MIT-style Khronos license (some files CC-BY-4.0 documentation; see upstream `LICENSE`) |
+| SPIRV-Tools | v2026.4 / vulkan-sdk-1.4.363.0, commit `ef96ed763b43b59b33b31b362f09a02b729fa1c9` | `spirv-as` assembly, `spirv-val` Vulkan 1.1 validation (library and build-time tools) | Apache-2.0 |
+| SPIRV-Cross | vulkan-sdk-1.4.363.0, commit `f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7` | SPIR-V reflection and MSL 3.1 lowering | Apache-2.0 (core sources dual-licensed Apache-2.0 OR MIT) |
+
+A distributed binary that includes the importer must carry these notices and the Apache-2.0 NOTICE obligations of the linked projects.

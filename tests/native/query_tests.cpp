@@ -50,7 +50,7 @@ int main() {
     ok(pr_device_capabilities_get(0, &caps));
     check(std::string(caps.stable_id).rfind("metal:registry:", 0) == 0,
           "Device identity is not backend-qualified");
-    check(caps.artifact_formats == (PR_ARTIFACT_VERIFIED_IR | PR_ARTIFACT_MSL_SOURCE) &&
+    check(caps.artifact_formats == (PR_ARTIFACT_VERIFIED_IR | PR_ARTIFACT_MSL_SOURCE | PR_ARTIFACT_SPIRV_MSL) &&
           caps.scalar_types == (PR_SCALAR_I32 | PR_SCALAR_U32 | PR_SCALAR_F32),
           "Implemented executable capabilities are inaccurate");
     check(caps.max_buffer_bytes && caps.max_threadgroup_memory_bytes && caps.max_block_x &&

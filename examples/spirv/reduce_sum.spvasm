@@ -1,0 +1,167 @@
+; Hand-written SPIR-V 1.3 assembly (Vulkan 1.1 GLCompute profile).
+; Workgroup partial sums with a structured grid-stride loop, a Workgroup-memory
+; tree reduction (structured loop + OpControlBarrier) and a uniform scale:
+;   partial[w] = scale * sum(input[i] for i < n, i mod T in [64w, 64w + 64))
+; where T = NumWorkgroups.x * WorkgroupSize.x.
+;   set 0 binding 0: input   (StorageBuffer, NonWritable f32 runtime array)
+;   set 0 binding 1: partial (StorageBuffer, writable f32 runtime array)
+;   set 0 binding 2: Uniform block { u32 n (offset 0); f32 scale (offset 4) }
+; LocalSize is fixed at 64x1x1.
+               OpCapability Shader
+          %std = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %main "reduce_sum" %gid_var %lid_var %wid_var %nwg_var
+               OpExecutionMode %main LocalSize 64 1 1
+               OpName %main "reduce_sum"
+               OpName %In "In"
+               OpMemberName %In 0 "data"
+               OpName %Out "Out"
+               OpMemberName %Out 0 "data"
+               OpName %Params "Params"
+               OpMemberName %Params 0 "n"
+               OpMemberName %Params 1 "scale"
+               OpName %input "input"
+               OpName %partial "partial"
+               OpName %params "params"
+               OpName %shared "shared"
+               OpDecorate %gid_var BuiltIn GlobalInvocationId
+               OpDecorate %lid_var BuiltIn LocalInvocationId
+               OpDecorate %wid_var BuiltIn WorkgroupId
+               OpDecorate %nwg_var BuiltIn NumWorkgroups
+               OpDecorate %wg_size BuiltIn WorkgroupSize
+               OpDecorate %floats ArrayStride 4
+               OpDecorate %In Block
+               OpMemberDecorate %In 0 Offset 0
+               OpMemberDecorate %In 0 NonWritable
+               OpDecorate %Out Block
+               OpMemberDecorate %Out 0 Offset 0
+               OpDecorate %Params Block
+               OpMemberDecorate %Params 0 Offset 0
+               OpMemberDecorate %Params 1 Offset 4
+               OpDecorate %input DescriptorSet 0
+               OpDecorate %input Binding 0
+               OpDecorate %partial DescriptorSet 0
+               OpDecorate %partial Binding 1
+               OpDecorate %params DescriptorSet 0
+               OpDecorate %params Binding 2
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+       %bool = OpTypeBool
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+        %int = OpTypeInt 32 1
+     %v3uint = OpTypeVector %uint 3
+     %floats = OpTypeRuntimeArray %float
+         %In = OpTypeStruct %floats
+        %Out = OpTypeStruct %floats
+     %Params = OpTypeStruct %uint %float
+      %int_0 = OpConstant %int 0
+      %int_1 = OpConstant %int 1
+     %uint_0 = OpConstant %uint 0
+     %uint_1 = OpConstant %uint 1
+     %uint_2 = OpConstant %uint 2
+    %uint_32 = OpConstant %uint 32
+    %uint_64 = OpConstant %uint 64
+  %uint_264 = OpConstant %uint 264
+    %float_0 = OpConstant %float 0
+    %wg_size = OpConstantComposite %v3uint %uint_64 %uint_1 %uint_1
+   %f_tile64 = OpTypeArray %float %uint_64
+  %ptr_in_sb = OpTypePointer StorageBuffer %In
+ %ptr_out_sb = OpTypePointer StorageBuffer %Out
+   %ptr_f_sb = OpTypePointer StorageBuffer %float
+  %ptr_param = OpTypePointer Uniform %Params
+   %ptr_u_un = OpTypePointer Uniform %uint
+   %ptr_f_un = OpTypePointer Uniform %float
+  %ptr_tile = OpTypePointer Workgroup %f_tile64
+   %ptr_f_wg = OpTypePointer Workgroup %float
+ %ptr_v3_in = OpTypePointer Input %v3uint
+      %input = OpVariable %ptr_in_sb StorageBuffer
+    %partial = OpVariable %ptr_out_sb StorageBuffer
+     %params = OpVariable %ptr_param Uniform
+     %shared = OpVariable %ptr_tile Workgroup
+    %gid_var = OpVariable %ptr_v3_in Input
+    %lid_var = OpVariable %ptr_v3_in Input
+    %wid_var = OpVariable %ptr_v3_in Input
+    %nwg_var = OpVariable %ptr_v3_in Input
+       %main = OpFunction %void None %func
+      %entry = OpLabel
+       %gid3 = OpLoad %v3uint %gid_var
+          %g = OpCompositeExtract %uint %gid3 0
+       %lid3 = OpLoad %v3uint %lid_var
+          %l = OpCompositeExtract %uint %lid3 0
+       %wid3 = OpLoad %v3uint %wid_var
+          %w = OpCompositeExtract %uint %wid3 0
+       %nwg3 = OpLoad %v3uint %nwg_var
+        %nwg = OpCompositeExtract %uint %nwg3 0
+     %lsize = OpCompositeExtract %uint %wg_size 0
+      %total = OpIMul %uint %nwg %lsize
+      %n_ptr = OpAccessChain %ptr_u_un %params %int_0
+          %n = OpLoad %uint %n_ptr
+  %scale_ptr = OpAccessChain %ptr_f_un %params %int_1
+      %scale = OpLoad %float %scale_ptr
+               OpBranch %stride_header
+
+; Structured grid-stride loop: acc += input[i]; i += total while i < n.
+%stride_header = OpLabel
+          %i = OpPhi %uint %g %entry %i_next %stride_continue
+        %acc = OpPhi %float %float_0 %entry %acc_next %stride_continue
+               OpLoopMerge %stride_merge %stride_continue None
+               OpBranch %stride_check
+%stride_check = OpLabel
+    %in_range = OpULessThan %bool %i %n
+               OpBranchConditional %in_range %stride_body %stride_merge
+%stride_body = OpLabel
+     %in_ptr = OpAccessChain %ptr_f_sb %input %int_0 %i
+      %value = OpLoad %float %in_ptr
+   %acc_next = OpFAdd %float %acc %value
+               OpBranch %stride_continue
+%stride_continue = OpLabel
+     %i_next = OpIAdd %uint %i %total
+               OpBranch %stride_header
+%stride_merge = OpLabel
+    %mine_ptr = OpAccessChain %ptr_f_wg %shared %l
+               OpStore %mine_ptr %acc
+               OpControlBarrier %uint_2 %uint_2 %uint_264
+               OpBranch %tree_header
+
+; Structured tree reduction; every invocation reaches each barrier.
+%tree_header = OpLabel
+          %s = OpPhi %uint %uint_32 %stride_merge %s_next %tree_continue
+               OpLoopMerge %tree_merge %tree_continue None
+               OpBranch %tree_check
+ %tree_check = OpLabel
+       %more = OpUGreaterThan %bool %s %uint_0
+               OpBranchConditional %more %tree_body %tree_merge
+  %tree_body = OpLabel
+     %active = OpULessThan %bool %l %s
+               OpSelectionMerge %tree_after None
+               OpBranchConditional %active %tree_add %tree_after
+   %tree_add = OpLabel
+    %other_i = OpIAdd %uint %l %s
+  %own_ptr = OpAccessChain %ptr_f_wg %shared %l
+  %other_ptr = OpAccessChain %ptr_f_wg %shared %other_i
+        %own = OpLoad %float %own_ptr
+      %other = OpLoad %float %other_ptr
+   %combined = OpFAdd %float %own %other
+               OpStore %own_ptr %combined
+               OpBranch %tree_after
+ %tree_after = OpLabel
+               OpControlBarrier %uint_2 %uint_2 %uint_264
+               OpBranch %tree_continue
+%tree_continue = OpLabel
+     %s_next = OpShiftRightLogical %uint %s %uint_1
+               OpBranch %tree_header
+ %tree_merge = OpLabel
+      %first = OpIEqual %bool %l %uint_0
+               OpSelectionMerge %finish None
+               OpBranchConditional %first %write %finish
+      %write = OpLabel
+   %zero_ptr = OpAccessChain %ptr_f_wg %shared %uint_0
+      %total_sum = OpLoad %float %zero_ptr
+     %scaled = OpFMul %float %total_sum %scale
+    %out_ptr = OpAccessChain %ptr_f_sb %partial %int_0 %w
+               OpStore %out_ptr %scaled
+               OpBranch %finish
+     %finish = OpLabel
+               OpReturn
+               OpFunctionEnd

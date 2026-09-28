@@ -69,6 +69,8 @@ typedef struct pr_event_info {
 #define PR_QUERY_VERSION_1 1u
 #define PR_ARTIFACT_VERIFIED_IR (UINT64_C(1) << 0)
 #define PR_ARTIFACT_MSL_SOURCE (UINT64_C(1) << 1)
+/* PARALYNX container version 2: MSL lowered from validated Vulkan 1.1 SPIR-V. */
+#define PR_ARTIFACT_SPIRV_MSL (UINT64_C(1) << 2)
 #define PR_SCALAR_I32 (UINT64_C(1) << 0)
 #define PR_SCALAR_U32 (UINT64_C(1) << 1)
 #define PR_SCALAR_F32 (UINT64_C(1) << 2)

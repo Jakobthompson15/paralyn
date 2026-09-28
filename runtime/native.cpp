@@ -280,7 +280,7 @@ void capabilities(const be::DeviceInfo &d, pr_device_capabilities_v1 *out) {
   out->version = PR_QUERY_VERSION_1;
   text(out->stable_id, d.stable_id);
   text(out->backend, d.backend);
-  out->artifact_formats = PR_ARTIFACT_VERIFIED_IR | PR_ARTIFACT_MSL_SOURCE;
+  out->artifact_formats = PR_ARTIFACT_VERIFIED_IR | PR_ARTIFACT_MSL_SOURCE | PR_ARTIFACT_SPIRV_MSL;
   out->scalar_types = PR_SCALAR_I32 | PR_SCALAR_U32 | PR_SCALAR_F32;
   out->max_buffer_bytes = d.max_buffer_bytes;
   out->max_threadgroup_memory_bytes = d.max_threadgroup_memory_bytes;
