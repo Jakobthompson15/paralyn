@@ -43,6 +43,15 @@ else()
 endif()
 target_sources(paralyn_runtime PRIVATE runtime/telemetry.cpp)
 target_include_directories(paralyn_runtime PUBLIC include)
+# Build-time (not only configure-time) revision/dirty identity for the runtime and CLI.
+set(PARALYN_BUILD_INFO_DIR ${PROJECT_BINARY_DIR}/generated)
+add_custom_target(paralyn_build_info ALL
+  COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -DOUTPUT=${PARALYN_BUILD_INFO_DIR}/paralyn_build_info.h
+          -P ${PROJECT_SOURCE_DIR}/cmake/build_info.cmake
+  BYPRODUCTS ${PARALYN_BUILD_INFO_DIR}/paralyn_build_info.h
+  COMMENT "Embedding build revision and dirty state" VERBATIM)
+target_include_directories(paralyn_runtime PRIVATE ${PARALYN_BUILD_INFO_DIR})
+add_dependencies(paralyn_runtime paralyn_build_info)
 add_library(paralyn_native SHARED runtime/native.cpp)
 target_include_directories(paralyn_native PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 target_link_libraries(paralyn_native PRIVATE paralyn_runtime)

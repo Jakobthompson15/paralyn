@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #include "paralyn/detail/backend.hpp"
+#include "paralyn_build_info.h" // Generated at build time by cmake/build_info.cmake.
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -651,11 +652,26 @@ struct MetalContext final : Context, std::enable_shared_from_this<MetalContext> 
            << ",\n  \"thermal_state_at_capture\": " << NSProcessInfo.processInfo.thermalState
            << ",\n  \"low_power_mode_at_capture\": "
            << (NSProcessInfo.processInfo.lowPowerModeEnabled ? "true" : "false")
-           << ",\n  \"paralyn_commit\": " << json(environment("PARALYN_COMMIT"))
+           // A caller-supplied revision (CLI, qualification harness) takes precedence;
+           // direct native clients fall back to the runtime's embedded build identity.
+           << ",\n  \"paralyn_commit\": "
+           << json(environment("PARALYN_COMMIT", PARALYN_EMBEDDED_REVISION))
            << ",\n  \"paralyn_dirty\": "
-           << (environment("PARALYN_SOURCE_DIRTY") == "true"    ? "true"
-               : environment("PARALYN_SOURCE_DIRTY") == "false" ? "false"
+           << (environment("PARALYN_SOURCE_DIRTY", PARALYN_EMBEDDED_DIRTY) == "true"    ? "true"
+               : environment("PARALYN_SOURCE_DIRTY", PARALYN_EMBEDDED_DIRTY) == "false" ? "false"
+                                                                                       : "null")
+           << ",\n  \"paralyn_revision_source\": "
+           << json(std::getenv("PARALYN_COMMIT") && *std::getenv("PARALYN_COMMIT")
+                       ? "environment"
+                       : "embedded_build")
+           << ",\n  \"paralyn_runtime_build\": {\"revision\": " << json(PARALYN_EMBEDDED_REVISION)
+           << ", \"dirty\": "
+           << (std::string(PARALYN_EMBEDDED_DIRTY) == "true"    ? "true"
+               : std::string(PARALYN_EMBEDDED_DIRTY) == "false" ? "false"
                                                                 : "null")
+           << ", \"changes_sha256\": "
+           << (*PARALYN_EMBEDDED_CHANGES_SHA256 ? json(PARALYN_EMBEDDED_CHANGES_SHA256) : "null")
+           << ", \"captured\": \"build\"}"
            << ",\n  \"llvm_version\": " << json(environment("PARALYN_LLVM_VERSION"))
            << ",\n  \"math_mode\": \"safe\",\n  \"floating_point_functions\": \"precise\","
            << "\n  \"cpu_fallback\": false,"
