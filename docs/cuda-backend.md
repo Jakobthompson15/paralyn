@@ -30,12 +30,20 @@ HIP/HIPRTC is **not implemented and has no stub**. `hip:N` and `rocm:N` report "
 **Loading.** The build has no NVIDIA headers or libraries. `api.hpp` holds independently written
 declarations of the documented Driver API/NVRTC subset. Library candidates are tried in this order:
 
-- Linux: `libcuda.so.1`, `libcuda.so`; NVRTC: `libnvrtc.so.13`, `.so.12`, `.so.11.2`, `libnvrtc.so`, then `$CUDA_HOME/lib64|lib/libnvrtc.so`.
-- Windows: `nvcuda.dll` (System32 only); NVRTC: `%CUDA_PATH%\bin\x64\` and `%CUDA_PATH%\bin\` with `nvrtc64_130_0.dll`, `nvrtc64_120_0.dll`, `nvrtc64_112_0.dll`, then the bare names through the standard search order.
-- macOS: `libcuda.dylib`. The attempt is recorded, although NVIDIA has shipped no macOS driver since CUDA 10.2.
+- Linux: `libcuda.so.1`, `libcuda.so`; NVRTC: `libnvrtc.so.13`, `.so.12`, `.so.11.2`, `libnvrtc.so`, then `$CUDA_HOME/lib64|lib/libnvrtc.so` (only if `CUDA_HOME` is absolute). glibc resolves these fixed sonames through `LD_LIBRARY_PATH`, `RUNPATH`, `ld.so.cache` and the system directories, never the current directory.
+- Windows: `nvcuda.dll` with `LOAD_LIBRARY_SEARCH_SYSTEM32` only. NVRTC: fully qualified paths only: `%CUDA_PATH%\bin\x64\` and `%CUDA_PATH%\bin\` (if `CUDA_PATH` is absolute) with `nvrtc64_130_0.dll`, `nvrtc64_120_0.dll`, `nvrtc64_112_0.dll`, then those names in each **absolute** `PATH` directory that actually contains them. Absolute loads use `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS`, which never includes the current directory.
+- macOS: **no default candidates.** NVIDIA has shipped no macOS driver since CUDA 10.2, and a bare name would make dyld search the current working directory. Nothing is loaded unless an absolute override is set.
 
-`PARALYN_CUDA_DRIVER_LIBRARY` and `PARALYN_NVRTC_LIBRARY` set exact paths, and an explicit path
-never falls back to a default. Versioned symbols are bound by their `_v2` names. Optional symbols
+**Current-directory policy (security).** The loader never passes a bare or relative name to
+`dlopen`/`LoadLibraryExW`, except `nvcuda.dll` (System32 only) and the fixed Linux sonames above.
+Every other candidate, default or explicit, must be an absolute path and is otherwise refused with
+`refused: not an absolute path`. Before this fix, running `paralyn devices` (or `doctor`,
+`support`, `pr_device_*`, Python `devices()`) on macOS in a directory containing a
+`libcuda.dylib` loaded and ran it. A regression test plants a probe library under every CUDA
+library name in the working directory and asserts it is never loaded (with a positive control).
+
+`PARALYN_CUDA_DRIVER_LIBRARY` and `PARALYN_NVRTC_LIBRARY` set exact **absolute** paths, and an
+explicit path never falls back to a default. Versioned symbols are bound by their `_v2` names. Optional symbols
 are `cuDeviceGetUuid(_v2)` and `nvrtcGetSupportedArchs`. `cuEventElapsedTime_v2` is preferred over
 `cuEventElapsedTime`. The loader runs once per process. The backend is **available** only if both
 libraries and all required symbols load, `cuInit` succeeds, and at least one device exists.
@@ -45,9 +53,12 @@ Otherwise the exact reason and every failed candidate are reported.
 the CUDA runtime API uses, so a caller's `cudart` allocations interoperate with it. Every driver
 operation runs inside `cuCtxPushCurrent`/`cuCtxPopCurrent`. On success, the pop is checked, and the
 popped context must be the primary context. So the caller's current context, or no context, is
-restored after each call, including on error paths. Buffers keep the retained primary context alive
-past their `Context`. Release happens exactly once. The test double checks that every driver call
-runs with the primary context current and that the caller's stack is restored.
+restored after each call, including on error paths. This includes destroying the events of a
+command whose end-event record failed after launch (previously done without the primary context
+current). Buffers keep the retained primary context alive past their `Context`. Release happens
+exactly once, including when the constructor fails after the retain. The test double checks that
+every driver call that needs a context runs with the primary context current and that the caller's
+stack is restored.
 
 **Memory and copies.** Memory comes from `cuMemAlloc` (zero bytes uses no allocation). Views pass
 the base plus a byte offset. Copies are synchronous `cuMemcpyHtoD`/`cuMemcpyDtoH`, run after
@@ -85,15 +96,28 @@ block and grid limits, the function's maximum threads, and 32-bit logical dimens
 | `NOT_PERMITTED`, `NOT_SUPPORTED` | `unsupported` |
 | Other codes | `execution` |
 
-Sticky faults (214, 700, 702, 714–719, 999) and any completion failure make the context
+Sticky faults make the context permanently failed whether they come from completion or directly
+from a copy, allocation, module or launch call: every code NVIDIA documents as leaving the context
+unusable or the process inconsistent (226 `CONTAINED`, 700, 702, 710 `ASSERT`, 714–719,
+721 `TENSOR_MEMORY_LEAK`, 810 `MPS_CLIENT_TERMINATED`, 911 `EXTERNAL_DEVICE`), plus 709
+`CONTEXT_IS_DESTROYED`, 214 `ECC_UNCORRECTABLE` and the conservative 999 `UNKNOWN`. 711 and 720 are
+recoverable. The list was reviewed against the CUresult reference in NVIDIA's cuda-python driver
+bindings (CUDA 13). Any completion failure also makes the context
 permanently failed, matching Metal's terminal-failure contract. `UNSUPPORTED_PTX_VERSION` explains
 the mismatch between NVRTC and the driver.
 
 **Selectors and enumeration.** Parsing is strict: `cuda:N` takes a decimal ordinal up to
 2^31−1. `metal:N`, legacy numeric indices, and all Metal messages are unchanged. `auto` picks the
 first Metal device. Only when no Metal device exists does it pick `cuda:0`, and only if CUDA is
-available. The native ABI lists Metal devices first, then available CUDA devices. For CUDA,
-`pr_device_info.registry_id` holds the CUDA ordinal. `max_buffer_bytes` is total device memory, an
+available. The native ABI lists Metal devices first, then available CUDA devices. **An
+enumeration index is not a selector**: legacy numeric `N` still means Metal device `N` only (so a
+CUDA-only host's `pr_device_get(0)` is `cuda:0`, while `pr_context_create("0")` fails as before);
+CUDA device `K` is `cuda:K`, where `K` counts CUDA entries. This is documented in `native.h` and
+the Python `devices()` docstring; numeric selectors were deliberately not remapped, to keep Metal
+selector behavior byte-identical. For CUDA, `pr_device_info.registry_id` is a nonzero,
+backend-tagged value `0x4355444100000000 | (ordinal + 1)` ("CUDA" in the high bytes), because
+existing consumers treat 0 as "no physical device". It is not a hardware identity; compare devices
+by `stable_id`. `max_buffer_bytes` is total device memory, an
 upper bound rather than free memory. `stable_id` is `cuda:uuid:…`, or `cuda:pci:…` when no UUID is
 available. The capability record advertises only the verified-IR format for CUDA, because MSL
 modules are Metal-specific and are rejected with `unsupported`.
@@ -122,7 +146,7 @@ compute capability, NVRTC architecture and options, driver and NVRTC versions, l
   the numerical options.
 - `cuda_codegen_frontend`: the kernels in `build/native-kernels.prk` and `build/operators.prk`,
   produced by the real Clang frontend, generate byte-identical CUDA to the goldens (4 kernels).
-- `cuda_backend_host`: 178 checks. The loader was tested with missing libraries, with Paralyn's own
+- `cuda_backend_host`: 293 checks (178 before the review fixes). The loader was tested with missing libraries, with Paralyn's own
   library (which lacks `cuInit` and `nvrtcVersion`), and with forced production absence. Also:
   selector parsing, the full error map and sticky set, and architecture selection. The engine
   was run against the test double. Covered: caller-context restoration after every operation and
@@ -132,14 +156,28 @@ compute capability, NVRTC architecture and options, driver and NVRTC versions, l
   OOM, launch-resource, invalid-PTX, NVRTC and push failures; a sticky illegal address that stays
   failed; evidence marked `test_double: true`; and exact release of memory, modules, streams,
   events and primary-context retains.
+  Review-fix additions: default candidates are empty on macOS and absolute-or-soname elsewhere;
+  absolute-path classification; a probe planted in the working directory under every CUDA library
+  name is never loaded by the default search or by relative explicit paths (positive control:
+  the same probe loaded by absolute path does run); a nonzero tagged `registry_id`; the extended
+  sticky set; and injected failures of `cuDevicePrimaryCtxRetain`, `cuStreamCreate`, a
+  constructor failure after the retain (unsupported old architecture; primary released exactly
+  once), `cuModuleGetFunction` and `cuFuncGetAttribute` (module unloaded, context usable),
+  `cuMemcpyHtoD`/`cuMemcpyDtoH` (mapped, recoverable), `cuEventCreate`, start and end
+  `cuEventRecord` (end-record failure: events destroyed with the primary context current, context
+  terminally failed), and `CUDA_ERROR_ASSERT` returned by a copy (terminal). The test double gained
+  injection hooks for `cuEventRecord`, `cuEventCreate`, `cuFuncGetAttribute` and `cuStreamCreate`
+  plus a `fail_after` counter.
 - `cuda_unavailable_cli`: with the libraries forced absent, `support`, `devices`, and
   `doctor --device cuda:0` report the backend honestly. `doctor` fails with `P-BACKEND-UNAVAILABLE`
   and creates no evidence directory. `hip:0` gives `P-BACKEND-UNIMPLEMENTED`. The native ABI
   returns `PR_DEVICE_UNAVAILABLE` for `cuda:0`, `cuda:x` and `hip:0`, and rejects unknown query
-  versions.
+  versions. Review fix: with the overrides unset and the probe planted in the working directory,
+  `devices`, `devices --json`, `support --json`, `doctor --device cuda:0`, `pr_device_count` and
+  Python `devices()` load nothing from it; a relative override is refused.
 
-Full `ctest -j1` on the Apple M5: **27/27 passed** (23 existing plus 4 new). Metal Gates A/B,
-native, array, MSL and terminal tests are unchanged.
+Full `ctest -j1` on the Apple M5: **27/27 passed** (23 existing plus 4 new), and again 27/27 after
+the review fixes (2026-09-28). Metal Gates A/B, native, array, MSL and terminal tests are unchanged.
 
 `scripts/qualify_cuda.py --harness-self-test-metal` was run twice on the M5, once with
 `operators.prk` and once with `native-kernels.prk`. Each run made 28 add/affine launches with
@@ -172,7 +210,9 @@ execution is authorized by this document. A person runs these steps locally.
 4. **Availability.** Run `build/paralyn devices --json`. Expected: a `cuda:0` device with backend
    `CUDA`, a `cuda:uuid:` stable id, and `backends.cuda.available: true` with driver and NVRTC
    versions. If it reports unavailable, record the reason. That result means unavailable, not
-   failed.
+   failed. If NVRTC is installed outside the loader path (Linux) or outside `%CUDA_PATH%` and the
+   absolute `PATH` directories (Windows), set `PARALYN_NVRTC_LIBRARY` to its **absolute** path;
+   relative overrides are refused.
 5. **Doctor probe.** Run `build/paralyn doctor --device cuda:0 --json --artifacts runs/cuda-doctor`.
    This runs one verified-IR vector add through NVRTC and the driver, and compares 257 FP32 values
    exactly on the host. Check `runs/cuda-doctor/execution.json`: `backend: CUDA`,
@@ -229,7 +269,11 @@ execution is authorized by this document. A person runs these steps locally.
 - **`cli/process_windows.cpp`.**
   - A `ChildGuard` ensures that unwinding leaves no running child. It terminates the child's job
     object (or the process as a fallback), joins both reader threads, and unregisters the console
-    handler.
+    handler. The output buffers and error slots the reader threads write are declared **before**
+    the guard, so they outlive the join on every unwinding path (review fix: they were previously
+    destroyed first, a use-after-free if `ResumeThread`, the wait, or thread creation failed).
+  - Known remaining limitation: if job assignment fails and a grandchild inherited the pipe write
+    ends, joining the readers waits until that grandchild exits.
   - Reader threads cannot leak exceptions.
   - The child inherits only its three standard handles (`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`), with
     duplicated stdin or `NUL`.
@@ -239,7 +283,8 @@ execution is authorized by this document. A person runs these steps locally.
   - The child starts suspended until it is in the job.
 - **Not done on Windows.**
   - No compile has been attempted.
-  - `tests/process_tests.cpp` is POSIX-only; a Windows process test is still needed.
+  - `tests/process_tests.cpp` is POSIX-only; a Windows process test is still needed, including a
+    failure injected after the reader threads start (e.g. a failing `ResumeThread`).
   - The Metal-only native tests are not registered on Windows.
   - Wheel packaging is macOS-only.
   - Ctrl-C forwarding is unverified.
