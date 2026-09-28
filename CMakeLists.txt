@@ -24,13 +24,13 @@ if(PARALYN_ENABLE_METAL AND NOT APPLE)
   message(FATAL_ERROR "Metal requires macOS. CUDA and HIP backends are not implemented yet.")
 endif()
 if(MSVC)
-  add_compile_options(/W4)
+  add_compile_options(/W4 /utf-8)
 else()
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 add_library(paralyn_ir STATIC compiler/ir/ir.cpp compiler/ir/artifact.cpp compiler/codegen/metal.cpp)
 target_include_directories(paralyn_ir PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-target_sources(paralyn_ir PRIVATE compiler/ir/executable.cpp)
+target_sources(paralyn_ir PRIVATE compiler/ir/executable.cpp compiler/codegen/cuda.cpp)
 if(PARALYN_ENABLE_METAL)
   enable_language(OBJCXX)
   set(CMAKE_OBJCXX_STANDARD 17)
@@ -42,11 +42,16 @@ else()
   target_link_libraries(paralyn_runtime PUBLIC paralyn_ir)
 endif()
 target_sources(paralyn_runtime PRIVATE runtime/telemetry.cpp)
+# CUDA Driver API + NVRTC backend: loaded at run time (dlopen/LoadLibrary), so it
+# has no build or link dependency on an NVIDIA toolkit and is always compiled.
+target_sources(paralyn_runtime PRIVATE backends/cuda/loader.cpp backends/cuda/engine.cpp runtime/registry.cpp)
+target_link_libraries(paralyn_runtime PUBLIC ${CMAKE_DL_LIBS})
 target_include_directories(paralyn_runtime PUBLIC include)
 add_library(paralyn_native SHARED runtime/native.cpp)
 target_include_directories(paralyn_native PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 target_link_libraries(paralyn_native PRIVATE paralyn_runtime)
 set_target_properties(paralyn_native PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+target_compile_definitions(paralyn_native PRIVATE PARALYN_HAS_METAL=$<BOOL:${PARALYN_ENABLE_METAL}>)
 set(LLVM_PACKAGE_VERSION "not installed (runtime-only build)")
 if(PARALYN_BUILD_COMPILER)
   find_package(LLVM CONFIG REQUIRED HINTS /opt/homebrew/opt/llvm@21/lib/cmake/llvm)
@@ -86,6 +91,8 @@ target_compile_definitions(paralyn PRIVATE
   PARALYN_INCLUDE_DIR="${PROJECT_SOURCE_DIR}/include" PARALYN_HOST_CXX="${CMAKE_CXX_COMPILER}" PARALYN_HOST_CC="${CMAKE_C_COMPILER}"
   PARALYN_DEPLOYMENT_TARGET="${CMAKE_OSX_DEPLOYMENT_TARGET}" PARALYN_RUNTIME_ARCHIVE="$<TARGET_FILE:paralyn_runtime>"
   PARALYN_NATIVE_LIBRARY="$<TARGET_FILE:paralyn_native>" PARALYN_IR_ARCHIVE="$<TARGET_FILE:paralyn_ir>"
+  PARALYN_NATIVE_LINK_LIBRARY="$<TARGET_LINKER_FILE:paralyn_native>"
+  PARALYN_HOST_CXX_VARIANT="${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" PARALYN_HOST_CXX_ID="${CMAKE_CXX_COMPILER_ID}"
   PARALYN_LLVM_VERSION="${LLVM_PACKAGE_VERSION}" PARALYN_BUILD_COMMIT="${PARALYN_BUILD_COMMIT}" PARALYN_BUILD_DIRTY="${PARALYN_BUILD_DIRTY}")
 if(UNIX)
   add_custom_command(TARGET paralyn POST_BUILD COMMAND ${CMAKE_COMMAND} -E create_symlink paralyn ${PROJECT_BINARY_DIR}/unicuda)
@@ -191,6 +198,24 @@ if(BUILD_TESTING AND PARALYN_ENABLE_METAL)
   set_tests_properties(public_msl PROPERTIES LABELS "gpu;metal" TIMEOUT 120)
 endif()
 if(BUILD_TESTING)
+  # CPU-only CUDA backend tests: generated-source goldens, loader behavior with
+  # missing libraries, selectors and error mapping through a labelled in-process
+  # test double of the driver table. None of these execute or qualify GPU work.
+  add_executable(cuda_codegen_tests tests/cuda/codegen_tests.cpp)
+  target_link_libraries(cuda_codegen_tests PRIVATE paralyn_ir)
+  add_test(NAME cuda_codegen COMMAND cuda_codegen_tests ${PROJECT_SOURCE_DIR}/tests/cuda/golden)
+  add_executable(cuda_backend_tests tests/cuda/backend_tests.cpp tests/cuda/fake_driver.cpp)
+  target_link_libraries(cuda_backend_tests PRIVATE paralyn_runtime)
+  target_include_directories(cuda_backend_tests PRIVATE backends/cuda)
+  add_test(NAME cuda_backend_host COMMAND cuda_backend_tests $<TARGET_FILE:paralyn_native>)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_test(NAME cuda_unavailable_cli COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/cuda/cli_unavailable.py
+    --paralyn $<TARGET_FILE:paralyn> --library $<TARGET_FILE:paralyn_native>)
+  set_tests_properties(cuda_unavailable_cli PROPERTIES LABELS "cuda;cli" TIMEOUT 60)
+  if(PARALYN_BUILD_COMPILER)
+    add_test(NAME cuda_codegen_frontend COMMAND cuda_codegen_tests ${PROJECT_SOURCE_DIR}/tests/cuda/golden
+      ${PROJECT_BINARY_DIR}/native-kernels.prk ${PROJECT_BINARY_DIR}/operators.prk)
+  endif()
   add_executable(telemetry_tests tests/telemetry_tests.cpp)
   target_link_libraries(telemetry_tests PRIVATE paralyn_runtime)
   target_include_directories(telemetry_tests SYSTEM PRIVATE third_party)

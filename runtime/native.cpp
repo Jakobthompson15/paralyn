@@ -1,6 +1,7 @@
 #include "paralyn/native.h"
 #include "paralyn/artifact.hpp"
 #include "paralyn/detail/backend.hpp"
+#include "paralyn/detail/cuda_backend.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -17,6 +18,9 @@
 #include <unordered_map>
 #include <utility>
 
+#ifndef PARALYN_HAS_METAL
+#define PARALYN_HAS_METAL 0
+#endif
 namespace {
 namespace be = paralyn::backend;
 struct Failure : std::runtime_error {
@@ -279,7 +283,8 @@ void capabilities(const be::DeviceInfo &d, pr_device_capabilities_v1 *out) {
   out->version = PR_QUERY_VERSION_1;
   text(out->stable_id, d.stable_id);
   text(out->backend, d.backend);
-  out->artifact_formats = PR_ARTIFACT_VERIFIED_IR | PR_ARTIFACT_MSL_SOURCE;
+  // Public MSL executables are Metal-specific; other backends load verified IR only.
+  out->artifact_formats = PR_ARTIFACT_VERIFIED_IR | (d.backend == "Metal" ? PR_ARTIFACT_MSL_SOURCE : 0);
   out->scalar_types = PR_SCALAR_I32 | PR_SCALAR_U32 | PR_SCALAR_F32;
   out->max_buffer_bytes = d.max_buffer_bytes;
   out->max_threadgroup_memory_bytes = d.max_threadgroup_memory_bytes;
@@ -352,15 +357,48 @@ pr_status pr_last_error(pr_error *out) {
   *out = last_error;
   return PR_SUCCESS;
 }
+pr_status pr_backend_status_get(const char *backend, pr_backend_status_v1 *out) {
+  return api("backend_status_get", [&] {
+    query_record(out);
+    require(backend, PR_INVALID_ARGUMENT, "Missing backend name");
+    const std::string name = backend;
+    require(name == "metal" || name == "cuda" || name == "hip", PR_INVALID_ARGUMENT,
+            "Unknown backend; expected metal, cuda or hip");
+    pr_backend_status_v1 result{};
+    result.struct_size = sizeof(result);
+    result.version = PR_QUERY_VERSION_1;
+    text(result.backend, name);
+    if (name == "metal") {
+      result.implemented = PARALYN_HAS_METAL ? 1 : 0;
+      result.device_count = static_cast<uint32_t>(be::devices().size());
+      result.available = result.device_count > 0;
+      text(result.reason, !result.implemented ? "Metal backend not built (macOS only)"
+                          : result.available  ? ""
+                                              : "No Metal device available");
+    } else if (name == "cuda") {
+      const auto status = be::cuda::status();
+      result.implemented = 1;
+      result.available = status.available;
+      result.device_count = static_cast<uint32_t>(std::max(status.device_count, 0));
+      result.driver_version = status.driver_version;
+      result.compiler_version = status.nvrtc_major * 1000 + status.nvrtc_minor * 10;
+      text(result.driver_library, status.driver_library);
+      text(result.compiler_library, status.nvrtc_library);
+      text(result.reason, status.reason);
+    } else
+      text(result.reason, "HIP/HIPRTC backend is not implemented");
+    *out = result;
+  });
+}
 pr_status pr_device_count(uint32_t *out) {
   return api("device_count", [&] {
     require(out, PR_INVALID_ARGUMENT, "Missing count output");
-    *out = static_cast<uint32_t>(be::devices().size());
+    *out = static_cast<uint32_t>(be::registry_devices().size());
   });
 }
 pr_status pr_device_get(uint32_t index, pr_device_info *out) {
   return api("device_get", [&] {
-    auto list = be::devices();
+    auto list = be::registry_devices();
     require(index < list.size(), PR_DEVICE_UNAVAILABLE, "Device index unavailable");
     device(list[index], out);
   });
@@ -368,7 +406,7 @@ pr_status pr_device_get(uint32_t index, pr_device_info *out) {
 pr_status pr_device_capabilities_get(uint32_t index, pr_device_capabilities_v1 *out) {
   return api("device_capabilities_get", [&] {
     query_record(out);
-    auto list = be::devices();
+    auto list = be::registry_devices();
     require(index < list.size(), PR_DEVICE_UNAVAILABLE, "Device index unavailable");
     capabilities(list[index], out);
   });
@@ -378,7 +416,7 @@ pr_status pr_context_create(const char *selector, pr_context *out) {
     require(out, PR_INVALID_ARGUMENT, "Missing context output");
     *out = 0;
     ensure_shutdown();
-    *out = add(std::make_shared<Context>(be::create_context(selector ? selector : "auto")));
+    *out = add(std::make_shared<Context>(be::registry_create_context(selector ? selector : "auto")));
   });
 }
 pr_status pr_context_device(pr_context h, pr_device_info *out) {

@@ -96,7 +96,22 @@ typedef struct pr_event_timing_v1 {
   pr_clock_domain clock_domain;
   double duration_seconds, start_seconds, end_seconds;
 } pr_event_timing_v1;
+/* Additive backend availability query (struct_size/version as above). Accepts
+ * "metal", "cuda" and "hip". implemented: code compiled into this library.
+ * available: libraries loaded/initialized and at least one device. This is not
+ * hardware qualification evidence. Versions use the vendor encoding
+ * (CUDA: 1000*major + 10*minor); 0 means unknown. */
+typedef struct pr_backend_status_v1 {
+  uint32_t struct_size, version;
+  char backend[32];
+  uint32_t implemented, available, device_count, reserved;
+  int32_t driver_version, compiler_version;
+  char driver_library[512];
+  char compiler_library[512];
+  char reason[1024];
+} pr_backend_status_v1;
 uint32_t pr_abi_version(void);
+pr_status pr_backend_status_get(const char *backend, pr_backend_status_v1 *out);
 pr_status pr_last_error(pr_error *out);
 pr_status pr_device_count(uint32_t *out);
 pr_status pr_device_get(uint32_t index, pr_device_info *out);
