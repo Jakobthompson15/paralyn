@@ -47,6 +47,8 @@ add_library(paralyn_native SHARED runtime/native.cpp)
 target_include_directories(paralyn_native PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 target_link_libraries(paralyn_native PRIVATE paralyn_runtime)
 set_target_properties(paralyn_native PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# FP32 tensor descriptors and the paralyn.msl.tensor provider (public C ABI client).
+target_sources(paralyn_native PRIVATE runtime/tensor.cpp)
 set(LLVM_PACKAGE_VERSION "not installed (runtime-only build)")
 if(PARALYN_BUILD_COMPILER)
   find_package(LLVM CONFIG REQUIRED HINTS /opt/homebrew/opt/llvm@21/lib/cmake/llvm)
