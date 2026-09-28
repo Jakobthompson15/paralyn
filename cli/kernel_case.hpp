@@ -51,6 +51,7 @@ struct CaseCheck {
 struct KernelCase {
   std::filesystem::path path;
   std::string sha256, name, entry, description;
+  std::string bytes; // Exact parsed bytes; sha256 is their digest (evidence copies these).
   std::array<std::uint32_t, 3> grid{0, 0, 0}, block{0, 0, 0};
   std::vector<CaseScalar> scalars;
   std::vector<CaseBuffer> buffers;

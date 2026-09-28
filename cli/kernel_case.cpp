@@ -137,9 +137,11 @@ struct Schema {
       fail("VERSION", "unsupported schema_version; this Paralyn reads version 1",
            root.get("schema_version"));
   }
-  toml::table parse(const fs::path &path, std::string &sha) const {
+  toml::table parse(const fs::path &path, std::string &sha, std::string *kept = nullptr) const {
     auto bytes = read_bounded(path, toml_limit, prefix + "-FILE");
     sha = sha256_bytes(bytes.data(), bytes.size());
+    if (kept)
+      *kept = bytes;
     try {
       return toml::parse(bytes, path.string());
     } catch (const toml::parse_error &error) {
@@ -317,11 +319,71 @@ std::string read_bounded(const fs::path &path, std::size_t limit, const std::str
   return text;
 }
 
+// Static shape contract of a builtin reference: every fact it needs (buffer
+// lengths, scalar values, constants) is declared in the case, so violations are
+// rejected at load time, before any module load or GPU submission. Returns an
+// empty string when the builtin can be evaluated for the declared case.
+static std::string builtin_shape_problem(const KernelCase &kc, const CaseCheck &check) {
+  if (check.reference_kind != "builtin")
+    return "";
+  auto buffer = [&](const std::string &role) -> const CaseBuffer * {
+    for (const auto &b : kc.buffers)
+      if (b.name == check.roles.at(role))
+        return &b;
+    return nullptr;
+  };
+  const CaseBuffer *out = nullptr;
+  for (const auto &b : kc.buffers)
+    if (b.name == check.buffer)
+      out = &b;
+  std::string problem;
+  auto scalar = [&](const std::string &role) -> std::uint64_t {
+    for (const auto &s : kc.scalars)
+      if (s.name == check.roles.at(role)) {
+        if (s.type == DType::I32 && (s.bits & 0x80000000u) && problem.empty())
+          problem = "role " + role + " (" + s.name + ") is a negative i32";
+        return s.bits;
+      }
+    if (problem.empty())
+      problem = "role " + role + " is unbound";
+    return 0;
+  };
+  if (!out)
+    return "output buffer " + check.buffer + " is not declared";
+  if (check.builtin == "vector-add-f32") {
+    auto lhs = buffer("lhs"), rhs = buffer("rhs");
+    auto n = scalar("count");
+    if (!problem.empty())
+      return problem;
+    if (!lhs || !rhs || n > lhs->length || n > rhs->length || n > out->length)
+      return "count (" + std::to_string(n) + ") exceeds the length of lhs, rhs or " + check.buffer;
+  } else if (check.builtin == "block-sum-f32") {
+    auto input = buffer("input");
+    auto n = scalar("count");
+    if (!problem.empty())
+      return problem;
+    auto group = check.constants.at("group_size");
+    auto groups = (n + group - 1) / group;
+    if (!input || n > input->length || groups > out->length)
+      return "count (" + std::to_string(n) + ") exceeds the input length or " + check.buffer +
+             " has fewer than " + std::to_string(groups) + " group elements";
+  } else if (check.builtin == "transpose-f32") {
+    auto input = buffer("input");
+    std::uint64_t width = scalar("width"), height = scalar("height");
+    if (!problem.empty())
+      return problem;
+    if (!input || width * height > input->length || width * height > out->length)
+      return "width*height (" + std::to_string(width * height) +
+             ") exceeds the length of input or " + check.buffer;
+  }
+  return "";
+}
+
 KernelCase load_case(const fs::path &input) {
   KernelCase out;
   out.path = fs::absolute(input).lexically_normal();
   Schema schema{"P-CASE", out.path.string()};
-  auto root = schema.parse(out.path, out.sha256);
+  auto root = schema.parse(out.path, out.sha256, &out.bytes);
   const auto base = out.path.parent_path();
   schema.only(root, {"schema", "schema_version", "case", "launch", "scalars", "buffers", "verify"},
               "");
@@ -464,6 +526,15 @@ KernelCase load_case(const fs::path &input) {
       out.checks.push_back(std::move(c));
     }
   }
+  for (const auto &check : out.checks) {
+    auto problem = builtin_shape_problem(out, check);
+    if (!problem.empty())
+      throw Diagnostic("P-REFERENCE-SHAPE", "input",
+                       out.path.string() + ": builtin " + check.builtin +
+                           " cannot be evaluated for " + check.buffer + ": " + problem +
+                           ". The declared case would make the kernel or the reference access "
+                           "elements outside the declared buffers; fix lengths or scalars");
+  }
   return out;
 }
 
@@ -496,6 +567,8 @@ CheckResult evaluate_check(const KernelCase &kc, const CaseCheck &check,
   // Elements a builtin does not define keep the declared initial contents: the
   // kernel must not write them, so canaries/sentinels are checked too.
   std::vector<std::uint32_t> expected = check.expected;
+  if (auto problem = builtin_shape_problem(kc, check); !problem.empty())
+    throw shape_error(problem); // Unreachable for cases from load_case.
   if (check.reference_kind == "builtin") {
     expected = out->initial;
     if (check.builtin == "vector-add-f32") {
