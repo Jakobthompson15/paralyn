@@ -7,6 +7,7 @@
 #include "kernel_case.hpp"
 #include "paralyn_build_info.h" // Generated at build time by cmake/build_info.cmake.
 #include "process.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cli11/CLI11.hpp>
 #include <cstdlib>
@@ -497,6 +498,21 @@ int kernel_case_command(const Options &options, const fs::path &source,
                      kc.path.string() + " declares no [[verify]] contract. verify requires an "
                      "independent reference (file, inline values or a registered builtin) with an "
                      "explicit tolerance; use run to execute without verification");
+  if (verifying) {
+    // PASS covers every observable result: an output without a declared check
+    // would never be compared, so the request is rejected before GPU work.
+    std::string uncovered;
+    for (const auto &b : kc.buffers)
+      if (b.output && std::none_of(kc.checks.begin(), kc.checks.end(),
+                                   [&](const auto &c) { return c.buffer == b.name; }))
+        uncovered += (uncovered.empty() ? "" : ", ") + b.name;
+    if (!uncovered.empty())
+      throw Diagnostic("P-CASE-VERIFY-UNCOVERED", "input",
+                       kc.path.string() + " declares output buffer(s) " + uncovered +
+                           " without a [[verify]] check. verify compares every declared output; "
+                           "add a check for each, or drop output = true for buffers that are not "
+                           "results, or use run to execute without verification");
+  }
   result["frontend_module"] = result["frontend"];
   result["frontend"] = "kernel_case";
   result["case"] = {{"path", kc.path.string()},
@@ -660,7 +676,7 @@ int kernel_case_execute(const Options &options, const fs::path &source,
     return 0;
   }
 
-  write(artifact / "case.toml", read(kc.path));
+  write(artifact / "case.toml", kc.bytes); // Exactly the bytes behind case.sha256.
   write(artifact / ("module" + source.extension().string() + (source.extension() == ".metal" ? ".prx" : "")),
         std::string(module_bytes.begin(), module_bytes.end()));
   std::vector<paralyn::native::Buffer> buffers;
@@ -785,8 +801,30 @@ int source_command(const Options &options) {
              native = extension == ".py" || extension == ".cpp" || extension == ".cc" ||
                       extension == ".c",
              ir_module = extension == ".prk";
+  result["source_revision"] = revision();
+  result["build_dirty"] = build_dirty();
+  result["build"] = build_record();
   std::vector<unsigned char> module_bytes;
   std::string host_source, ir;
+  // Selection flags that do not apply to this target are rejected, never ignored.
+  if (!options.manifest.empty() && !msl)
+    throw Diagnostic("P-MANIFEST-NOT-APPLICABLE", "input",
+                     "--manifest describes the resources of Metal source (.metal); " +
+                         source.filename().string() +
+                         " carries its own interface. Remove --manifest");
+  if (!options.entry.empty() && options.kase.empty() &&
+      !((msl || container || ir_module) &&
+        (options.command == "run" || options.command == "verify")))
+    throw Diagnostic("P-CASE-NOT-APPLICABLE", "input",
+                     "--entry selects the kernel of a kernel case and requires --case CASE.toml" +
+                         std::string(msl || container || ir_module
+                                         ? ""
+                                         : "; " + source.filename().string() +
+                                               " is a complete program. Run it without --entry"));
+  // Validated before any evidence directory exists or host code is compiled.
+  std::uint64_t capture_limit = 0;
+  if (options.command == "run" && !(msl || container || ir_module))
+    capture_limit = capture_file_limit();
   if (!options.kase.empty() && !(msl || container || ir_module))
     throw Diagnostic("P-CASE-NOT-APPLICABLE", "input",
                      "--case applies to kernel modules (.metal with --manifest, .prx, .prk); " +
@@ -1072,7 +1110,7 @@ int source_command(const Options &options) {
     paralyn::cli::Capture capture;
     capture.stdout_path = (artifact / "application.stdout").string();
     capture.stderr_path = (artifact / "application.stderr").string();
-    capture.file_limit = capture_file_limit();
+    capture.file_limit = capture_limit;
     capture.memory_limit = 16 * 1024 * 1024;
     // A partial report exists before arbitrary application code runs, so an
     // abnormal CLI termination still leaves the run's identity and inputs.
