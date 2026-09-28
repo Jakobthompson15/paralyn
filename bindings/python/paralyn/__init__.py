@@ -83,6 +83,33 @@ class _EventInfo(_c.Structure):
                 ("gpu_end_seconds", _c.c_double)]
 
 
+class _DeviceCapabilities(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("stable_id", _c.c_char * 128), ("backend", _c.c_char * 32),
+                ("artifact_formats", _c.c_uint64), ("scalar_types", _c.c_uint64),
+                ("max_buffer_bytes", _c.c_uint64), ("max_threadgroup_memory_bytes", _c.c_uint64),
+                ("max_block_x", _c.c_uint32), ("max_block_y", _c.c_uint32),
+                ("max_block_z", _c.c_uint32), ("max_buffer_bindings", _c.c_uint32),
+                ("unified_memory", _c.c_uint32), ("reserved", _c.c_uint32)]
+
+
+class _EventTiming(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("completed", _c.c_uint32), ("duration_valid", _c.c_uint32),
+                ("timestamps_valid", _c.c_uint32), ("clock_domain", _c.c_int),
+                ("duration_seconds", _c.c_double), ("start_seconds", _c.c_double),
+                ("end_seconds", _c.c_double)]
+
+
+_QUERY_VERSION_1 = 1
+
+
+def _query(record_type):
+    record = record_type()
+    record.struct_size, record.version = _c.sizeof(record_type), _QUERY_VERSION_1
+    return record
+
+
 def _text(value):
     return value.decode("utf-8", errors="replace")
 
@@ -136,6 +163,10 @@ class _Library:
             "pr_launch": (_c.c_int, [h, h, _Dim3, _Dim3, ptr(_Argument), u32, ptr(h)]),
             "pr_event_wait": (_c.c_int, [h, ptr(_EventInfo)]),
             "pr_event_cancel": (_c.c_int, [h]),
+            # Additive versioned queries (ABI 1 records above are unchanged).
+            "pr_device_capabilities_get": (_c.c_int, [u32, ptr(_DeviceCapabilities)]),
+            "pr_context_capabilities": (_c.c_int, [h, ptr(_DeviceCapabilities)]),
+            "pr_event_timing": (_c.c_int, [h, ptr(_EventTiming)]),
         }
         for name, (result, arguments) in signatures.items():
             function = getattr(self.api, name)
@@ -193,6 +224,62 @@ class Device:
     def _from_native(cls, value):
         return cls(_text(value.name), _text(value.backend), _text(value.os), value.registry_id,
                    value.max_buffer_bytes, bool(value.unified_memory))
+
+
+class ClockDomain(IntEnum):
+    UNAVAILABLE = 0
+    DURATION_ONLY = 1
+    METAL_SYSTEM_MACH = 2
+
+
+ARTIFACT_VERIFIED_IR = 1 << 0
+ARTIFACT_MSL_SOURCE = 1 << 1
+
+
+@dataclass(frozen=True)
+class DeviceCapabilities:
+    """Version-1 capability record; stable_id is backend-qualified and system-local."""
+    stable_id: str
+    backend: str
+    artifact_formats: int
+    scalar_types: int
+    max_buffer_bytes: int
+    max_threadgroup_memory_bytes: int
+    max_block: tuple
+    max_buffer_bindings: int
+    unified_memory: bool
+
+    @classmethod
+    def _from_native(cls, value):
+        return cls(_text(value.stable_id), _text(value.backend), value.artifact_formats,
+                   value.scalar_types, value.max_buffer_bytes, value.max_threadgroup_memory_bytes,
+                   (value.max_block_x, value.max_block_y, value.max_block_z),
+                   value.max_buffer_bindings, bool(value.unified_memory))
+
+
+@dataclass(frozen=True)
+class EventTiming:
+    """Version-1 timing record. Absolute timestamps are None unless the backend marks them valid."""
+    completed: bool
+    duration_seconds: object
+    start_seconds: object
+    end_seconds: object
+    clock_domain: ClockDomain
+
+    @classmethod
+    def _from_native(cls, value):
+        duration = value.duration_seconds if value.duration_valid else None
+        start = value.start_seconds if value.timestamps_valid else None
+        end = value.end_seconds if value.timestamps_valid else None
+        return cls(bool(value.completed), duration, start, end, ClockDomain(value.clock_domain))
+
+
+def device_capabilities(index=0, library=None):
+    lib = _library(library)
+    value = _query(_DeviceCapabilities)
+    lib.check(lib.api.pr_device_capabilities_get(_integer(index, 0, (1 << 32) - 1, "device index"),
+                                                 _c.byref(value)))
+    return DeviceCapabilities._from_native(value)
 
 
 def devices(library=None):
@@ -268,6 +355,12 @@ class Context(_Owned):
         self._lib.check(self._lib.api.pr_context_device(self.handle, _c.byref(value)))
         return Device._from_native(value)
 
+    @property
+    def capabilities(self):
+        value = _query(_DeviceCapabilities)
+        self._lib.check(self._lib.api.pr_context_capabilities(self.handle, _c.byref(value)))
+        return DeviceCapabilities._from_native(value)
+
     def buffer(self, size):
         return Buffer(self, size)
 
@@ -283,13 +376,15 @@ class Context(_Owned):
 
     def close(self):
         failure = None
-        resources = getattr(self, "_array_resources", None)
-        self._array_resources = None
-        if resources is not None:
-            try:
-                resources.close()
-            except Exception as error:
-                failure = error
+        for name in ("_tensor_resources", "_array_resources"):
+            resources = getattr(self, name, None)
+            setattr(self, name, None)
+            if resources is not None:
+                try:
+                    resources.close()
+                except Exception as error:
+                    if failure is None:
+                        failure = error
         try:
             super().close()
         except Exception as error:
@@ -509,6 +604,12 @@ class Event(_Owned):
         self._lib.check(self._lib.api.pr_event_wait(self.handle, _c.byref(result)))
         return EventInfo(bool(result.completed), result.gpu_start_seconds, result.gpu_end_seconds)
 
+    def timing(self):
+        """Wait, propagate command failure, and return the versioned timing record."""
+        result = _query(_EventTiming)
+        self._lib.check(self._lib.api.pr_event_timing(self.handle, _c.byref(result)))
+        return EventTiming._from_native(result)
+
     def cancel(self):
         self._lib.check(self._lib.api.pr_event_cancel(self.handle))
 
@@ -519,3 +620,12 @@ __all__ = ["ABI_VERSION", "Access", "Buffer", "Context", "Device", "Error", "Eve
 
 from .array import Array, add, affine, asarray, float32
 __all__ += ["Array", "add", "affine", "asarray", "float32"]
+__all__ += ["ARTIFACT_MSL_SOURCE", "ARTIFACT_VERIFIED_IR", "ClockDomain", "DeviceCapabilities",
+            "EventTiming", "device_capabilities"]
+
+from .tensor import (Activation, Tensor, TensorDescriptor, bias_activation_into, bias_add,
+                     load_tensor_operators, matmul, matmul_into, relu, tensor,
+                     tensor_operators_artifact)
+__all__ += ["Activation", "Tensor", "TensorDescriptor", "bias_activation_into", "bias_add",
+            "load_tensor_operators", "matmul", "matmul_into", "relu", "tensor",
+            "tensor_operators_artifact"]
