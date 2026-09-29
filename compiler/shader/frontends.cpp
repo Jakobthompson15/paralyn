@@ -564,6 +564,13 @@ std::vector<std::uint32_t> normalize_storage_buffers(const std::vector<std::uint
     // Fail closed: any other instruction that names a rooted pointer (a call
     // argument, OpPhi/OpSelect, an atomic, an extended instruction, ...)
     // would need its own types rewritten; leave that to an explicit extension.
+    const bool atomic = (x.op >= 227 && x.op <= 242) || x.op == 318 || x.op == 319 ||
+                        x.op == 5614 || x.op == 5615 || x.op == 6035;
+    for (std::uint32_t j = 1; j < x.count; ++j)
+      if (atomic && rooted.count(w(j)))
+        // Same stable code and wording as the importer's own atomic rejection.
+        throw spirv::ImportError("spirv.instruction",
+                                 "atomic instructions are not qualified in this profile");
     for (std::uint32_t j = 1; j < x.count; ++j)
       if (rooted.count(w(j)) && !(x.op == OpVariable && j == 2))
         fail(hl, "legalization",
