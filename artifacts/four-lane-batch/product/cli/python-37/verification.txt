@@ -1,0 +1,7 @@
+["37", "hello world", "雪 / café", "$(touch forbidden)", "`uname`", "a\"b", "", "--json", "--"]
+Verification: PASS
+child stderr Ω
+
+Runtime progress:
+
+Host exit status: 37

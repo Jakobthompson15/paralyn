@@ -1,0 +1,2 @@
+["0", "hello world", "雪 / café", "$(touch forbidden)", "`uname`", "a\"b", "", "--json", "--"]
+Verification: PASS

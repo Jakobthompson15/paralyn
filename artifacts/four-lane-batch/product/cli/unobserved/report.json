@@ -1,0 +1,134 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "run",
+  "status": "failed",
+  "source": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved.cu",
+  "source_sha256": "31e77e2d12400a757494949198abd1917343e261ad460dee5fdac42b39f1f327",
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "build_dirty": false,
+  "build": {
+    "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "dirty": false,
+    "changes_sha256": null,
+    "captured": "build"
+  },
+  "frontend": "cuda_cpp",
+  "inspection": {
+    "kernels": [
+      {
+        "name": "unused",
+        "parameters": [
+          {
+            "name": "p",
+            "type": "f32",
+            "buffer": true,
+            "read_only": false
+          }
+        ]
+      }
+    ],
+    "launches": [],
+    "ir": "paralyn.ir v0\nkernel unused(p: read_write buffer<f32>) {\n  store p[threadIdx.x] = 1.0E+0:f32\n}\n\n"
+  },
+  "run_id": "1790693861514586-56871",
+  "artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved",
+  "device_selector": "auto",
+  "llvm_version": "21.1.8",
+  "verification": {
+    "status": "not_requested"
+  },
+  "application": {
+    "arguments": [],
+    "stdout": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved/application.stdout",
+    "stderr": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved/application.stderr",
+    "command": [
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved/program"
+    ],
+    "capture": {
+      "streamed": true,
+      "file_limit_bytes": 1073741824,
+      "stdout_bytes": 0,
+      "stdout_persisted_bytes": 0,
+      "stdout_truncated": false,
+      "stderr_bytes": 118,
+      "stderr_persisted_bytes": 118,
+      "stderr_truncated": false
+    },
+    "exit_code": 1,
+    "interrupted": false
+  },
+  "runtime_log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved/runtime.log",
+  "events": [
+    {
+      "stage": "executable prepared",
+      "status": "completed"
+    }
+  ],
+  "selected_device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 7,
+    "scalar_types": 7
+  },
+  "runtime_artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/unobserved",
+  "limitations": [
+    "Host I/O inputs are not automatically traced",
+    "run does not verify results",
+    "Native applications may explicitly select a different context; runtime events identify observed work"
+  ],
+  "runtime_evidence": null,
+  "runtime_events": [
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 1,
+      "category": "context",
+      "status": "created",
+      "detail": "metal:registry:0000000100000429",
+      "context_id": 1,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7168010.417670333
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 2,
+      "category": "api_failure",
+      "status": "failed",
+      "detail": "CUDA compatibility: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7168010.417938125
+    },
+    {
+      "schema": "paralyn.runtime.event",
+      "schema_version": 1,
+      "sequence": 3,
+      "category": "process_failure",
+      "status": "failed",
+      "detail": "Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported",
+      "context_id": 0,
+      "operation_id": 0,
+      "bytes": 0,
+      "host_monotonic_seconds": 7168010.418124458
+    }
+  ],
+  "runtime_errors_observed": true,
+  "exit_code": 1,
+  "failure_origin": "runtime"
+}

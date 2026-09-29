@@ -1,0 +1,44 @@
+# Kernel case for the verified-IR module compiled from examples/native/kernels.cu
+# (entry affine: out[i] = a[i] * scale + b[i] with contraction disabled).
+# The build produces that module as build/native-kernels.prk.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "ir-affine-1003"
+entry = "affine"
+
+[launch]
+grid = [4, 1, 1]
+block = [256, 1, 1]
+
+[scalars.n]
+type = "i32"   # the CUDA kernel declares int n
+value = 1003
+
+[scalars.scale]
+type = "f32"
+value = 0.5
+
+[buffers.a]
+dtype = "f32"
+length = 1003
+file = "data/vector_add_a.f32"
+sha256 = "daed10ac0acd21c0624c83ee0373c0827d04d991260ff0e7b6d5bdd3799aea33"
+
+[buffers.b]
+dtype = "f32"
+length = 1003
+file = "data/vector_add_b.f32"
+sha256 = "b2530182fd402df693e7bb978a5e65601cc4eeaec7a10a6e22d509231c8d8748"
+
+[buffers.out]
+dtype = "f32"
+length = 1003
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "out"
+reference = { file = "data/affine_expected.f32", sha256 = "b076c07b78b56a3701703e5f5dfe6127c8725e8488999dd8e3012800120c7b19" }
+tolerance = { kind = "ulp", ulp = 0 }

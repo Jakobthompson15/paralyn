@@ -1,0 +1,39 @@
+{
+  "application": "two-layer FP32 MLP inference (Python)",
+  "provider": "paralyn.msl.tensor",
+  "provider_artifact_sha256": "2b69286f163751fe1408d301dcc9fcd49431f788bc9ad91f7e102380e0f6e78c",
+  "shapes": {
+    "batch": 64,
+    "in": 257,
+    "hidden": 130,
+    "out": 11
+  },
+  "seed": 2026,
+  "gpu_commands": 4,
+  "stages": [
+    {
+      "stage": "matmul1",
+      "gpu_duration_seconds": 0.00011066673323512077
+    },
+    {
+      "stage": "bias_relu1",
+      "gpu_duration_seconds": 7.62520357966423e-06
+    },
+    {
+      "stage": "matmul2",
+      "gpu_duration_seconds": 4.2125117033720016e-05
+    },
+    {
+      "stage": "bias2",
+      "gpu_duration_seconds": 6.875023245811462e-06
+    }
+  ],
+  "reference": "float64 accumulation from FP32 inputs",
+  "tolerance": "componentwise a-priori bound, docs/tensors-matmul.md",
+  "max_abs_error": 1.215380397434629e-07,
+  "worst_error_to_bound_hidden": 0.010150627785924227,
+  "worst_error_to_bound_output": 0.0004809764601181446,
+  "cpu_fallback": false,
+  "hidden_sha256": "d2a3dde856870f2dc5da17fe3e16e883f643ce685e7e71771262c0ec7f0ded66",
+  "output_sha256": "3ecb2b1d71d52f4a83f8e6e4cc1f953b189d97c3f434cbd77126e46559a5b073"
+}

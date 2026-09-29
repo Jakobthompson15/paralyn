@@ -1,0 +1,104 @@
+Compiling kernel...
+Compiling kernel...
+Compiling kernel...
+Kernel: vector_add
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 2 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 16 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 4097 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 15626 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 65 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: modf_write
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: modf_write
+Grid: 2 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: modf_write
+Grid: 1563 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 3 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 16 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 128 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 40 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Reusing kernel pipeline...
+Reusing kernel pipeline...
+Reusing kernel pipeline...
+SPIR-V on Metal: 17 GPU events, 1467859 values independently compared, 14 rejection checks
+Verification: PASS
+Compiling kernel...
+Compiling kernel...
+Kernel: vector_add
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 1 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 2 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: vector_add
+Grid: 193 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 4 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Kernel: reduce_sum
+Grid: 32 × 1 × 1
+Block: 64 × 1 × 1
+Executing on GPU...
+Python SPIR-V: 6 GPU events, 12511 values independently compared, 2 rejections
+Verification: PASS

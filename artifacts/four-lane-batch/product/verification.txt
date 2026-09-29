@@ -1,0 +1,2 @@
+Verification: PASS
+53 physical GPU events audited; 50 have retained native command/source records. No CPU fallback.

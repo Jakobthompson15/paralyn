@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "wheel": "paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+  "sha256": "d4cb114cbacfa79aeabfa5be496f0b7214b024fb26e5c917b9834c7c5f2dd43a",
+  "repeat_sha256": "d4cb114cbacfa79aeabfa5be496f0b7214b024fb26e5c917b9834c7c5f2dd43a",
+  "byte_identical": true,
+  "contains": [
+    "paralyn-0.0.1.dist-info/METADATA",
+    "paralyn-0.0.1.dist-info/RECORD",
+    "paralyn-0.0.1.dist-info/WHEEL",
+    "paralyn-0.0.1.dist-info/licenses/LICENSE",
+    "paralyn-0.0.1.dist-info/licenses/THIRD_PARTY_LICENSES.md",
+    "paralyn-0.0.1.dist-info/licenses/cli11/LICENSE",
+    "paralyn-0.0.1.dist-info/licenses/nlohmann/LICENSE.MIT",
+    "paralyn-0.0.1.dist-info/licenses/tomlplusplus/LICENSE",
+    "paralyn/__init__.py",
+    "paralyn/_build.json",
+    "paralyn/_data/operators.cu",
+    "paralyn/_data/operators.prk",
+    "paralyn/_native/libparalyn_native.dylib",
+    "paralyn/array.py",
+    "paralyn/tensor.py"
+  ]
+}

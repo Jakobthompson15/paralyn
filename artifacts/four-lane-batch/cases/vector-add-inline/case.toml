@@ -1,0 +1,38 @@
+# Small inline case for vector_add with a registered builtin host reference.
+# n = 5 while `out` holds 7 elements: the two trailing sentinels must remain
+# unchanged, and the builtin reference checks them as well.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "vector-add-inline-sentinels"
+entry = "vector_add"
+
+[launch]
+grid = [1, 1, 1]
+block = [64, 1, 1]
+
+[scalars.n]
+type = "u32"
+value = 5
+
+[buffers.a]
+dtype = "f32"
+length = 5
+values = [1.5, -2.0, 0.25, 1024.0, -0.0]
+
+[buffers.b]
+dtype = "f32"
+length = 5
+values = [2.5, 2.0, -0.75, 0.5, 3]
+
+[buffers.out]
+dtype = "f32"
+length = 7
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "out"
+reference = { builtin = "vector-add-f32", lhs = "a", rhs = "b", count = "n" }
+tolerance = { kind = "exact" }

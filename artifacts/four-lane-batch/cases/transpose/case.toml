@@ -1,0 +1,39 @@
+# Kernel case for examples/metal/kernels.metal entry tiled_transpose: a 33x19
+# row-major matrix through padded 16x16 shared tiles with partial edge tiles.
+# Two independent contracts are available: the reference file below, and the
+# transpose-f32 builtin in transpose_builtin.toml.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "transpose-33x19"
+entry = "tiled_transpose"
+
+[launch]
+grid = [3, 2, 1]    # ceil(33 / 16), ceil(19 / 16)
+block = [16, 16, 1] # the manifest requires exactly [16, 16, 1]
+
+[scalars.width]
+type = "u32"
+value = 33
+
+[scalars.height]
+type = "u32"
+value = 19
+
+[buffers.input]
+dtype = "f32"
+length = 627
+file = "data/transpose_input.f32"
+sha256 = "d40ce7cb3bb134170883819c00f2749654a20e5e11f3b9ea0b5fb3abeb2f50ec"
+
+[buffers.output]
+dtype = "f32"
+length = 627
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "output"
+reference = { file = "data/transpose_expected.f32", sha256 = "a0707901de15ba2d9e86d5d98b3c78b422705ddd4a6f6688cd6640e91e555d46" }
+tolerance = { kind = "exact" }

@@ -1,0 +1,2 @@
+Verification: PASS
+Native C, C++ and Python clients passed independent CPU comparisons; 21 real GPU events audited, including 20 source-linked command records and one post-context-release event.

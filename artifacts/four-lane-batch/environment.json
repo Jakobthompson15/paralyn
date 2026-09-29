@@ -1,0 +1,62 @@
+{
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "hardware": {
+    "chip": "Apple M5",
+    "memory_bytes": 17179869184
+  },
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.1\nBuildVersion:\t\t25F80",
+  "sdk": "26.2",
+  "apple_clang": "Apple clang version 17.0.0 (clang-1700.6.3.2)",
+  "llvm_clang": "Homebrew clang version 21.1.8",
+  "cmake": "cmake version 4.4.3",
+  "ninja": "1.13.2",
+  "python": {
+    "/opt/homebrew/bin/python3.14": "Python 3.14.5",
+    "/usr/bin/python3": "Python 3.9.6"
+  },
+  "spirv_pins": "SPIRV-Tools/Cross/Headers vulkan-sdk-1.4.363.0 (see configure.log)",
+  "host_load_before_benchmark": "Tue Sep 29 14:58:33 UTC 2026\n 8:58  up 82 days, 23:07, 2 users, load averages: 6.82 8.77 12.26\n\nPID    COMMAND          %CPU\n19956  Loom Helper      92.5\n92195  bird             61.7\n0      kernel_task      42.8\n44064  com.apple.Virtua 31.5\n407    WindowServer     25.0\n7744   fileproviderd    11.6\n57175  Google Chrome He 11.6\n35656  Google Chrome He 8.8 \n",
+  "host_load_after_benchmark": "Tue Sep 29 14:58:49 UTC 2026\n 8:58  up 82 days, 23:08, 2 users, load averages: 6.36 8.57 12.12\n\nPID    COMMAND          %CPU\n19956  Loom Helper      94.9\n92195  bird             63.6\n0      kernel_task      57.0\n35656  Google Chrome He 42.1\n407    WindowServer     37.0\n44064  com.apple.Virtua 29.5\n7744   fileproviderd    14.8\n57241  top              7.4 \n",
+  "benchmark_measured_medians_descriptive_only": {
+    "1024/generated": {
+      "measured": 100,
+      "median_gpu_seconds": 2.5208573788404465e-06,
+      "median_total_seconds": 0.000211833
+    },
+    "1024/handwritten": {
+      "measured": 100,
+      "median_gpu_seconds": 2.5208573788404465e-06,
+      "median_total_seconds": 0.0002102915
+    },
+    "65536/generated": {
+      "measured": 100,
+      "median_gpu_seconds": 4.624947905540466e-06,
+      "median_total_seconds": 0.000217041
+    },
+    "65536/handwritten": {
+      "measured": 100,
+      "median_gpu_seconds": 4.624947905540466e-06,
+      "median_total_seconds": 0.0001823745
+    },
+    "1048576/generated": {
+      "measured": 100,
+      "median_gpu_seconds": 0.00011902069672942162,
+      "median_total_seconds": 0.000601479
+    },
+    "1048576/handwritten": {
+      "measured": 100,
+      "median_gpu_seconds": 0.0001183126587420702,
+      "median_total_seconds": 0.000577354
+    },
+    "16777216/generated": {
+      "measured": 100,
+      "median_gpu_seconds": 0.0017515209037810564,
+      "median_total_seconds": 0.006665417
+    },
+    "16777216/handwritten": {
+      "measured": 100,
+      "median_gpu_seconds": 0.0017542499117553234,
+      "median_total_seconds": 0.0065624375
+    }
+  }
+}

@@ -1,0 +1,21 @@
+[1/21] Embedding build revision and dirty state
+[2/21] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/codegen/cuda.cpp.o
+[3/21] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o
+[4/21] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o
+[5/21] Building CXX object CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o
+[6/21] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o
+[7/21] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/runtime.mm.o
+[8/21] Building CXX object CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o
+[9/21] Linking CXX static library libparalyn_ir.a
+[10/21] Building CXX object CMakeFiles/paralyn_runtime.dir/runtime/registry.cpp.o
+[11/21] Building CXX object CMakeFiles/paralyn_native.dir/runtime/tensor.cpp.o
+[12/21] Building CXX object CMakeFiles/paralyn_runtime.dir/backends/cuda/loader.cpp.o
+[13/21] Building CXX object CMakeFiles/paralyn_native.dir/runtime/native.cpp.o
+[14/21] Building CXX object CMakeFiles/paralyn_runtime.dir/backends/cuda/engine.cpp.o
+[15/21] Building CXX object CMakeFiles/paralyn.dir/cli/process_posix.cpp.o
+[16/21] Building OBJCXX object CMakeFiles/paralyn_runtime.dir/backends/metal/engine.mm.o
+[17/21] Linking CXX static library libparalyn_runtime.a
+[18/21] Linking CXX shared library libparalyn_native.dylib
+[19/21] Building CXX object CMakeFiles/paralyn.dir/cli/kernel_case.cpp.o
+[20/21] Building CXX object CMakeFiles/paralyn.dir/cli/main.cpp.o
+[21/21] Linking CXX executable paralyn

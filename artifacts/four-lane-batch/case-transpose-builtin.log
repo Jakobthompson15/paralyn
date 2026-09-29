@@ -1,0 +1,9 @@
+Paralyn: launching tiled_transpose (case transpose-33x19-builtin)
+Paralyn
+Kernel       tiled_transpose (case transpose-33x19-builtin)
+Device       Apple M5 / Metal
+GPU          completed (6.87502e-06 s GPU duration)
+Output       output: 629 f32 -> /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/transpose-builtin/outputs/output.bin
+  output: 629 compared, 0 mismatches (exact vs builtin reference)
+Verification: PASS (629 values compared across 1 declared check(s))
+Report       /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/transpose-builtin/report.json

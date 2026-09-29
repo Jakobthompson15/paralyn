@@ -1,0 +1,90 @@
+Test project /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+      Start  1: ir_and_codegen
+ 1/36 Test  #1: ir_and_codegen ...................   Passed    0.21 sec
+      Start  2: kernel_artifacts
+ 2/36 Test  #2: kernel_artifacts .................   Passed    0.27 sec
+      Start  3: executable_artifacts
+ 3/36 Test  #3: executable_artifacts .............   Passed    0.35 sec
+      Start  4: frontend
+ 4/36 Test  #4: frontend .........................   Passed    2.92 sec
+      Start  5: native_compile
+ 5/36 Test  #5: native_compile ...................   Passed    3.07 sec
+      Start  6: metal_runtime
+ 6/36 Test  #6: metal_runtime ....................   Passed    0.50 sec
+      Start  7: unobserved_runtime_failure
+ 7/36 Test  #7: unobserved_runtime_failure .......   Passed    0.06 sec
+      Start  8: native_c
+ 8/36 Test  #8: native_c .........................   Passed    0.62 sec
+      Start  9: native_cpp
+ 9/36 Test  #9: native_cpp .......................   Passed    0.43 sec
+      Start 10: native_tests
+10/36 Test #10: native_tests .....................   Passed    0.85 sec
+      Start 11: python_tests
+11/36 Test #11: python_tests .....................   Passed    0.47 sec
+      Start 12: python_example
+12/36 Test #12: python_example ...................   Passed    0.30 sec
+      Start 13: python_finalizer
+13/36 Test #13: python_finalizer .................   Passed    0.37 sec
+      Start 14: gate_a
+14/36 Test #14: gate_a ...........................   Passed    1.42 sec
+      Start 15: gate_b_correctness
+15/36 Test #15: gate_b_correctness ...............   Passed    8.48 sec
+      Start 16: native_queries
+16/36 Test #16: native_queries ...................   Passed    0.23 sec
+      Start 17: public_msl
+17/36 Test #17: public_msl .......................   Passed    0.38 sec
+      Start 18: cuda_codegen
+18/36 Test #18: cuda_codegen .....................   Passed    0.20 sec
+      Start 19: cuda_backend_host
+19/36 Test #19: cuda_backend_host ................   Passed    0.43 sec
+      Start 20: cuda_unavailable_cli
+20/36 Test #20: cuda_unavailable_cli .............   Passed    1.04 sec
+      Start 21: cuda_codegen_frontend
+21/36 Test #21: cuda_codegen_frontend ............   Passed    0.00 sec
+      Start 22: runtime_telemetry
+22/36 Test #22: runtime_telemetry ................   Passed    0.21 sec
+      Start 23: terminal_contract
+23/36 Test #23: terminal_contract ................   Passed    6.87 sec
+      Start 24: arrays_cpp
+24/36 Test #24: arrays_cpp .......................   Passed    0.34 sec
+      Start 25: arrays_python
+25/36 Test #25: arrays_python ....................   Passed    0.28 sec
+      Start 26: process_execution
+26/36 Test #26: process_execution ................   Passed    0.38 sec
+      Start 27: kernel_cases
+27/36 Test #27: kernel_cases .....................   Passed   10.73 sec
+      Start 28: native_cli_arrays
+28/36 Test #28: native_cli_arrays ................   Passed    0.85 sec
+      Start 29: tensors_cpp
+29/36 Test #29: tensors_cpp ......................   Passed    0.43 sec
+      Start 30: tensors_python
+30/36 Test #30: tensors_python ...................   Passed    0.13 sec
+      Start 31: tensors_mlp_cpp
+31/36 Test #31: tensors_mlp_cpp ..................   Passed    0.28 sec
+      Start 32: tensors_mlp_python
+32/36 Test #32: tensors_mlp_python ...............   Passed    0.25 sec
+      Start 33: tensors_mlp_match
+33/36 Test #33: tensors_mlp_match ................   Passed    0.32 sec
+      Start 34: spirv_importer
+34/36 Test #34: spirv_importer ...................   Passed    0.34 sec
+      Start 35: spirv_cli
+35/36 Test #35: spirv_cli ........................   Passed    1.95 sec
+      Start 36: spirv_metal
+36/36 Test #36: spirv_metal ......................   Passed    0.86 sec
+
+100% tests passed out of 36
+
+Label Time Summary:
+arrays     =   1.47 sec*proc (3 tests)
+cases      =  10.73 sec*proc (1 test)
+cli        =  21.43 sec*proc (5 tests)
+cuda       =   1.04 sec*proc (1 test)
+gate-a     =   1.42 sec*proc (1 test)
+gate-b     =   8.54 sec*proc (2 tests)
+gpu        =  37.37 sec*proc (24 tests)
+metal      =   0.38 sec*proc (1 test)
+native     =   3.26 sec*proc (7 tests)
+spirv      =   3.15 sec*proc (3 tests)
+tensors    =   1.40 sec*proc (5 tests)
+
+Total Test time (real) =  46.80 sec

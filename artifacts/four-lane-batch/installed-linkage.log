@@ -1,0 +1,6 @@
+/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/bin/paralyn:
+	@rpath/libparalyn_native.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/opt/homebrew/opt/llvm@21/lib/libclang-cpp.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/opt/homebrew/opt/llvm@21/lib/libLLVM.dylib (compatibility version 1.0.0, current version 21.1.8)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)

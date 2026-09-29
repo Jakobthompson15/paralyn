@@ -1,0 +1,9 @@
+Paralyn: launching affine (case ir-affine-1003)
+Paralyn
+Kernel       affine (case ir-affine-1003)
+Device       Apple M5 / Metal
+GPU          completed (6.58352e-06 s GPU duration)
+Output       out: 1003 f32 -> /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/outputs/out.bin
+  out: 1003 compared, 0 mismatches (ulp vs file reference)
+Verification: PASS (1003 values compared across 1 declared check(s))
+Report       /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/report.json

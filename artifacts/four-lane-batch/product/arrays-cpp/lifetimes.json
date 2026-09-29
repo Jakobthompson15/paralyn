@@ -1,0 +1,1 @@
+{"events":[{"parent":"explicitly_closed","gpu_start_seconds":3282880.0950248754,"gpu_end_seconds":3282880.0950312503},{"parent":"wrapper_destroyed","gpu_start_seconds":3282880.0993987503,"gpu_end_seconds":3282880.0994049166}],"status":"verified","cpu_fallback":false}

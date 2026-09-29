@@ -1,0 +1,315 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "verify",
+  "status": "passed",
+  "source": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/metal/kernels.metal",
+  "source_sha256": "96d063d9270ca83a928165d7aa4d8db2de2f9097bebad784d808a3d91619f930",
+  "project": {
+    "path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/cases/paralyn.toml",
+    "sha256": "9bfbd4d500718f11404ba53134acf536da2bcc95f99344ca7d2ab8bdff265585",
+    "name": "metal-kernel-examples",
+    "case": "vector-add",
+    "module": "kernels"
+  },
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "build_dirty": false,
+  "build": {
+    "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "dirty": false,
+    "changes_sha256": null,
+    "captured": "build"
+  },
+  "frontend": "kernel_case",
+  "target": "metal-msl3.1",
+  "entries": [
+    {
+      "name": "vector_add",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "f32",
+          "buffer": true,
+          "binding": 0,
+          "access": 1
+        },
+        {
+          "name": "b",
+          "type": "f32",
+          "buffer": true,
+          "binding": 2,
+          "access": 1
+        },
+        {
+          "name": "out",
+          "type": "f32",
+          "buffer": true,
+          "binding": 5,
+          "access": 3
+        },
+        {
+          "name": "n",
+          "type": "u32",
+          "buffer": false,
+          "binding": 7,
+          "access": 1
+        }
+      ],
+      "required_block": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "block_reduce",
+      "parameters": [
+        {
+          "name": "input",
+          "type": "f32",
+          "buffer": true,
+          "binding": 1,
+          "access": 1
+        },
+        {
+          "name": "output",
+          "type": "f32",
+          "buffer": true,
+          "binding": 3,
+          "access": 3
+        },
+        {
+          "name": "n",
+          "type": "u32",
+          "buffer": false,
+          "binding": 6,
+          "access": 1
+        }
+      ],
+      "required_block": [
+        64,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "tiled_transpose",
+      "parameters": [
+        {
+          "name": "input",
+          "type": "f32",
+          "buffer": true,
+          "binding": 0,
+          "access": 1
+        },
+        {
+          "name": "output",
+          "type": "f32",
+          "buffer": true,
+          "binding": 4,
+          "access": 3
+        },
+        {
+          "name": "width",
+          "type": "u32",
+          "buffer": false,
+          "binding": 8,
+          "access": 1
+        },
+        {
+          "name": "height",
+          "type": "u32",
+          "buffer": false,
+          "binding": 9,
+          "access": 1
+        }
+      ],
+      "required_block": [
+        16,
+        16,
+        1
+      ]
+    }
+  ],
+  "frontend_module": "metal_source",
+  "case": {
+    "path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/cases/vector_add.toml",
+    "sha256": "15134aee65c888d17430e542cd99178365f8829e7c388e24dbf0048c668859cc",
+    "name": "vector-add-1003",
+    "entry": "vector_add",
+    "description": "out[i] = a[i] + b[i] for i < n, reference file computed independently in Python"
+  },
+  "launch": {
+    "grid": [
+      16,
+      1,
+      1
+    ],
+    "block": [
+      64,
+      1,
+      1
+    ]
+  },
+  "cpu_fallback": false,
+  "run_id": "1790694025352538-57753",
+  "artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add",
+  "runtime_log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add/runtime.log",
+  "runtime_events_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add/runtime-events.ndjson",
+  "device_selector": "metal:0",
+  "device": {
+    "selector": "metal:0",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 7,
+    "scalar_types": 7
+  },
+  "arguments": [
+    {
+      "name": "a",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "read",
+      "origin": "file",
+      "initial_sha256": "daed10ac0acd21c0624c83ee0373c0827d04d991260ff0e7b6d5bdd3799aea33",
+      "output": false
+    },
+    {
+      "name": "b",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "read",
+      "origin": "file",
+      "initial_sha256": "b2530182fd402df693e7bb978a5e65601cc4eeaec7a10a6e22d509231c8d8748",
+      "output": false
+    },
+    {
+      "name": "out",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "read_write",
+      "origin": "fill",
+      "initial_sha256": "df7de1d051d6386b79c9fd932ff69a027b4b2a2332989e476b6a02dbb1ba36af",
+      "output": true
+    },
+    {
+      "name": "n",
+      "kind": "scalar",
+      "dtype": "u32",
+      "bits": 1003
+    }
+  ],
+  "backend_compilation": "passed",
+  "timing": {
+    "completed": true,
+    "duration_valid": true,
+    "duration_seconds": 6.250105798244476e-06,
+    "timestamps_valid": true,
+    "clock_domain": 2,
+    "start_seconds": 3283051.0009345417,
+    "end_seconds": 3283051.000940792
+  },
+  "runtime_evidence_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add/runtime/execution.json",
+  "runtime_evidence": {
+    "backend": "Metal",
+    "device": "Apple M5",
+    "registry_id": 4294968361,
+    "stable_device_id": "metal:registry:0000000100000429",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "physical_memory_bytes": 17179869184,
+    "unified_memory": true,
+    "metal_language_version": "3.1",
+    "thermal_state_at_capture": 0,
+    "low_power_mode_at_capture": false,
+    "paralyn_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "paralyn_dirty": false,
+    "paralyn_revision_source": "embedded_build",
+    "paralyn_runtime_build": {
+      "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+      "dirty": false,
+      "changes_sha256": null,
+      "captured": "build"
+    },
+    "llvm_version": "21.1.8",
+    "math_mode": "safe",
+    "floating_point_functions": "precise",
+    "cpu_fallback": false,
+    "runtime_owned_current_buffer_bytes": 12036,
+    "runtime_owned_peak_buffer_bytes": 12036,
+    "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+    "launches": [
+      {
+        "kernel": "vector_add",
+        "grid": [
+          16,
+          1,
+          1
+        ],
+        "block": [
+          64,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3283051.0009345417,
+        "gpu_end_seconds": 3283051.000940792,
+        "gpu_duration_seconds": 6.250105798244476e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "out",
+      "dtype": "f32",
+      "elements": 1003,
+      "encoding": "little-endian 32-bit",
+      "path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add/outputs/out.bin",
+      "sha256": "32466146bcde7adf9a7b39cc5b5ae6c26175fdff8803c4cfeda231683cabca6a"
+    }
+  ],
+  "verification": {
+    "status": "passed",
+    "compared": 1003,
+    "checks": [
+      {
+        "buffer": "out",
+        "dtype": "f32",
+        "reference": {
+          "kind": "file",
+          "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/cases/data/vector_add_expected.f32",
+          "sha256": "32466146bcde7adf9a7b39cc5b5ae6c26175fdff8803c4cfeda231683cabca6a"
+        },
+        "tolerance": {
+          "kind": "exact"
+        },
+        "compared": 1003,
+        "mismatches": 0,
+        "status": "passed",
+        "first_mismatches": [],
+        "max_abs_error": 0.0,
+        "max_ulp_distance": 0
+      }
+    ],
+    "comparison": "host comparison of GPU output against the declared independent reference"
+  }
+}
