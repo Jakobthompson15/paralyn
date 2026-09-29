@@ -10,11 +10,9 @@ Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-c
    - Rerun the full benchmark on an idle GPU.
    - Rebuild the wheel so it includes `tensor.py` and the tensor provider, then requalify the installed and runtime-only builds (including doctor provenance).
 2. **Runtime/backends:**
-   - Run `scripts/windows-inventory.ps1` on the authorized Windows machines and record the results.
-   - On an NVIDIA machine, follow the steps in `docs/cuda-backend.md`.
-   - Compile the Windows port and add a Windows process test that injects a failure after the readers start.
-   - Confirm NVRTC is discovered without an override, or record the absolute `PARALYN_NVRTC_LIBRARY` used.
-   - HIP/HIPRTC remains a separate required backend.
+   - Per [the platform decision](decisions/2026-09-28-platform-scope.md): Metal only for now, and Linux replaces native Windows.
+   - Next: make the runtime-only, compiler and CLI builds pass their CPU/host tests on Linux in a local container, and add Linux packaging.
+   - NVIDIA qualification (steps in `docs/cuda-backend.md`) and the HIP/HIPRTC backend are blocked on hardware. They stay required.
 3. **Compilers/frontends:**
    - Put HLSL (DXC) and GLSL (glslang) on the pinned SPIR-V importer.
    - Design the shader-to-CUDA/HIP bridge.
@@ -25,7 +23,7 @@ Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-c
 5. **CLI:**
    - Add `init`, `bench`, `cache`, `toolchain` and NDJSON command streaming.
    - Extend kernel cases to more dtypes.
-   - Qualify Windows capture.
+   - Qualify Linux capture (POSIX runner) in the container.
 
 The M8 PTX/SASS prerequisites are unchanged. No hardware acquisition, remote execution or push is authorized.
 

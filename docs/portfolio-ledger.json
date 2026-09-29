@@ -2490,10 +2490,13 @@
       "required": true,
       "implementation": "implementing",
       "qualification": "unavailable",
-      "hardware_availability": "not_observed_in_current_environment",
+      "hardware_availability": "none_available_owner_decision_metal_only_2026_09_28",
       "verified_subsets": [],
-      "next_task": "Run scripts/windows-inventory.ps1 on authorized machines; on an NVIDIA machine follow the qualification steps in docs/cuda-backend.md.",
-      "note": "Dynamically loaded CUDA Driver API + NVRTC backend for verified-IR modules (docs/cuda-backend.md); host-tested only through a test double. No NVIDIA hardware has executed a kernel."
+      "next_task": "Blocked on hardware. When available, follow the qualification steps in docs/cuda-backend.md on Linux.",
+      "note": "Dynamically loaded CUDA Driver API + NVRTC backend for verified-IR modules (docs/cuda-backend.md); host-tested only through a test double. No NVIDIA hardware has executed a kernel.",
+      "blockers": [
+        "No NVIDIA/AMD hardware; owner chose Metal-only for now (docs/decisions/2026-09-28-platform-scope.md)."
+      ]
     },
     {
       "id": "rocm",
@@ -2501,9 +2504,12 @@
       "required": true,
       "implementation": "not_started",
       "qualification": "unavailable",
-      "hardware_availability": "not_observed_in_current_environment",
+      "hardware_availability": "none_available_owner_decision_metal_only_2026_09_28",
       "verified_subsets": [],
-      "next_task": "At Stage C/G establish available AMD hardware, supported public stack, and independent execution backend."
+      "next_task": "At Stage C/G establish available AMD hardware, supported public stack, and independent execution backend.",
+      "blockers": [
+        "No NVIDIA/AMD hardware; owner chose Metal-only for now (docs/decisions/2026-09-28-platform-scope.md)."
+      ]
     }
   ],
   "operator_provider_targets": [
@@ -2917,7 +2923,7 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Archive a clean capture of the integrated four-lane batch (tensors/MLP, projects and kernel cases, SPIR-V import, CUDA backend host tests), then continue docs/handoff.md. NVIDIA/Windows qualification needs hardware inventory first; missing hardware remains an incomplete prerequisite.",
+  "next_acceptance_gap": "Archive a clean capture of the integrated four-lane batch (tensors/MLP, projects and kernel cases, SPIR-V import, CUDA backend host tests), then continue docs/handoff.md. NVIDIA/AMD qualification is blocked on hardware (Metal-only decision); Linux replaces Windows; missing hardware remains an incomplete prerequisite.",
   "complete_platform_program": "docs/complete-platform-program.md",
   "additional_required_programs": [
     {
@@ -3172,5 +3178,15 @@
         }
       ]
     }
-  ]
+  ],
+  "platform_scope": {
+    "decided": "2026-09-28",
+    "record": "docs/decisions/2026-09-28-platform-scope.md",
+    "required_operating_systems": [
+      "macOS",
+      "Linux"
+    ],
+    "native_windows": "not_required_existing_code_unqualified",
+    "vendor_hardware": "Apple M5 only; NVIDIA/AMD blocked"
+  }
 }
