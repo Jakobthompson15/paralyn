@@ -1,0 +1,31 @@
+// Separable blur, pass 1 of 2: horizontal convolution of a row-major
+// width x height FP32 image with a (2 * radius + 1)-tap kernel read from a
+// weight buffer, clamp-to-edge addressing. One invocation per pixel, 16x16
+// workgroups; dispatch ceil(width / 16) x ceil(height / 16) groups.
+// Taps are accumulated left to right (k = -radius .. radius) with separate
+// multiply and add (numerical policy 1 disables contraction).
+#version 450
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) readonly buffer Src { float data[]; } src;
+layout(set = 0, binding = 1) readonly buffer Weights { float data[]; } weights;
+layout(set = 0, binding = 2) writeonly buffer Dst { float data[]; } dst;
+layout(push_constant) uniform Params {
+  uint width;
+  uint height;
+  int radius;
+} params;
+
+void main() {
+  uint x = gl_GlobalInvocationID.x;
+  uint y = gl_GlobalInvocationID.y;
+  if (x >= params.width || y >= params.height)
+    return;
+  int last = int(params.width) - 1;
+  float sum = 0.0;
+  for (int k = -params.radius; k <= params.radius; ++k) {
+    int sx = clamp(int(x) + k, 0, last);
+    sum += weights.data[k + params.radius] * src.data[y * params.width + uint(sx)];
+  }
+  dst.data[y * params.width + x] = sum;
+}

@@ -62,6 +62,7 @@ KernelCase load_case(const std::filesystem::path &path);
 struct ProjectModule {
   std::string name;
   std::filesystem::path source, manifest; // manifest only for .metal sources
+  std::string entry, profile;             // GLSL/HLSL sources only (profile: HLSL)
 };
 struct ProjectCase {
   std::string name, module;

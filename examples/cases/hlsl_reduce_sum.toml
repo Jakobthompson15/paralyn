@@ -1,0 +1,39 @@
+# Kernel case for examples/hlsl/reduce_sum.hlsl entry reduce_sum (profile
+# cs_6_0): 256-thread groupshared tree reduction, one partial sum per group,
+# scale 1. Inputs are small integers, so every summation order is exact and the
+# block-sum-f32 builtin (sequential double sum, rounded to f32) is an exact reference.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "hlsl-reduce-sum-1003"
+entry = "reduce_sum"
+
+[launch]
+grid = [4, 1, 1]      # ceil(1003 / 256)
+block = [256, 1, 1]
+
+[scalars.n]
+type = "u32"
+value = 1003
+
+[scalars.scale]
+type = "f32"
+value = 1.0
+
+[buffers.input]
+dtype = "f32"
+length = 1003
+file = "data/reduce_input.f32"
+sha256 = "92ddf78c2e1a8fa57e790f297c2d3e9bb45fa7883e459c24733e4d1f1593a5da"
+
+[buffers.partial]
+dtype = "f32"
+length = 6         # 4 group sums plus two trailing sentinels
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "partial"
+reference = { builtin = "block-sum-f32", input = "input", count = "n", group_size = 256 }
+tolerance = { kind = "exact" }

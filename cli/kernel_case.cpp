@@ -692,12 +692,32 @@ Project load_project(const fs::path &input) {
     for (auto &&[key, node] : schema.table(*modules, "modules")) {
       const std::string name(key.str()), where = "modules." + name;
       auto &t = schema.table(node, where);
-      schema.only(t, {"source", "manifest"}, where);
+      schema.only(t, {"source", "manifest", "entry", "profile"}, where);
       ProjectModule m;
       m.name = name;
       m.source = resolve(base, schema.text(schema.need(t, "source", where), where + ".source"));
       auto ext = m.source.extension().string();
-      if (ext == ".metal") {
+      // GLSL/HLSL compute sources (docs/hlsl-glsl-frontends.md) declare their
+      // shader entry point; HLSL also its cs_6_x profile. Other modules keep
+      // rejecting both fields exactly as unknown fields.
+      const bool shader = ext == ".comp" || ext == ".glsl" || ext == ".hlsl";
+      for (const char *field : {"entry", "profile"})
+        if (t.get(field) && !(shader && (std::string(field) == "entry" || ext == ".hlsl")))
+          schema.fail("UNKNOWN-FIELD", where + "." + field + " is only valid for " +
+                                           (std::string(field) == "entry" ? ".comp, .glsl and .hlsl"
+                                                                          : ".hlsl") +
+                                           " sources",
+                      t.get(field));
+      if (shader && t.get("manifest"))
+        schema.fail("UNKNOWN-FIELD", where + ".manifest is only valid for .metal sources",
+                    t.get("manifest"));
+      if (ext == ".hlsl") {
+        m.entry = schema.text(schema.need(t, "entry", where), where + ".entry");
+        m.profile = schema.text(schema.need(t, "profile", where), where + ".profile");
+      } else if (shader) {
+        if (auto e = t.get("entry"))
+          m.entry = schema.text(*e, where + ".entry");
+      } else if (ext == ".metal") {
         m.manifest =
             resolve(base, schema.text(schema.need(t, "manifest", where), where + ".manifest"));
       } else if (ext == ".prx" || ext == ".prk") {
@@ -705,7 +725,7 @@ Project load_project(const fs::path &input) {
           schema.fail("UNKNOWN-FIELD", where + ".manifest is only valid for .metal sources",
                       t.get("manifest"));
       } else
-        schema.fail("VALUE", where + ".source must be a .metal, .prx or .prk kernel module",
+        schema.fail("VALUE", where + ".source must be a .metal, .prx, .prk, .comp, .glsl or .hlsl kernel module",
                     t.get("source"));
       out.modules[name] = m;
     }

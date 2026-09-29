@@ -1,0 +1,38 @@
+# Kernel case for examples/hlsl/transpose.hlsl entry transpose_tiled (profile
+# cs_6_0) with the registered transpose-f32 host reference: src is 19 rows of
+# 33 columns, dst is its 33x19 transpose plus two trailing sentinels.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "hlsl-transpose-33x19-builtin"
+entry = "transpose_tiled"
+
+[launch]
+grid = [3, 2, 1]
+block = [16, 16, 1]
+
+[scalars.width]
+type = "u32"
+value = 33
+
+[scalars.height]
+type = "u32"
+value = 19
+
+[buffers.src]
+dtype = "f32"
+length = 627
+file = "data/transpose_input.f32"
+sha256 = "d40ce7cb3bb134170883819c00f2749654a20e5e11f3b9ea0b5fb3abeb2f50ec"
+
+[buffers.dst]
+dtype = "f32"
+length = 629       # two trailing sentinels beyond width*height
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "dst"
+reference = { builtin = "transpose-f32", input = "src", width = "width", height = "height" }
+tolerance = { kind = "exact" }

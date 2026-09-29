@@ -1,0 +1,6 @@
+// Negative fixture: GL_GOOGLE_include_directive enabled through a spliced #extension.
+#version 450
+#ext\
+ension GL_GOOGLE_include_directive : enable
+layout(local_size_x = 64) in;
+void main() {}

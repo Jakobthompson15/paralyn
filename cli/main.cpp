@@ -7,6 +7,9 @@
 #if PARALYN_HAS_SPIRV
 #include "paralyn/spirv.hpp"
 #endif
+#if PARALYN_HAS_GLSL || PARALYN_HAS_HLSL
+#include "paralyn/shader.hpp"
+#endif
 #include "kernel_case.hpp"
 #include "paralyn_build_info.h" // Generated at build time by cmake/build_info.cmake.
 #include "platform.hpp"
@@ -43,6 +46,14 @@ using Json = nlohmann::ordered_json;
 using paralyn::cli::execute;
 namespace {
 using paralyn::cli::Diagnostic;
+// A diagnostic that also carries compiler messages located in the user's source
+// (GLSL/HLSL frontends). The located list is reported under
+// diagnostic.source_diagnostics in JSON results.
+struct LocatedDiagnostic : Diagnostic {
+  Json located;
+  LocatedDiagnostic(std::string identifier, std::string where, std::string text, Json list)
+      : Diagnostic(std::move(identifier), std::move(where), std::move(text)), located(std::move(list)) {}
+};
 struct Options {
   std::string command, target, device = "auto", output, artifacts, manifest, report,
                                requires,
@@ -51,6 +62,8 @@ struct Options {
   std::vector<std::string> arguments;
   // Kernel cases and projects (docs/projects-and-cases.md).
   std::string kase, entry, project, program;
+  // HLSL compute profile (cs_6_x); docs/hlsl-glsl-frontends.md.
+  std::string profile;
 };
 fs::path prefix;
 Json project_record; // Selected paralyn.toml target, recorded in execution reports.
@@ -512,6 +525,75 @@ paralyn::ExecutableModule spirv_module(const fs::path &source, bool assembly) {
                    "-DPARALYN_ENABLE_SPIRV=ON (see docs/spirv-import.md).");
 #endif
 }
+#if PARALYN_HAS_GLSL || PARALYN_HAS_HLSL
+std::string stable_id(const std::string &prefix, const std::string &code) {
+  std::string id = prefix;
+  for (char c : code.substr(code.find('.') + 1))
+    id += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  return id;
+}
+#endif
+// GLSL (.comp/.glsl) and HLSL (.hlsl) compute sources: pinned glslang/DXC
+// worker process -> SPIR-V 1.3 -> the SPIR-V importer above -> Metal.
+paralyn::ExecutableModule shader_module(const fs::path &source, bool hlsl, const Options &options,
+                                        Json &record) {
+  const std::string language = hlsl ? "HLSL" : "GLSL";
+#if PARALYN_HAS_GLSL || PARALYN_HAS_HLSL
+  namespace sh = paralyn::shader;
+  sh::CompileOptions compile;
+  compile.language = hlsl ? sh::Language::Hlsl : sh::Language::Glsl;
+  compile.source_name = source.filename().string();
+  compile.entry = options.entry;
+  compile.profile = options.profile;
+  paralyn::spirv::ImportOptions import;
+  import.source_name = source.filename().string();
+  import.producer_version = "0.0.1+" PARALYN_BUILD_COMMIT ".dirty=" PARALYN_BUILD_DIRTY;
+  try {
+    const auto text = read(source);
+    sh::CompileResult compiled;
+    auto module = sh::import_source(text, compile, import, &compiled);
+    Json warnings = Json::array();
+    for (const auto &w : compiled.warnings)
+      warnings.push_back({{"file", w.file}, {"line", w.line}, {"column", w.column}, {"message", w.message}});
+    record = {{"language", hlsl ? "hlsl" : "glsl"},
+              {"compiler", hlsl ? "DXC (separate worker process)" : "glslang (separate worker process)"},
+              {"toolchain", compiled.toolchain},
+              {"worker_arguments", Json(compiled.arguments)},
+              {"entry", options.entry.empty() ? Json(nullptr) : Json(options.entry)},
+              {"profile", hlsl ? Json(options.profile) : Json(nullptr)},
+              {"target", "Vulkan 1.1 / SPIR-V 1.3 GLCompute"},
+              {"compiler_spirv_sha256", compiled.compiler_spirv_sha256},
+              {"normalization", compiled.normalization.empty() ? Json(nullptr) : Json(compiled.normalization)},
+              {"warnings", warnings}};
+    return module;
+  } catch (const sh::CompileError &error) {
+    Json located = Json::array();
+    for (const auto &d : error.diagnostics)
+      located.push_back({{"severity", d.severity},
+                         {"file", d.file.empty() ? Json(nullptr) : Json(d.file)},
+                         {"line", d.line ? Json(d.line) : Json(nullptr)},
+                         {"column", d.column ? Json(d.column) : Json(nullptr)},
+                         {"message", d.message}});
+    const bool compiling = error.code.find(".compile") != std::string::npos ||
+                           error.code.find(".worker") != std::string::npos ||
+                           error.code.find(".legalization") != std::string::npos;
+    throw LocatedDiagnostic(stable_id("P-" + language + "-", error.code),
+                            compiling ? "compilation" : "input", error.what(), located);
+  } catch (const paralyn::spirv::ImportError &error) {
+    throw Diagnostic(stable_id("P-SPIRV-", error.code), "import",
+                     std::string(error.what()) + " (in the SPIR-V the " + language +
+                         " frontend produced from " + source.filename().string() + ")");
+  }
+#else
+  (void)options;
+  (void)record;
+  throw Diagnostic("P-" + language + "-UNAVAILABLE", "input",
+                   "This build does not include the optional " + language +
+                       " compute frontend. Reconfigure with -DPARALYN_ENABLE_SPIRV=ON "
+                       "-DPARALYN_ENABLE_" + language + "=ON (see docs/hlsl-glsl-frontends.md). " +
+                       source.filename().string() + " was not compiled.");
+#endif
+}
 #if PARALYN_HAS_COMPILER
 std::string ir_text(const paralyn::FrontendResult &frontend) {
   std::string s;
@@ -785,8 +867,16 @@ int kernel_case_execute(const Options &options, const fs::path &source,
   }
 
   write(artifact / "case.toml", kc.bytes); // Exactly the bytes behind case.sha256.
-  write(artifact / ("module" + source.extension().string() + (source.extension() == ".metal" ? ".prx" : "")),
-        std::string(module_bytes.begin(), module_bytes.end()));
+  const auto source_extension = source.extension().string();
+  const bool shader_source =
+      source_extension == ".comp" || source_extension == ".glsl" || source_extension == ".hlsl";
+  if (shader_source) {
+    // GLSL/HLSL: the compiled container and the exact source bytes it came from.
+    write(artifact / "module.prx", std::string(module_bytes.begin(), module_bytes.end()));
+    fs::copy_file(source, artifact / ("source" + source_extension));
+  } else
+    write(artifact / ("module" + source_extension + (source_extension == ".metal" ? ".prx" : "")),
+          std::string(module_bytes.begin(), module_bytes.end()));
   std::vector<paralyn::native::Buffer> buffers;
   std::vector<paralyn::native::View> views;
   std::vector<paralyn::native::Argument> launch_arguments;
@@ -906,10 +996,13 @@ int source_command(const Options &options) {
   if (!project_record.is_null())
     result["project"] = project_record;
   const bool msl = extension == ".metal", container = extension == ".prx",
-             spirv = extension == ".spvasm" || extension == ".spv",
+             spirv_input = extension == ".spvasm" || extension == ".spv",
              native = extension == ".py" || extension == ".cpp" || extension == ".cc" ||
                       extension == ".c",
              ir_module = extension == ".prk";
+  // GLSL/HLSL compute sources lower through SPIR-V and are handled as SPIR-V modules below.
+  const bool glsl = extension == ".comp" || extension == ".glsl", hlsl = extension == ".hlsl";
+  const bool spirv = spirv_input || glsl || hlsl;
   bool spirv_payload = spirv;
   result["source_revision"] = revision();
   result["build_dirty"] = build_dirty();
@@ -922,7 +1015,12 @@ int source_command(const Options &options) {
                      "--manifest describes the resources of Metal source (.metal); " +
                          source.filename().string() +
                          " carries its own interface. Remove --manifest");
-  if (!options.entry.empty() && options.kase.empty() &&
+  if (!options.profile.empty() && !hlsl)
+    throw Diagnostic("P-PROFILE-NOT-APPLICABLE", "input",
+                     "--profile selects the HLSL compute profile (cs_6_x) of an .hlsl source; " +
+                         source.filename().string() + " takes no profile. Remove --profile");
+  // For GLSL/HLSL sources --entry names the shader entry point (HLSL requires it).
+  if (!options.entry.empty() && options.kase.empty() && !glsl && !hlsl &&
       !((msl || container || spirv || ir_module) &&
         (options.command == "run" || options.command == "verify")))
     throw Diagnostic("P-CASE-NOT-APPLICABLE", "input",
@@ -937,7 +1035,8 @@ int source_command(const Options &options) {
     capture_limit = capture_file_limit();
   if (!options.kase.empty() && !(msl || container || spirv || ir_module))
     throw Diagnostic("P-CASE-NOT-APPLICABLE", "input",
-                     "--case applies to kernel modules (.metal with --manifest, .prx, .prk, .spvasm, .spv); " +
+                     "--case applies to kernel modules (.metal with --manifest, .prx, .prk, .spvasm, .spv, "
+                     ".comp, .glsl, .hlsl); " +
                          source.filename().string() + " is a complete program. Run it without --case");
   if (ir_module) {
     // Existing verified-IR .prk v1 modules: read-only use, never rewritten.
@@ -959,7 +1058,9 @@ int source_command(const Options &options) {
     }
     module_bytes.assign(bytes.begin(), bytes.end());
   } else if (msl || container || spirv) {
-    auto module = msl     ? msl_module(source, options)
+    Json shader_record;
+    auto module = msl              ? msl_module(source, options)
+                  : (glsl || hlsl) ? shader_module(source, hlsl, options, shader_record)
                   : spirv ? spirv_module(source, extension == ".spvasm")
                           : [&] {
                               auto b = read(source);
@@ -982,6 +1083,13 @@ int source_command(const Options &options) {
     }
     if (spirv_payload)
       describe_spirv(result, module);
+    if (glsl || hlsl) {
+      result["frontend"] = hlsl ? "hlsl_compute" : "glsl_compute";
+      result["shader"] = shader_record;
+      result["lowering"] = std::string(hlsl ? "DXC" : "glslang") +
+                           " -> SPIR-V 1.3 -> Paralyn SPIR-V profile -> SPIRV-Cross MSL 3.1 (Metal "
+                           "only; no CUDA/HIP lowering)";
+    }
     module_bytes = paralyn::serialize_executable(module);
   }
   if (msl || container || spirv || ir_module) {
@@ -1030,13 +1138,17 @@ int source_command(const Options &options) {
     auto count = (msl || container || spirv) ? result["entries"].size()
                                              : result["inspection"]["kernels"].size();
     result["payload_validation"] =
-        spirv_payload ? "spirv-val (Vulkan 1.1), Paralyn SPIR-V profile and reflected descriptor; "
+        (glsl || hlsl) ? std::string(hlsl ? "DXC" : "glslang") +
+                             " compilation, spirv-val (Vulkan 1.1), Paralyn SPIR-V profile and "
+                             "reflected descriptor; Metal compilation/reflection occurs on check or load"
+        : spirv_payload ? "spirv-val (Vulkan 1.1), Paralyn SPIR-V profile and reflected descriptor; "
                         "Metal compilation/reflection occurs on check or load"
         : (msl || container) ? "resource contract and source profile; Metal "
                                "compilation/reflection occurs on check or load"
                              : "verified scalar IR";
     output(options, result,
-           (spirv_payload ? "Imported " : (msl || container) ? "Packaged " : "Compiled ") +
+           ((glsl || hlsl) ? std::string("Compiled ") + (hlsl ? "HLSL" : "GLSL") + " and imported "
+            : spirv_payload ? "Imported " : (msl || container) ? "Packaged " : "Compiled ") +
                std::to_string(count) +
                (spirv_payload ? " validated SPIR-V GLCompute entrypoint(s) to "
                 : (msl || container) ? " declared Metal entrypoint(s) to "
@@ -1061,7 +1173,10 @@ int source_command(const Options &options) {
     text << "Detected kernels:\n";
     if (spirv_payload)
       for (const auto &e : result["entries"]) {
-        text << "  " << e["name"].get<std::string>() << " (SPIR-V GLCompute, workgroup "
+        text << "  " << e["name"].get<std::string>()
+             << (glsl   ? " (GLSL via glslang, SPIR-V GLCompute, workgroup "
+                 : hlsl ? " (HLSL via DXC, SPIR-V GLCompute, workgroup "
+                        : " (SPIR-V GLCompute, workgroup ")
              << e["required_block"][0] << "x" << e["required_block"][1] << "x"
              << e["required_block"][2] << ", lowered to MSL by SPIRV-Cross)\n";
         for (const auto &p : e["parameters"])
@@ -1350,7 +1465,9 @@ Json support() {
     std::string n = name;
     bool implemented = n == "Native C/C++" || n == "Native Python" || n == "Metal source" ||
                        (n == "CUDA C++" && PARALYN_HAS_COMPILER) ||
-                       (n == "SPIR-V" && PARALYN_HAS_SPIRV);
+                       (n == "SPIR-V" && PARALYN_HAS_SPIRV) ||
+                       (n == "GLSL compute" && PARALYN_HAS_GLSL) ||
+                       (n == "HLSL compute" && PARALYN_HAS_HLSL);
     rows.push_back(
         {{"name", n},
          {"required", true},
@@ -1362,6 +1479,12 @@ Json support() {
                    : n == "SPIR-V" && implemented
                        ? "SPIR-V 1.3/Vulkan 1.1 GLCompute buffer/scalar profile via SPIRV-Cross to "
                          "Metal; Kernel model rejected; no CUDA/HIP lowering"
+                   : n == "GLSL compute" && implemented
+                       ? "GLSL 4.50 compute via a pinned glslang worker to SPIR-V 1.3, then the "
+                         "SPIR-V profile to Metal; no CUDA/HIP lowering"
+                   : n == "HLSL compute" && implemented
+                       ? "HLSL cs_6_0..cs_6_8 via a pinned DXC -spirv worker to SPIR-V 1.3, then "
+                         "the SPIR-V profile to Metal; no CUDA/HIP lowering"
                    : n == "Native C/C++" || n == "Native Python"
                        ? "ABI1 buffers/modules/launch and contiguous FP32 arrays"
                        : "no executable profile"},
@@ -1425,6 +1548,20 @@ void resolve_project(Options &options) {
     options.target = selected.module->source.string();
     options.manifest = selected.module->manifest.string();
     options.kase = selected.kernel_case->file.string();
+    // GLSL/HLSL modules declare their shader entry point and HLSL profile.
+    if (!options.profile.empty() && !selected.module->profile.empty())
+      throw Diagnostic("P-TARGET-AMBIGUOUS", "input",
+                       "--profile conflicts with the project's declared module profile");
+    if (!selected.module->profile.empty())
+      options.profile = selected.module->profile;
+    if (!selected.module->entry.empty()) {
+      if (!options.entry.empty() && options.entry != selected.module->entry)
+        throw Diagnostic("P-CASE-ENTRY-MISMATCH", "input",
+                         "--entry " + options.entry + " contradicts the entry \"" +
+                             selected.module->entry + "\" declared by module " +
+                             selected.module->name);
+      options.entry = selected.module->entry;
+    }
   } else {
     if (options.command == "verify")
       throw Diagnostic("P-REFERENCE-REQUIRED", "verification",
@@ -1474,6 +1611,12 @@ int main(int argc, char **argv) {
     if (command == "compile" || command == "inspect" || command == "check" || command == "explain" ||
         command == "run" || command == "verify")
       sub->add_option("--manifest", options.manifest, "Typed Metal resource manifest (JSON)");
+    if (command == "compile" || command == "inspect" || command == "check" || command == "explain" ||
+        command == "run" || command == "verify")
+      sub->add_option("--profile", options.profile,
+                      "HLSL compute profile of an .hlsl source (cs_6_0 .. cs_6_8)");
+    if (command == "compile" || command == "inspect" || command == "explain")
+      sub->add_option("--entry", options.entry, "Entry point of a GLSL/HLSL compute source");
     if (command == "run" || command == "verify" || command == "check") {
       sub->add_option("--case", options.kase,
                       "Kernel case file (CASE.toml), or a case name within a project");
@@ -1559,7 +1702,8 @@ int main(int argc, char **argv) {
       if (options.target == "builtin:vector-add" && options.kase.empty())
         return doctor(options);
       const auto kind = fs::path(options.target).extension();
-      const bool kernel_module = kind == ".metal" || kind == ".prx" || kind == ".prk";
+      const bool kernel_module = kind == ".metal" || kind == ".prx" || kind == ".prk" ||
+                                 kind == ".comp" || kind == ".glsl" || kind == ".hlsl";
       if (options.kase.empty() && !kernel_module) // Modules get P-KERNEL-CASE-REQUIRED.
         throw Diagnostic("P-REFERENCE-REQUIRED", "verification",
                          "verify needs a declared independent reference: use builtin:vector-add, "
@@ -1600,6 +1744,8 @@ int main(int argc, char **argv) {
                             {"stage", d ? d->stage : "runtime"},
                             {"message", error.what()},
                             {"device_selector", options.device}};
+    if (auto located = dynamic_cast<const LocatedDiagnostic *>(&error))
+      result["diagnostic"]["source_diagnostics"] = located->located;
     if (options.json)
       std::cout << result.dump() << "\n";
     else

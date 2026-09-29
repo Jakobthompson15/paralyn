@@ -45,6 +45,29 @@ def files():
     t = series(width * height, 11, 1.0)
     out["transpose_input.f32"] = t
     out["transpose_expected.f32"] = [t[y * width + x] for x in range(width) for y in range(height)]
+    # Separable blur (examples/glsl/blur_rows.comp then blur_columns.comp):
+    # 40x23 image, 7-tap kernel in multiples of 1/32 (sums to 1), clamp-to-edge,
+    # taps accumulated k = -3..3 as f32(sum + f32(w * x)).
+    bw, bh, radius = 40, 23, 3
+    image = [f32(((i * 37 + 11) % 256) / 256.0) for i in range(bw * bh)]
+    weights = [f32(v / 32.0) for v in (1.0, 3.5, 7.0, 9.0, 7.0, 3.5, 1.0)]
+
+    def blur(src, rows):
+        dst = []
+        for y in range(bh):
+            for x in range(bw):
+                total = 0.0
+                for k in range(-radius, radius + 1):
+                    sx = min(max(x + k, 0), bw - 1) if rows else x
+                    sy = y if rows else min(max(y + k, 0), bh - 1)
+                    total = f32(total + f32(weights[k + radius] * src[sy * bw + sx]))
+                dst.append(total)
+        return dst
+
+    out["blur_input.f32"] = image
+    out["blur_weights.f32"] = weights
+    out["blur_rows_expected.f32"] = blur(image, True)
+    out["blur_columns_expected.f32"] = blur(out["blur_rows_expected.f32"], False)
     return out
 
 

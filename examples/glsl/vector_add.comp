@@ -1,0 +1,17 @@
+// GLSL 4.50 compute shader (Vulkan 1.1 semantics), compiled by the pinned
+// glslang worker to SPIR-V 1.3 and imported through the Paralyn SPIR-V
+// profile. c[i] = a[i] + b[i] for every i < n, one invocation per element.
+//   paralyn compile examples/glsl/vector_add.comp --entry vector_add --output vector_add.prx
+#version 450
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) readonly buffer A { float data[]; } a;
+layout(set = 0, binding = 1) readonly buffer B { float data[]; } b;
+layout(set = 0, binding = 2) writeonly buffer C { float data[]; } c;
+layout(push_constant) uniform Params { uint n; } params;
+
+void main() {
+  uint i = gl_GlobalInvocationID.x;
+  if (i < params.n)
+    c.data[i] = a.data[i] + b.data[i];
+}

@@ -53,3 +53,15 @@ Only builds configured with `-DPARALYN_ENABLE_SPIRV=ON` compile and statically l
 | SPIRV-Cross | vulkan-sdk-1.4.363.0, commit `f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7` | SPIR-V reflection and MSL 3.1 lowering | Apache-2.0 (core sources dual-licensed Apache-2.0 OR MIT) |
 
 A distributed binary that includes the importer must carry these notices and the Apache-2.0 NOTICE obligations of the linked projects.
+
+## Optional GLSL and HLSL compiler workers
+
+Only builds configured with `-DPARALYN_ENABLE_GLSL=ON` / `-DPARALYN_ENABLE_HLSL=ON` (both require the SPIR-V importer) build these compilers, as separate executables in the build tree. Paralyn invokes them as worker processes and **links none of their code** into the CLI, the native runtime or the Python binding; runtime-only and default builds never read the archives. The CLI and its generated `.prx` containers record the worker identity (pinned commit and the SHA-256 of the executable and, for DXC, `libdxcompiler.dylib`). Exact archives, commits and checksums are in `third_party/README.md` and `third_party/SHA256SUMS.json`; license texts are retained unmodified under `third_party/glslang/licenses/` and `third_party/dxc/licenses/`.
+
+| Component | Pinned identity | Use | License |
+|---|---|---|---|
+| glslang | tag vulkan-sdk-1.4.363.0 (16.6.0), commit `e1b562a8bed273a02f30b59b66a5d499793cede5` | GLSL 4.50 compute → SPIR-V 1.3 (Vulkan 1.1) worker | BSD-3-Clause / BSD-2-Clause / MIT / Apache-2.0 / Khronos MIT variant; generated Bison parser GPL-3.0-or-later WITH Bison-exception-2.2 (see upstream `LICENSE.txt`) |
+| DirectXShaderCompiler (DXC) | v1.9.2607, commit `0d3ee6b551b8fa768fbf825300ebab81047ef6a8` | HLSL compute (`cs_6_0`..`cs_6_8`) → SPIR-V 1.3 worker (`-spirv`) | University of Illinois/NCSA; third-party notices in upstream `ThirdPartyNotices.txt` |
+| DXC's SPIRV-Tools / SPIRV-Headers / DirectX-Headers | commits `b707790a…`, `29981f65…`, `980971e8…` (DXC v1.9.2607 submodules) | Built into the DXC worker only | Apache-2.0 / MIT-style Khronos / MIT |
+
+Redistributing the worker binaries (not currently done: they are neither installed nor packaged) would require shipping these notices, including DXC's third-party notices and the Apache-2.0 NOTICE obligations.

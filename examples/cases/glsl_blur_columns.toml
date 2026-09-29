@@ -1,0 +1,50 @@
+# Kernel case for examples/glsl/blur_columns.comp: one pass of the separable blur
+# on a 40x23 FP32 image (7-tap kernel in multiples of 1/32, clamp-to-edge).
+# The reference is computed independently by generate_data.py with f32 rounding
+# after every multiply and add, in the shader's tap order, so the data is exact.
+# Pass 2: its input is the verified pass-1 reference (blur_rows_expected.f32).
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "glsl-blur-columns-40x23"
+entry = "blur_columns"
+
+[launch]
+grid = [3, 2, 1]     # ceil(40 / 16) x ceil(23 / 16)
+block = [16, 16, 1]
+
+[scalars.width]
+type = "u32"
+value = 40
+
+[scalars.height]
+type = "u32"
+value = 23
+
+[scalars.radius]
+type = "i32"
+value = 3
+
+[buffers.src]
+dtype = "f32"
+length = 920
+file = "data/blur_rows_expected.f32"
+sha256 = "978e69d2c06a263f01973db4dbd6e71ac7f9d3a67a5d5258b0d8d6bef16d42f2"
+
+[buffers.weights]
+dtype = "f32"
+length = 7
+file = "data/blur_weights.f32"
+sha256 = "4480b9ad80872d62587b3451f1f1102998288b4592a9e0273fd080f32bbd16a0"
+
+[buffers.dst]
+dtype = "f32"
+length = 920
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "dst"
+reference = { file = "data/blur_columns_expected.f32", sha256 = "766702774571465978da75d5262e93e64bed8070c69fa0868d2cded83bda7f7f" }
+tolerance = { kind = "exact" }

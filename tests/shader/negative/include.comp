@@ -1,0 +1,6 @@
+// Negative fixture: #include cannot be resolved; only the exact source bytes are compiled.
+#version 450
+#extension GL_GOOGLE_include_directive : require
+#include "common.glsl"
+layout(local_size_x = 64) in;
+void main() {}

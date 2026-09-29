@@ -1,0 +1,27 @@
+// Separable blur, pass 2 of 2: vertical convolution (see blur_rows.comp).
+// Taps are accumulated top to bottom (k = -radius .. radius).
+#version 450
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) readonly buffer Src { float data[]; } src;
+layout(set = 0, binding = 1) readonly buffer Weights { float data[]; } weights;
+layout(set = 0, binding = 2) writeonly buffer Dst { float data[]; } dst;
+layout(push_constant) uniform Params {
+  uint width;
+  uint height;
+  int radius;
+} params;
+
+void main() {
+  uint x = gl_GlobalInvocationID.x;
+  uint y = gl_GlobalInvocationID.y;
+  if (x >= params.width || y >= params.height)
+    return;
+  int last = int(params.height) - 1;
+  float sum = 0.0;
+  for (int k = -params.radius; k <= params.radius; ++k) {
+    int sy = clamp(int(y) + k, 0, last);
+    sum += weights.data[k + params.radius] * src.data[uint(sy) * params.width + x];
+  }
+  dst.data[y * params.width + x] = sum;
+}
