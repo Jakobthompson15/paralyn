@@ -525,12 +525,14 @@ paralyn::ExecutableModule spirv_module(const fs::path &source, bool assembly) {
                    "-DPARALYN_ENABLE_SPIRV=ON (see docs/spirv-import.md).");
 #endif
 }
+#if PARALYN_HAS_GLSL || PARALYN_HAS_HLSL
 std::string stable_id(const std::string &prefix, const std::string &code) {
   std::string id = prefix;
   for (char c : code.substr(code.find('.') + 1))
     id += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
   return id;
 }
+#endif
 // GLSL (.comp/.glsl) and HLSL (.hlsl) compute sources: pinned glslang/DXC
 // worker process -> SPIR-V 1.3 -> the SPIR-V importer above -> Metal.
 paralyn::ExecutableModule shader_module(const fs::path &source, bool hlsl, const Options &options,
