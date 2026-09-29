@@ -641,3 +641,9 @@ from .tensor import (Activation, Tensor, TensorDescriptor, bias_activation_into,
 __all__ += ["Activation", "Tensor", "TensorDescriptor", "bias_activation_into", "bias_add",
             "load_tensor_operators", "matmul", "matmul_into", "relu", "tensor",
             "tensor_operators_artifact"]
+from .tensor import (Reduce, add_into, batched_matmul, batched_matmul_into, bias_gelu, gelu,
+                     layer_norm, layer_norm_into, reduce_rows_into, residual_add, row_max,
+                     row_sum, softmax, softmax_rows_into)
+__all__ += ["Reduce", "add_into", "batched_matmul", "batched_matmul_into", "bias_gelu", "gelu",
+            "layer_norm", "layer_norm_into", "reduce_rows_into", "residual_add", "row_max",
+            "row_sum", "softmax", "softmax_rows_into"]

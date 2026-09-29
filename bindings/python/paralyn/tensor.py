@@ -25,6 +25,12 @@ _MAX_ELEMENTS = (1 << 31) - 1
 class Activation(IntEnum):
     NONE = 0
     RELU = 1
+    GELU_TANH = 2  # 0.5*x*(1 + tanh(0.7978845608028654f*(x + 0.044715f*x^3))); MSL has no erf
+
+
+class Reduce(IntEnum):
+    SUM = 0
+    MAX = 1
 
 
 class _TensorDesc(_c.Structure):
@@ -49,6 +55,38 @@ class _BiasActivation(_c.Structure):
                 ("out", _c.POINTER(_TensorDesc))]
 
 
+class _BatchedMatmul(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("batch", _c.c_uint64), ("m", _c.c_uint64), ("n", _c.c_uint64), ("k", _c.c_uint64),
+                ("a", _c.POINTER(_TensorDesc)), ("b", _c.POINTER(_TensorDesc)),
+                ("c", _c.POINTER(_TensorDesc))]
+
+
+class _ReduceRows(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("op", _c.c_int), ("reserved", _c.c_uint32),
+                ("x", _c.POINTER(_TensorDesc)), ("out", _c.POINTER(_TensorDesc))]
+
+
+class _SoftmaxRows(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("causal", _c.c_uint32), ("scale", _c.c_float),
+                ("x", _c.POINTER(_TensorDesc)), ("out", _c.POINTER(_TensorDesc))]
+
+
+class _LayerNorm(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("epsilon", _c.c_float), ("reserved", _c.c_uint32),
+                ("x", _c.POINTER(_TensorDesc)), ("gamma", _c.POINTER(_TensorDesc)),
+                ("beta", _c.POINTER(_TensorDesc)), ("out", _c.POINTER(_TensorDesc))]
+
+
+class _Add(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("x", _c.POINTER(_TensorDesc)), ("y", _c.POINTER(_TensorDesc)),
+                ("out", _c.POINTER(_TensorDesc))]
+
+
 def _api(lib):
     if not getattr(lib, "_tensor_signatures", False):
         h, u32, u64, ptr = _c.c_uint64, _c.c_uint32, _c.c_uint64, _c.POINTER
@@ -59,6 +97,11 @@ def _api(lib):
             "pr_tensor_operators_load": (_c.c_int, [h, ptr(h)]),
             "pr_matmul_f32": (_c.c_int, [h, h, ptr(_Matmul), ptr(h)]),
             "pr_bias_activation_f32": (_c.c_int, [h, h, ptr(_BiasActivation), ptr(h)]),
+            "pr_batched_matmul_f32": (_c.c_int, [h, h, ptr(_BatchedMatmul), ptr(h)]),
+            "pr_reduce_rows_f32": (_c.c_int, [h, h, ptr(_ReduceRows), ptr(h)]),
+            "pr_softmax_rows_f32": (_c.c_int, [h, h, ptr(_SoftmaxRows), ptr(h)]),
+            "pr_layer_norm_f32": (_c.c_int, [h, h, ptr(_LayerNorm), ptr(h)]),
+            "pr_add_f32": (_c.c_int, [h, h, ptr(_Add), ptr(h)]),
         }
         for name, (result, arguments) in signatures.items():
             function = getattr(lib.api, name)
@@ -171,6 +214,64 @@ def bias_activation_into(queue, operators, x, bias, out, *, activation=Activatio
     lib.check(lib.api.pr_bias_activation_f32(queue.handle, operators.handle, _c.byref(op),
                                              _c.byref(result)))
     return _event(lib, result.value)
+
+
+def _real(value, label):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{label} must be a real number")
+    return float(value)
+
+
+def _submit(queue, operators, name, record):
+    if not isinstance(queue, Queue) or not isinstance(operators, Module):
+        raise TypeError(f"{name} requires a Queue and the tensor operator Module")
+    lib = _api(queue._lib)
+    result = _c.c_uint64()
+    lib.check(getattr(lib.api, name)(queue.handle, operators.handle, _c.byref(record), _c.byref(result)))
+    return _event(lib, result.value)
+
+
+def batched_matmul_into(queue, operators, a, b, c, *, batch, m, n, k):
+    """C[i] = A[i] B[i] over rank-3 descriptors that may be strided (transposes and
+    head splits as views). Returns an Event, or None when batch*m*n == 0."""
+    descs = [x._native() for x in (a, b, c)]
+    op = _BatchedMatmul(_c.sizeof(_BatchedMatmul), TENSOR_VERSION_1,
+                        *(_integer(v, 0, (1 << 64) - 1, label)
+                          for v, label in ((batch, "batch"), (m, "m"), (n, "n"), (k, "k"))),
+                        *(_c.pointer(d) for d in descs))
+    return _submit(queue, operators, "pr_batched_matmul_f32", op)
+
+
+def reduce_rows_into(queue, operators, x, out, *, op=Reduce.SUM):
+    """out[i] = sum or max over row i of x [rows, columns] (fixed documented order)."""
+    xd, od = x._native(), out._native()
+    record = _ReduceRows(_c.sizeof(_ReduceRows), TENSOR_VERSION_1, int(Reduce(op)), 0,
+                         _c.pointer(xd), _c.pointer(od))
+    return _submit(queue, operators, "pr_reduce_rows_f32", record)
+
+
+def softmax_rows_into(queue, operators, x, out, *, scale=1.0, causal=False):
+    """Row softmax of scale*x over the last dimension (rank 2 or 3); causal masks
+    column j of row i when j > i + columns - rows."""
+    xd, od = x._native(), out._native()
+    record = _SoftmaxRows(_c.sizeof(_SoftmaxRows), TENSOR_VERSION_1, _flag(causal, "causal"),
+                          _real(scale, "scale"), _c.pointer(xd), _c.pointer(od))
+    return _submit(queue, operators, "pr_softmax_rows_f32", record)
+
+
+def layer_norm_into(queue, operators, x, gamma, beta, out, *, epsilon=1e-5):
+    """LayerNorm over the last dimension of x [rows, columns] with gamma/beta [columns]."""
+    descs = [d._native() for d in (x, gamma, beta, out)]
+    record = _LayerNorm(_c.sizeof(_LayerNorm), TENSOR_VERSION_1, _real(epsilon, "epsilon"), 0,
+                        *(_c.pointer(d) for d in descs))
+    return _submit(queue, operators, "pr_layer_norm_f32", record)
+
+
+def add_into(queue, operators, x, y, out):
+    """Elementwise out = x + y for equal-shape contiguous descriptors."""
+    descs = [d._native() for d in (x, y, out)]
+    record = _Add(_c.sizeof(_Add), TENSOR_VERSION_1, *(_c.pointer(d) for d in descs))
+    return _submit(queue, operators, "pr_add_f32", record)
 
 
 class _Operators:
@@ -390,3 +491,72 @@ def bias_add(x, bias, *, relu=False):
 def relu(x):
     """out = x where x is not less than zero (NaN/-0.0 pass through), else +0.0."""
     return _bias_activation(x, None, Activation.RELU)
+
+
+def gelu(x):
+    """Tanh-form GELU on the GPU (see Activation.GELU_TANH)."""
+    return _bias_activation(x, None, Activation.GELU_TANH)
+
+
+def bias_gelu(x, bias):
+    """out[i, j] = gelu_tanh(x[i, j] + bias[j]) on the GPU."""
+    return _bias_activation(x, bias, Activation.GELU_TANH)
+
+
+def batched_matmul(a, b):
+    """C[i] = A[i] B[i] for contiguous rank-3 tensors [batch,m,k] x [batch,k,n]."""
+    context = _same_context(a, b)
+    if a.ndim != 3 or b.ndim != 3:
+        raise ValueError("batched_matmul requires rank-3 tensors")
+    batch, m, k = a.shape
+    if b.shape[0] != batch or b.shape[1] != k:
+        raise ValueError(f"batched_matmul shapes differ: {a.shape} x {b.shape}")
+    n = b.shape[2]
+    resources = _operators(context)
+    return _output(context, (batch, m, n), a.device, lambda c: batched_matmul_into(
+        resources.queue, resources.module, a.descriptor(), b.descriptor(), c,
+        batch=batch, m=m, n=n, k=k))
+
+
+def _reduce(x, op):
+    context = _same_context(x)
+    if x.ndim != 2:
+        raise ValueError("row reductions require rank-2 tensors")
+    resources = _operators(context)
+    return _output(context, (x.shape[0],), x.device, lambda out: reduce_rows_into(
+        resources.queue, resources.module, x.descriptor(), out, op=op))
+
+
+def row_sum(x):
+    """Row sums of a rank-2 tensor in the documented fixed order."""
+    return _reduce(x, Reduce.SUM)
+
+
+def row_max(x):
+    """Row maxima (NaN-propagating, +0.0 preferred over -0.0, -inf for empty rows)."""
+    return _reduce(x, Reduce.MAX)
+
+
+def softmax(x, *, scale=1.0, causal=False):
+    """Numerically stable row softmax of scale*x over the last dimension."""
+    context = _same_context(x)
+    resources = _operators(context)
+    return _output(context, x.shape, x.device, lambda out: softmax_rows_into(
+        resources.queue, resources.module, x.descriptor(), out, scale=scale, causal=causal))
+
+
+def layer_norm(x, gamma, beta, *, epsilon=1e-5):
+    """LayerNorm over the last dimension of a rank-2 tensor."""
+    context = _same_context(x, gamma, beta)
+    resources = _operators(context)
+    return _output(context, x.shape, x.device, lambda out: layer_norm_into(
+        resources.queue, resources.module, x.descriptor(), gamma.descriptor(), beta.descriptor(),
+        out, epsilon=epsilon))
+
+
+def residual_add(x, y):
+    """Elementwise x + y of equal-shape tensors (named apart from paralyn.add for Arrays)."""
+    context = _same_context(x, y)
+    resources = _operators(context)
+    return _output(context, x.shape, x.device, lambda out: add_into(
+        resources.queue, resources.module, x.descriptor(), y.descriptor(), out))
