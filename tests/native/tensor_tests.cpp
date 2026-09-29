@@ -256,7 +256,7 @@ void descriptors(Suite &s) {
   require(bytes_copy.size() == size && !std::memcmp(bytes_copy.data(), "PARALYNX", 8), "artifact magic");
   const auto module = paralyn::deserialize_executable(bytes_copy.data(), bytes_copy.size());
   require(module.producer == "paralyn.msl.tensor" && module.numerical_policy == 1 &&
-              module.entries.size() == 4 && module.entries[0].name == "paralyn_matmul_f32",
+              module.entries.size() == 10 && module.entries[0].name == "paralyn_matmul_f32",
           "provider artifact identity");
 }
 
