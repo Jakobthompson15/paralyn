@@ -1,4 +1,40 @@
-# Checkpoint: four-lane batch (tensors, kernel cases, SPIR-V, CUDA backend)
+# Checkpoint: round 2 (capture, transformer block, GLSL/HLSL)
+
+Base `cccb177`. Branches `lane/capture-cccb177`, `lane/transformer-block` and `lane/hlsl-glsl-frontends` are merged on `integration/round-2`. See the top section of [status](status.md).
+
+## Exact next task per workstream
+
+1. **Qualification.** Capture the merged revision clean:
+   - Run `scripts/qualify_suites.py` and add the `transformer_*` and `shader_*` suites.
+   - Build with GLSL/HLSL after `scripts/fetch_shader_compilers.py --restore`.
+   - Make the kernel_cases and Python SPIR-V runners keep their evidence instead of using temp directories.
+   - Rerun the no-backend build.
+   - Rerun the benchmark on a quiet host.
+2. **Operators.**
+   - Add a multi-row-per-threadgroup path to lift the 16,777,215-row limit.
+   - Add an erf-form GELU.
+   - Add a training step with checked gradients (backward operators).
+   - Expose operators through the CLI.
+   - Add a PyTorch custom operator on Metal.
+3. **Frontends.**
+   - Build the shader workers in the Linux container.
+   - Map importer rejections to source lines through `OpLine`.
+   - Consider widening the SPIR-V profile (`OpArrayLength`, vectors in buffers).
+   - Next inputs: WGSL (Naga), OpenCL C (Clspv), Slang.
+   - Broader CUDA C++: loops, shared memory, barriers, atomics.
+   - The shader-to-CUDA/HIP bridge stays blocked with vendor hardware.
+4. **CLI.** Add `init`, `bench`, `cache`, `toolchain` and NDJSON streaming.
+5. **Platform.**
+   - Linux build with the compiler (LLVM 21) enabled, plus an x86_64 build.
+   - Linux packaging.
+   - Fix the two GCC warnings.
+   - NVIDIA/AMD remain blocked on hardware ([decision](decisions/2026-09-28-platform-scope.md)).
+   - PTX stays clean-room only and SASS waits for a lawyer ([policy](legal/ptx-sass-terms.md)).
+
+---
+
+# Previous checkpoint
+
 
 Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-cases`, `lane/spirv-metal-import`, `lane/cuda-backend-windows`, merged on `integration/next-batch`. See the top section of [status](status.md) for what was implemented and its limits. None of this has been captured cleanly or archived yet.
 

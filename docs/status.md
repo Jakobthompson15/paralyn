@@ -1,3 +1,40 @@
+# Round 2 — 2026-09-29: clean capture, transformer block, GLSL/HLSL (development evidence)
+
+Integrated on `integration/round-2` from `cccb177`. The merged tree passes **45/45 CTests** with SPIR-V, GLSL and HLSL enabled, and **38/38** in the default build. Both runs are Debug builds on the physical M5.
+
+- **Clean capture of `cccb177`** ([evidence](../artifacts/four-lane-batch/README.md)). This archives the previous four-lane batch as clean-revision evidence:
+  - CTests: 36/36.
+  - Product: 53 GPU events. Native: 21. Native CLI: 4.
+  - Gate A, and Gate B's 75 launches.
+  - The full 880-launch benchmark. The host was busy (load average about 6.8), so its timings are correctness and protocol evidence only.
+  - The tensor, SPIR-V and kernel-case suites.
+  - The rebuilt wheel includes the tensor provider and runs the MLP from fresh venvs on Python 3.9 and 3.14.
+  - A relocated install and a runtime-only build were also captured.
+  - All 42 retained execution records embed revision `cccb177` with `dirty=false`.
+  - `scripts/qualify_suites.py` now captures the newer suites for future revisions.
+- **Transformer-block operators** ([contract](transformer-operators.md)). These extend the `paralyn.msl.tensor` provider:
+  - New operators: batched strided matmul, row sum/max, stable row softmax with an optional causal mask, LayerNorm, tanh-form GELU (as a bias-activation mode), and elementwise add.
+  - A capability query, `pr_tensor_operators_capabilities`.
+  - Available from C, C++ and Python.
+  - Row operators support at most 16,777,215 rows and return `PR_UNSUPPORTED` above that.
+  - `examples/native/transformer_block.{py,cpp}` runs a pre-LN encoder block (4 heads, causal or bidirectional) in exactly 15 audited GPU launches, with no CPU stage.
+  - Checked end-to-end and per stage against float64. Output max |error| is about 2.6e-7, and every stage's error is at most 0.2 of its derived bound.
+  - The C++ and Python outputs hash-match.
+  - Not PyTorch, cuDNN/cuBLAS, or training.
+- **GLSL and HLSL compute** ([profile](hlsl-glsl-frontends.md)). These are optional builds: `-DPARALYN_ENABLE_GLSL=ON` and `-DPARALYN_ENABLE_HLSL=ON`.
+  - Compilers: pinned glslang (vulkan-sdk-1.4.363.0) and DXC v1.9.2607.
+  - DXC is fetched, not vendored. Run `python3 scripts/fetch_shader_compilers.py --restore` first.
+  - Both compilers run as isolated worker processes and feed the unchanged SPIR-V importer on Metal.
+  - GPU programs:
+    - GLSL: vector add and a multi-dispatch separable blur.
+    - HLSL: vector add, a groupshared transpose and a reduction.
+  - Evidence: 58 GPU events plus 11 kernel-case runs; 8.1M values were compared against CPU references.
+  - `#include` is banned, and that is enforced both before and after compiling.
+  - Images, 64-bit types, wave/subgroup operations and atomics are rejected.
+  - There is no GLSL/HLSL → CUDA/HIP path.
+
+The transformer and shader lanes are development evidence, not an archived capture yet.
+
 # Four-lane implementation batch — 2026-09-28 (development evidence)
 
 Integrated on branch `integration/next-batch` from `4f8fb22`. Four lanes were built in isolated worktrees, adversarially reviewed and fixed, then merged. On the physical Apple M5, the merged tree passes **36/36 CTests** with `-DPARALYN_ENABLE_SPIRV=ON` and **33/33** in the default build, including Gate A and Gate B correctness. These are Debug development runs, **not a clean archived capture**. The benchmark was not rerun. Software remains 0.0.1.

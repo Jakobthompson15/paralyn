@@ -169,7 +169,8 @@
         "artifacts/benchmark-log-isolation/SHA256SUMS.json"
       ],
       "limits": "Measurement boundary corrected; non-isolated desktop timing variation does not establish a speedup or absence of performance regressions. Production runtime/compiler/CLI/binding files unchanged from87978b1."
-    }
+    },
+    "four_lane_batch_evidence_record": "artifacts/four-lane-batch/README.md (clean revision cccb177)"
   },
   "frontend_tracks": [
     {
@@ -1005,7 +1006,7 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "E",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
       "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
       "complete": false,
@@ -1036,26 +1037,26 @@
           "backend": "metal",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "Partial profile on Metal via pinned DXC v1.9.2607 worker → SPIR-V importer (docs/hlsl-glsl-frontends.md). Development evidence (integration/round-2, Debug); not yet archived clean.",
           "verified_subsets": []
         },
         {
           "backend": "cuda",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge; vendor hardware blocked.",
           "verified_subsets": []
         },
         {
           "backend": "rocm",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge; vendor hardware blocked.",
           "verified_subsets": []
         }
       ],
       "blockers": [],
-      "next_task": "Select and pin a licensed compiler bridge and explicit shader-model/resource subset independently of GLSL."
+      "next_task": "Clean capture; OpLine source mapping; Linux worker build."
     },
     {
       "id": "glsl_compute",
@@ -1063,7 +1064,7 @@
       "kind": "frontend_or_native_interface",
       "required": true,
       "stage": "E",
-      "implementation": "not_started",
+      "implementation": "implementing",
       "qualification": "unavailable",
       "qualification_scope": "Full initial track contract from mandate 4.4, not merely a single sample.",
       "complete": false,
@@ -1094,26 +1095,26 @@
           "backend": "metal",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "Partial profile on Metal via pinned glslang vulkan-sdk-1.4.363.0 worker → SPIR-V importer (docs/hlsl-glsl-frontends.md). Development evidence (integration/round-2, Debug); not yet archived clean.",
           "verified_subsets": []
         },
         {
           "backend": "cuda",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge; vendor hardware blocked.",
           "verified_subsets": []
         },
         {
           "backend": "rocm",
           "required": true,
           "qualification": "unavailable",
-          "reason": "No complete required-subset qualification record yet.",
+          "reason": "No shader-to-CUDA/HIP bridge; vendor hardware blocked.",
           "verified_subsets": []
         }
       ],
       "blockers": [],
-      "next_task": "Pin GLSL version/environment and compiler bridge; implement separate input/reflection tests rather than counting HLSL."
+      "next_task": "Clean capture; OpLine source mapping; Linux worker build."
     },
     {
       "id": "wgsl",
@@ -2923,7 +2924,7 @@
       "note": "No remote execution, provisioning, graph provider, or specialized hardware backend is implemented."
     }
   ],
-  "next_acceptance_gap": "Archive a clean capture of the integrated four-lane batch (tensors/MLP, projects and kernel cases, SPIR-V import, CUDA backend host tests), then continue docs/handoff.md. NVIDIA/AMD qualification is blocked on hardware (Metal-only decision); Linux replaces Windows; missing hardware remains an incomplete prerequisite.",
+  "next_acceptance_gap": "Archive a clean capture of round 2 (transformer and GLSL/HLSL suites); then continue docs/handoff.md. NVIDIA/AMD blocked on hardware; Linux replaces Windows.",
   "complete_platform_program": "docs/complete-platform-program.md",
   "additional_required_programs": [
     {
@@ -2949,25 +2950,28 @@
       "required": true,
       "implementation": "implementing",
       "qualification": "unavailable",
-      "note": "Versioned FP32 tensor descriptor v1 (contiguous 2-D); strides/broadcasting not implemented."
+      "note": "FP32 tensor descriptor v1 with batched strided views for matmul; broadcasting not implemented. Development evidence (integration/round-2, Debug); not yet archived clean."
     },
     {
       "id": "reductions_scans",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "Row sum/max on Metal (docs/transformer-operators.md); scans not implemented. Development evidence (integration/round-2, Debug); not yet archived clean."
     },
     {
       "id": "normalization_softmax",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "Row softmax (optional causal mask) and LayerNorm on Metal. Development evidence (integration/round-2, Debug); not yet archived clean."
     },
     {
       "id": "convolution_attention",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "Attention built from batched matmul + softmax in the transformer block example; no convolution. Development evidence (integration/round-2, Debug); not yet archived clean."
     },
     {
       "id": "fft_rng_sparse",
@@ -3022,13 +3026,14 @@
       "required": true,
       "implementation": "implementing",
       "qualification": "unavailable",
-      "note": "examples/native/mlp.py and mlp.cpp run a two-layer FP32 MLP entirely on Metal, checked against a float64 reference; C++/Python outputs hash-matched. Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet."
+      "note": "examples/native/mlp.py and mlp.cpp run a two-layer FP32 MLP entirely on Metal, checked against a float64 reference; C++/Python outputs hash-matched. Development evidence only (integration branch, Debug build, dirty worktrees); no clean archived capture yet. Clean capture at cccb177: artifacts/four-lane-batch."
     },
     {
       "id": "transformer_block_application",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "implementing",
+      "qualification": "unavailable",
+      "note": "examples/native/transformer_block.{py,cpp}: pre-LN encoder block in 15 GPU launches, float64-checked, C++/Python hash-matched. Development evidence (integration/round-2, Debug); not yet archived clean."
     },
     {
       "id": "training_gradient_application",
