@@ -1,0 +1,35 @@
+# Kernel case for examples/metal/kernels.metal entry block_reduce (64-lane
+# threadgroup tree reduction with barriers). One partial sum per group; the
+# final group is partial. Inputs are small integers, so every summation order
+# is exact and an exact tolerance is justified for this data.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "block-reduce-1003"
+entry = "block_reduce"
+
+[launch]
+grid = [16, 1, 1]
+block = [64, 1, 1]  # the manifest requires exactly [64, 1, 1]
+
+[scalars.n]
+type = "u32"
+value = 1003
+
+[buffers.input]
+dtype = "f32"
+length = 1003
+file = "data/reduce_input.f32"
+sha256 = "92ddf78c2e1a8fa57e790f297c2d3e9bb45fa7883e459c24733e4d1f1593a5da"
+
+[buffers.output]
+dtype = "f32"
+length = 18        # 16 group sums plus two trailing sentinels
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "output"
+reference = { builtin = "block-sum-f32", input = "input", count = "n", group_size = 64 }
+tolerance = { kind = "exact" }

@@ -1,0 +1,6 @@
+Paralyn: executable prepared
+
+Verification: PASS (1024 independently checked elements)
+Paralyn: application exited successfully
+Paralyn: execution completed; report /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/gate-a/report.json
+Gate A evidence verified: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/gate-a

@@ -1,0 +1,342 @@
+{
+ "steps": [
+  {
+   "name": "wheel",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "bindings/python/build_wheel.py",
+    "--compiler",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--library",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "--module",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/operators.prk",
+    "--output",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/package"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.807668374851346,
+   "log": "wheel.log"
+  },
+  {
+   "name": "wheel-repeat",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "bindings/python/build_wheel.py",
+    "--compiler",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--library",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "--module",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/operators.prk",
+    "--output",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/wheel-repeat"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.6375599578022957,
+   "log": "wheel-repeat.log"
+  },
+  {
+   "name": "install-python314",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "bindings/python/test_install.py",
+    "--wheel",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/package/paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+    "--output",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python314"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 2.0921099581755698,
+   "log": "install-python314.log"
+  },
+  {
+   "name": "install-python39",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/usr/bin/python3",
+    "bindings/python/test_install.py",
+    "--wheel",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/package/paralyn-0.0.1-py3-none-macosx_26_0_arm64.whl",
+    "--output",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python39"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.8960644998587668,
+   "log": "install-python39.log"
+  },
+  {
+   "name": "installed-mlp-python314",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PYTHONPATH",
+    "-u",
+    "PYTHONHOME",
+    "-u",
+    "PARALYN_LIBRARY",
+    "-u",
+    "PARALYN_OPERATORS",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python314/venv/bin/python",
+    "-I",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-app/mlp.py",
+    "--artifacts",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-python314"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.23036591708660126,
+   "log": "installed-mlp-python314.log"
+  },
+  {
+   "name": "installed-mlp-discovery",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PYTHONPATH",
+    "-u",
+    "PARALYN_LIBRARY",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python314/venv/bin/python",
+    "-I",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-app/discover.py"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 1,
+   "wall_seconds": 0.044440167024731636,
+   "log": "installed-mlp-discovery.log"
+  },
+  {
+   "name": "installed-mlp-discovery-2",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PYTHONPATH",
+    "-u",
+    "PARALYN_LIBRARY",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python314/venv/bin/python",
+    "-I",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-app/discover.py"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.042802708223462105,
+   "log": "installed-mlp-discovery-2.log"
+  },
+  {
+   "name": "installed-mlp-python39",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PYTHONPATH",
+    "-u",
+    "PYTHONHOME",
+    "-u",
+    "PARALYN_LIBRARY",
+    "-u",
+    "PARALYN_OPERATORS",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python39/venv/bin/python",
+    "-I",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-app/mlp.py",
+    "--artifacts",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-python39"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.375492624938488,
+   "log": "installed-mlp-python39.log"
+  },
+  {
+   "name": "runtime-only-configure",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "cmake",
+    "-S",
+    ".",
+    "-B",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DPARALYN_BUILD_COMPILER=OFF",
+    "-DBUILD_TESTING=OFF"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.2577740838751197,
+   "log": "runtime-only-configure.log"
+  },
+  {
+   "name": "runtime-only-build",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "cmake",
+    "--build",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177",
+    "-j8"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 5.077058375347406,
+   "log": "runtime-only-build.log"
+  },
+  {
+   "name": "runtime-only-linkage",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "otool",
+    "-L",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.012355959042906761,
+   "log": "runtime-only-linkage.log"
+  },
+  {
+   "name": "runtime-only-doctor",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn",
+    "doctor",
+    "--device",
+    "metal:0",
+    "--json",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/runtime-only-doctor"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.9092976250685751,
+   "log": "runtime-only-doctor.log"
+  },
+  {
+   "name": "runtime-only-library-linkage",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "otool",
+    "-L",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/libparalyn_native.dylib"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.010228291153907776,
+   "log": "runtime-only-library-linkage.log"
+  },
+  {
+   "name": "runtime-only-case-vector-add",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "vector-add",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/runtime-only-cases/vector-add"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.07850070809945464,
+   "log": "runtime-only-case-vector-add.log"
+  },
+  {
+   "name": "runtime-only-case-ir-affine",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn",
+    "verify",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native-kernels.prk",
+    "--case",
+    "examples/cases/ir_affine.toml",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/runtime-only-cases/ir-affine"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.07237933296710253,
+   "log": "runtime-only-case-ir-affine.log"
+  },
+  {
+   "name": "cmake-install",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "cmake",
+    "--install",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "--prefix",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-original"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.1656253752298653,
+   "log": "cmake-install.log"
+  },
+  {
+   "name": "installed-doctor",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/bin/paralyn",
+    "doctor",
+    "--device",
+    "metal:0",
+    "--json",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/installations/relocated-doctor"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.9240517499856651,
+   "log": "installed-doctor.log"
+  },
+  {
+   "name": "installed-cli",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/native/cli_arrays.py",
+    "--paralyn",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/bin/paralyn",
+    "--artifacts",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/installed-cli"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.346268624998629,
+   "log": "installed-cli.log"
+  },
+  {
+   "name": "installed-linkage",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "otool",
+    "-L",
+    "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/bin/paralyn"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.012569834012538195,
+   "log": "installed-linkage.log"
+  }
+ ]
+}

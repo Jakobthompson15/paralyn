@@ -1,0 +1,4 @@
+Paralyn: executable prepared
+Verification: PASS integer_semantics launches=5 boundary_casts=12 compared=50
+Paralyn: application exited successfully
+Paralyn: execution completed; report /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cuda/integer_semantics/report.json

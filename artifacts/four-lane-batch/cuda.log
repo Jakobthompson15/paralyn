@@ -1,0 +1,6 @@
+Verified exact_arithmetic: 46 physical-GPU launches
+Verified xyz_builtins: 3 physical-GPU launches
+Verified aliases_and_host: 9 physical-GPU launches
+Verified integer_semantics: 5 physical-GPU launches
+Verified numerics: 3 physical-GPU launches
+Gate B correctness qualification verified: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cuda

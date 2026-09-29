@@ -1,0 +1,55 @@
+# Third-party licenses and dependency inventory
+
+Recorded 2026-09-25. Paralyn's original implementation is Apache-2.0; see `LICENSE` and `NOTICE`. External documentation references are not imported implementation code. No NVIDIA CUDA toolkit, CuMetal, or MetaXuda dependency is used.
+
+## Selected local development dependencies
+
+The versions below were obtained from the installed tools. LLVM 21.1.8 frontend integration tests have passed locally; this does not itself establish the full source-to-GPU Gate A milestone. Acceptance results are maintained in `docs/status.md` and the Gate A evidence.
+
+| Component | Observed version / identity | Use | License and source |
+|---|---|---|---|
+| LLVM/Clang/LibTooling | Homebrew LLVM 21.1.8, arm64; `/opt/homebrew/opt/llvm@21` | CUDA AST parsing and compiler libraries; not a runtime dependency | [Apache-2.0 with LLVM exceptions and component notices](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/LICENSE.TXT) |
+| CMake / CTest | 4.4.3 | Build configuration and tests | [BSD-3-Clause; additional component notices](https://cmake.org/licensing/) |
+| Ninja | 1.13.2 | Build executor | [Apache-2.0](https://github.com/ninja-build/ninja/blob/v1.13.2/COPYING) |
+| Python | 3.14.5 selected by CMake | Evidence tests and native Python binding via standard-library ctypes; no third-party Python packages; not required by C/C++ clients | [Python Software Foundation license](https://docs.python.org/3/license.html) |
+| Apple Clang | 17.0.0, clang-1700.6.3.2 | System C++ / Objective-C++ toolchain as selected by build | Apple toolchain notices and [LLVM licensing](https://llvm.org/docs/DeveloperPolicy.html#copyright-license-and-patents) |
+| macOS SDK | 26.2, selected by Xcode | Metal/Foundation headers and public system APIs | [Apple developer agreements](https://developer.apple.com/support/terms/); SDK not redistributed |
+| Metal and Foundation frameworks | Provided by macOS 26.5.1, build 25F80 | Device discovery, buffers, runtime shader compilation, GPU submission | Apple system components; not bundled or relicensed |
+| C++ standard library / system runtime | Supplied by selected compiler and macOS | Native host/runtime execution | Toolchain/system notices; [LLVM libc++ license](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/libcxx/LICENSE.TXT) where applicable |
+
+The selected LLVM bottle declares minimum macOS 26.0; the current CLI and generated host builds use deployment target 26.0. Metal safe/precise API availability from macOS 15 is not a claim that this CLI supports macOS 15. See `docs/engineering-notes.md`.
+
+The selected LLVM version is a tested-environment choice, not a requirement that all users obtain exactly 21.1.8. Matching LibTooling headers/libraries and a passing parser/build check are required for any alternate version.
+
+Homebrew and the OS may install additional transitive components. This source repository does not vendor their binaries. Before redistributing a compiled compiler or package, inspect its actual linked and bundled dependencies, include all required license texts/notices, and update this inventory for that exact artifact. Do not treat the top-level LLVM license as a substitute for bundled third-party notices.
+
+## Prior art, not dependencies
+
+| Project | Observed upstream license status | Paralyn use |
+|---|---|---|
+| [CuMetal](https://github.com/Lulzx/cuda-metal/blob/main/LICENSE) | Apache-2.0 | Documentation comparison only; no implementation imported |
+| [ZLUDA](https://github.com/vosen/ZLUDA) | Apache-2.0 or MIT | Documentation comparison only |
+| [MetaXuda](https://github.com/Perinban/MetaXuda/blob/main/LICENSE) | Custom restrictions on commercial use and modified redistribution | Research reference only; no code, native libraries, or dependency |
+| Other frameworks, APIs, and papers | See `docs/prior-art.md`; each implementation has its own terms | Research reference only |
+
+Review exact licenses before adding dependencies or copying examples. Public documentation and a familiar API name do not grant permission to copy proprietary implementations. If licensed third-party code is later adopted, retain its copyright, provenance, applicable license text, and notices in the same change.
+
+## Terminal command parsing and JSON reports
+
+The CLI vendors CLI11 2.4.2 (BSD-3-Clause) and nlohmann/json 3.11.3 (MIT). Exact upstream URLs, license copies and checksums are in `third_party/`. Their headers are build inputs; configuring and running Paralyn does not download dependencies. They are not linked into the native runtime or required by the Python binding.
+
+## Project and kernel-case TOML
+
+The CLI vendors toml++ (tomlplusplus) **3.4.0** by Mark Gillard, MIT license, single header `third_party/tomlplusplus/toml.hpp` with its license in `third_party/tomlplusplus/LICENSE`. Source: tag `v3.4.0` (commit `30172438cee64926dc41fdd9c11fb3ba5b2ba9de`) of <https://github.com/marzer/tomlplusplus>. The checked-in bytes are pinned by SHA256 in `third_party/SHA256SUMS.json`; their Git blob identities (`toml.hpp` `0599bf5ed502caa77a5359da68f2b10c2d9dddde`, `LICENSE` `261cd6158738041e15adb526423d05075b060fcb`) were cross-checked against that tag when imported on 2026-09-28. It is used only by the CLI to parse `paralyn.toml` projects and kernel-case files; the native runtime and Python binding do not include it.
+
+## Optional SPIR-V import toolchain
+
+Only builds configured with `-DPARALYN_ENABLE_SPIRV=ON` compile and statically link these into the `paralyn` CLI (the `paralyn_spirv` importer). The native runtime, Python binding and runtime-only builds do not link them; `.prx` modules they produce execute without them. Exact archives, commits and checksums are in `third_party/README.md` and `third_party/SHA256SUMS.json`; the upstream license texts are retained unmodified in `third_party/spirv/licenses/`.
+
+| Component | Pinned identity | Use | License |
+|---|---|---|---|
+| SPIRV-Headers | vulkan-sdk-1.4.363.0, commit `496543121ce6419f23d6fa5d7194ba66c36212d2` | SPIR-V grammar/headers for SPIRV-Tools | MIT-style Khronos license (some files CC-BY-4.0 documentation; see upstream `LICENSE`) |
+| SPIRV-Tools | v2026.4 / vulkan-sdk-1.4.363.0, commit `ef96ed763b43b59b33b31b362f09a02b729fa1c9` | `spirv-as` assembly, `spirv-val` Vulkan 1.1 validation (library and build-time tools) | Apache-2.0 |
+| SPIRV-Cross | vulkan-sdk-1.4.363.0, commit `f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7` | SPIR-V reflection and MSL 3.1 lowering | Apache-2.0 (core sources dual-licensed Apache-2.0 OR MIT) |
+
+A distributed binary that includes the importer must carry these notices and the Apache-2.0 NOTICE obligations of the linked projects.

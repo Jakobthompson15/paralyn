@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/mlp-app/discover.py", line 8, in <module>
+    print(json.dumps({"package": paralyn.__file__, "tensor_module": tensor.__file__, "library": lib,
+                                                                    ^^^^^^^^^^^^^^^
+AttributeError: 'function' object has no attribute '__file__'. Did you mean: '__le__'?

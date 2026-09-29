@@ -1,0 +1,82 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "run",
+  "status": "completed",
+  "source": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native language.c",
+  "source_sha256": "f2282e7326ad936b23a0cc016d9996e9f6bb1a9b9174bf17e429efcd19f48f36",
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "build_dirty": false,
+  "build": {
+    "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "dirty": false,
+    "changes_sha256": null,
+    "captured": "build"
+  },
+  "run_id": "1790693860283213-56859",
+  "artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c",
+  "device_selector": "auto",
+  "llvm_version": "21.1.8",
+  "verification": {
+    "status": "not_requested"
+  },
+  "application": {
+    "arguments": [],
+    "stdout": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c/application.stdout",
+    "stderr": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c/application.stderr",
+    "command": [
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c/program"
+    ],
+    "capture": {
+      "streamed": true,
+      "file_limit_bytes": 1073741824,
+      "stdout_bytes": 8,
+      "stdout_persisted_bytes": 8,
+      "stdout_truncated": false,
+      "stderr_bytes": 0,
+      "stderr_persisted_bytes": 0,
+      "stderr_truncated": false
+    },
+    "exit_code": 0,
+    "interrupted": false
+  },
+  "runtime_log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c/runtime.log",
+  "events": [
+    {
+      "stage": "executable prepared",
+      "status": "completed"
+    },
+    {
+      "stage": "application exited successfully",
+      "status": "completed"
+    }
+  ],
+  "selected_device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 7,
+    "scalar_types": 7
+  },
+  "runtime_artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/native-c/native",
+  "limitations": [
+    "Host I/O inputs are not automatically traced",
+    "run does not verify results",
+    "Native applications may explicitly select a different context; runtime events identify observed work"
+  ],
+  "runtime_evidence": null,
+  "runtime_errors_observed": false,
+  "exit_code": 0,
+  "failure_origin": null
+}

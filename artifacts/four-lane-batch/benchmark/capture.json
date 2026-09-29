@@ -1,0 +1,22 @@
+{
+  "benchmark_sha256": "f867b6e03330c8050785e1233a8c36b7e4f449c0203b1c92e31da33e3398d918",
+  "paralyn_sha256": "846092c66239cc6a4e1a4c3585137be8a8aef18da9421d5b4a332262c9f064c0",
+  "source_sha256": "ef38c75684722b775b6fc351ca1b955e3c2eb12522153487ea64708040a9b0c7",
+  "status": "verified",
+  "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/gate_b_benchmark",
+    "--source",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/vector_add.cu",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/benchmark"
+  ],
+  "paralyn_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+  "paralyn_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "paralyn_dirty": false,
+  "device": "Apple M5",
+  "started_utc": "2026-09-29T14:58:41.330721+00:00",
+  "finished_utc": "2026-09-29T14:58:46.581448+00:00",
+  "benchmark_exit_status": 0,
+  "cpu_fallback": false,
+  "audit": "880 rows, pairing/order, all sources, numerical policy, real command status/timestamps, buffer release and CPU comparison reports checked"
+}

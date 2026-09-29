@@ -1,0 +1,1 @@
+error[P-RUNTIME]: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/qualification/unsupported_shared.cu:2:20: ParalynError: CUDA feature "shared_memory" is not currently supported.

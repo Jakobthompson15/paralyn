@@ -1,0 +1,4 @@
+/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn:
+	@rpath/libparalyn_native.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)

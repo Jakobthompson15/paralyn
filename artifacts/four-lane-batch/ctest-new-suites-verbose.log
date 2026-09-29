@@ -1,0 +1,718 @@
+UpdateCTestConfiguration  from :/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/DartConfiguration.tcl
+Parse Config file:/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/DartConfiguration.tcl
+Test project /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 27
+    Start 27: kernel_cases
+
+27: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/kernel_cases.py" "--paralyn" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn" "--source" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1" "--prk" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native-kernels.prk"
+27: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+27: Test timeout computed to be: 300
+27: {"negative_checks": 95, "gpu_events": 17}
+1/9 Test #27: kernel_cases .....................   Passed   10.25 sec
+test 29
+    Start 29: tensors_cpp
+
+29: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/run_tensors.py" "--kind" "cpp" "--build" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177"
+29: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+29: Test timeout computed to be: 180
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 2 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 2 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 2 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 2 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 4 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 4 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 4 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 3 × 4 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 5 × 9 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 5 × 9 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 5 × 9 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 5 × 9 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_fill_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_fill_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_fill_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_fill_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Reusing kernel pipeline...
+29: Kernel: paralyn_bias_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 2 × 2 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_bias_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_bias_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Compiling kernel...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_bias_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_activation_f32
+29: Grid: 1 × 1 × 1
+29: Block: 256 × 1 × 1
+29: Executing on GPU...
+29: Kernel: paralyn_matmul_f32
+29: Grid: 1 × 1 × 1
+29: Block: 16 × 16 × 1
+29: Executing on GPU...
+29: Tensor provider: 47 source-linked GPU commands (38 tiled matmul), 4 high-level events; worst error/bound ratio 0.936059
+29: Verification: PASS FP32 tensor descriptors, matmul, bias/ReLU (bitwise sequential FP32 reference and float64 bound)
+29: Evidence audit: 47 completed Metal launches
+2/9 Test #29: tensors_cpp ......................   Passed    0.26 sec
+test 30
+    Start 30: tensors_python
+
+30: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/run_tensors.py" "--kind" "python" "--build" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177"
+30: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+30: Test timeout computed to be: 180
+30: Compiling kernel...
+30: Compiling kernel...
+30: Compiling kernel...
+30: Compiling kernel...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 2 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 2 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 2 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 2 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 2 × 3 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 2 × 3 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 2 × 3 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 2 × 3 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_fill_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_fill_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_fill_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_fill_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_bias_activation_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_bias_activation_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_activation_f32
+30: Grid: 1 × 1 × 1
+30: Block: 256 × 1 × 1
+30: Executing on GPU...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Reusing kernel pipeline...
+30: Compiling kernel...
+30: Compiling kernel...
+30: Compiling kernel...
+30: Compiling kernel...
+30: Kernel: paralyn_matmul_f32
+30: Grid: 1 × 1 × 1
+30: Block: 16 × 16 × 1
+30: Executing on GPU...
+30: Tensor Python: 37 GPU commands on Apple M5; worst error/bound 0.752
+30: Verification: PASS Python FP32 tensors, matmul, bias/ReLU, capability/timing wrappers
+30: Evidence audit: 37 completed Metal launches
+3/9 Test #30: tensors_python ...................   Passed    0.13 sec
+test 31
+    Start 31: tensors_mlp_cpp
+
+31: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/run_tensors.py" "--kind" "mlp-cpp" "--build" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177"
+31: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+31: Test timeout computed to be: 180
+31: Compiling kernel...
+31: Compiling kernel...
+31: Compiling kernel...
+31: Compiling kernel...
+31: Kernel: paralyn_matmul_f32
+31: Grid: 9 × 4 × 1
+31: Block: 16 × 16 × 1
+31: Executing on GPU...
+31: Kernel: paralyn_bias_activation_f32
+31: Grid: 33 × 1 × 1
+31: Block: 256 × 1 × 1
+31: Executing on GPU...
+31: Kernel: paralyn_matmul_f32
+31: Grid: 1 × 4 × 1
+31: Block: 16 × 16 × 1
+31: Executing on GPU...
+31: Kernel: paralyn_bias_activation_f32
+31: Grid: 3 × 1 × 1
+31: Block: 256 × 1 × 1
+31: Executing on GPU...
+31: Device: Apple M5; provider paralyn.msl.tensor; shapes x[64,257] W1[257,130] W2[130,11] seed 2026
+31: GPU matmul1: 110.625 us
+31: GPU bias_relu1: 7.58329 us
+31: GPU matmul2: 42.0418 us
+31: GPU bias2: 7.12508 us
+31: Max |error| vs float64 reference: 1.21538e-07; worst error/bound: hidden 0.0101506, output 0.000480976
+31: Verification: PASS two-layer FP32 MLP (704 outputs within float64-reference bound; 4 GPU commands)
+31: Evidence audit: 4 completed Metal launches
+4/9 Test #31: tensors_mlp_cpp ..................   Passed    0.07 sec
+test 32
+    Start 32: tensors_mlp_python
+
+32: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/run_tensors.py" "--kind" "mlp-python" "--build" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177"
+32: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+32: Test timeout computed to be: 180
+32: Compiling kernel...
+32: Compiling kernel...
+32: Compiling kernel...
+32: Compiling kernel...
+32: Kernel: paralyn_matmul_f32
+32: Grid: 9 × 4 × 1
+32: Block: 16 × 16 × 1
+32: Executing on GPU...
+32: Kernel: paralyn_bias_activation_f32
+32: Grid: 33 × 1 × 1
+32: Block: 256 × 1 × 1
+32: Executing on GPU...
+32: Kernel: paralyn_matmul_f32
+32: Grid: 1 × 4 × 1
+32: Block: 16 × 16 × 1
+32: Executing on GPU...
+32: Kernel: paralyn_bias_activation_f32
+32: Grid: 3 × 1 × 1
+32: Block: 256 × 1 × 1
+32: Executing on GPU...
+32: Device: Apple M5; provider paralyn.msl.tensor; x[64,257] W1[257,130] W2[130,11] seed 2026
+32: GPU matmul1: 110.625 us
+32: GPU bias_relu1: 7.375 us
+32: GPU matmul2: 42.583 us
+32: GPU bias2: 6.916 us
+32: Max |error| vs float64 reference: 1.215e-07; worst error/bound: hidden 0.010, output 0.000
+32: Verification: PASS two-layer FP32 MLP (704 outputs within float64-reference bound; 4 GPU commands)
+32: Evidence audit: 4 completed Metal launches
+5/9 Test #32: tensors_mlp_python ...............   Passed    0.29 sec
+test 33
+    Start 33: tensors_mlp_match
+
+33: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/run_tensors.py" "--kind" "mlp-match" "--build" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177"
+33: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+33: Test timeout computed to be: 180
+33: Compiling kernel...
+33: Compiling kernel...
+33: Compiling kernel...
+33: Compiling kernel...
+33: Kernel: paralyn_matmul_f32
+33: Grid: 9 × 4 × 1
+33: Block: 16 × 16 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_bias_activation_f32
+33: Grid: 33 × 1 × 1
+33: Block: 256 × 1 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_matmul_f32
+33: Grid: 1 × 4 × 1
+33: Block: 16 × 16 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_bias_activation_f32
+33: Grid: 3 × 1 × 1
+33: Block: 256 × 1 × 1
+33: Executing on GPU...
+33: Compiling kernel...
+33: Compiling kernel...
+33: Compiling kernel...
+33: Compiling kernel...
+33: Kernel: paralyn_matmul_f32
+33: Grid: 9 × 4 × 1
+33: Block: 16 × 16 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_bias_activation_f32
+33: Grid: 33 × 1 × 1
+33: Block: 256 × 1 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_matmul_f32
+33: Grid: 1 × 4 × 1
+33: Block: 16 × 16 × 1
+33: Executing on GPU...
+33: Kernel: paralyn_bias_activation_f32
+33: Grid: 3 × 1 × 1
+33: Block: 256 × 1 × 1
+33: Executing on GPU...
+33: Device: Apple M5; provider paralyn.msl.tensor; shapes x[64,257] W1[257,130] W2[130,11] seed 2026
+33: GPU matmul1: 110.333 us
+33: GPU bias_relu1: 7.37514 us
+33: GPU matmul2: 42.3747 us
+33: GPU bias2: 6.91647 us
+33: Max |error| vs float64 reference: 1.21538e-07; worst error/bound: hidden 0.0101506, output 0.000480976
+33: Verification: PASS two-layer FP32 MLP (704 outputs within float64-reference bound; 4 GPU commands)
+33: Evidence audit: 4 completed Metal launches
+33: Device: Apple M5; provider paralyn.msl.tensor; x[64,257] W1[257,130] W2[130,11] seed 2026
+33: GPU matmul1: 110.750 us
+33: GPU bias_relu1: 7.500 us
+33: GPU matmul2: 42.041 us
+33: GPU bias2: 6.875 us
+33: Max |error| vs float64 reference: 1.215e-07; worst error/bound: hidden 0.010, output 0.000
+33: Verification: PASS two-layer FP32 MLP (704 outputs within float64-reference bound; 4 GPU commands)
+33: Evidence audit: 4 completed Metal launches
+33: C++/Python MLP comparison: identical hidden and output bytes (output SHA-256 3ecb2b1d71d52f4a83f8e6e4cc1f953b189d97c3f434cbd77126e46559a5b073), provider artifact 2b69286f163751fe1408d301dcc9fcd49431f788bc9ad91f7e102380e0f6e78c
+6/9 Test #33: tensors_mlp_match ................   Passed    0.29 sec
+test 34
+    Start 34: spirv_importer
+
+34: Test command: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv_importer_tests "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/spirv" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/negative" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures"
+34: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+34: Test timeout computed to be: 60
+34: Toolchain: SPIRV-Tools vulkan-sdk-1.4.363.0 (ef96ed763b43b59b33b31b362f09a02b729fa1c9); SPIRV-Cross vulkan-sdk-1.4.363.0 (f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7); SPIRV-Headers vulkan-sdk-1.4.363.0 (496543121ce6419f23d6fa5d7194ba66c36212d2)
+34: SPIR-V importer: 174 checks, 58 stable rejections, no GPU work submitted
+7/9 Test #34: spirv_importer ...................   Passed    0.02 sec
+test 35
+    Start 35: spirv_cli
+
+35: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/run_spirv.py" "--paralyn" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn" "--examples" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/spirv" "--negative" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/negative" "--assembled" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures" "--mode" "cli"
+35: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+35: Test timeout computed to be: 120
+35: SPIR-V CLI: 4 fixture imports, 16 stable diagnostics, no GPU dispatch
+8/9 Test #35: spirv_cli ........................   Passed    1.95 sec
+test 36
+    Start 36: spirv_metal
+
+36: Test command: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/run_spirv.py" "--paralyn" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn" "--examples" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/spirv" "--negative" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/negative" "--assembled" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures" "--mode" "gpu" "--driver" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv_metal_tests" "--library" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib" "--python-path" "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/bindings/python"
+36: Working Directory: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177
+36: Test timeout computed to be: 180
+36: Compiling kernel...
+36: Compiling kernel...
+36: Compiling kernel...
+36: Kernel: vector_add
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 2 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 16 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 4097 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 15626 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 65 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: modf_write
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: modf_write
+36: Grid: 2 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: modf_write
+36: Grid: 1563 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 3 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 16 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 128 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 40 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Reusing kernel pipeline...
+36: Reusing kernel pipeline...
+36: Reusing kernel pipeline...
+36: SPIR-V on Metal: 17 GPU events, 1467859 values independently compared, 14 rejection checks
+36: Verification: PASS
+36: Compiling kernel...
+36: Compiling kernel...
+36: Kernel: vector_add
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 1 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 2 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: vector_add
+36: Grid: 193 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 4 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Kernel: reduce_sum
+36: Grid: 32 × 1 × 1
+36: Block: 64 × 1 × 1
+36: Executing on GPU...
+36: Python SPIR-V: 6 GPU events, 12511 values independently compared, 2 rejections
+36: Verification: PASS
+9/9 Test #36: spirv_metal ......................   Passed    0.62 sec
+
+The following tests passed:
+	kernel_cases
+	tensors_cpp
+	tensors_python
+	tensors_mlp_cpp
+	tensors_mlp_python
+	tensors_mlp_match
+	spirv_importer
+	spirv_cli
+	spirv_metal
+
+100% tests passed out of 9
+
+Label Time Summary:
+cases      =  10.25 sec*proc (1 test)
+cli        =  12.20 sec*proc (2 tests)
+gpu        =  13.86 sec*proc (8 tests)
+spirv      =   2.60 sec*proc (3 tests)
+tensors    =   1.04 sec*proc (5 tests)
+
+Total Test time (real) =  13.89 sec

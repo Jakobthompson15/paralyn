@@ -1,0 +1,2 @@
+Device: Apple M5; shape=(1003,); dtype=float32
+Verification: PASS native arrays (1003 values, add + affine, independent CPU reference)

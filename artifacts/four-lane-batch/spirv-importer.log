@@ -1,0 +1,2 @@
+Toolchain: SPIRV-Tools vulkan-sdk-1.4.363.0 (ef96ed763b43b59b33b31b362f09a02b729fa1c9); SPIRV-Cross vulkan-sdk-1.4.363.0 (f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7); SPIRV-Headers vulkan-sdk-1.4.363.0 (496543121ce6419f23d6fa5d7194ba66c36212d2)
+SPIR-V importer: 174 checks, 58 stable rejections, no GPU work submitted

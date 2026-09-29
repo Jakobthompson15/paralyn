@@ -1,0 +1,9 @@
+Paralyn: launching vector_add (case vector-add-inline-sentinels)
+Paralyn
+Kernel       vector_add (case vector-add-inline-sentinels)
+Device       Apple M5 / Metal
+GPU          completed (6.25011e-06 s GPU duration)
+Output       out: 7 f32 -> /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add-inline/outputs/out.bin
+  out: 7 compared, 0 mismatches (exact vs builtin reference)
+Verification: PASS (7 values compared across 1 declared check(s))
+Report       /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add-inline/report.json

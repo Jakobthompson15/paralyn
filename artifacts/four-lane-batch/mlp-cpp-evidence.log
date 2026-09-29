@@ -1,0 +1,27 @@
+Compiling kernel...
+Compiling kernel...
+Compiling kernel...
+Compiling kernel...
+Kernel: paralyn_matmul_f32
+Grid: 9 × 4 × 1
+Block: 16 × 16 × 1
+Executing on GPU...
+Kernel: paralyn_bias_activation_f32
+Grid: 33 × 1 × 1
+Block: 256 × 1 × 1
+Executing on GPU...
+Kernel: paralyn_matmul_f32
+Grid: 1 × 4 × 1
+Block: 16 × 16 × 1
+Executing on GPU...
+Kernel: paralyn_bias_activation_f32
+Grid: 3 × 1 × 1
+Block: 256 × 1 × 1
+Executing on GPU...
+Device: Apple M5; provider paralyn.msl.tensor; shapes x[64,257] W1[257,130] W2[130,11] seed 2026
+GPU matmul1: 112.5 us
+GPU bias_relu1: 7.29132 us
+GPU matmul2: 43.2502 us
+GPU bias2: 6.87502 us
+Max |error| vs float64 reference: 1.21538e-07; worst error/bound: hidden 0.0101506, output 0.000480976
+Verification: PASS two-layer FP32 MLP (704 outputs within float64-reference bound; 4 GPU commands)

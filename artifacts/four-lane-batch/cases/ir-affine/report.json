@@ -1,0 +1,271 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "verify",
+  "status": "passed",
+  "source": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native-kernels.prk",
+  "source_sha256": "52a31e2054e10966f040c0bcb2f07cff9dd65512e908770f58c675173cf398ef",
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "build_dirty": false,
+  "build": {
+    "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "dirty": false,
+    "changes_sha256": null,
+    "captured": "build"
+  },
+  "frontend": "kernel_case",
+  "entries": [
+    {
+      "name": "vector_add",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "f32",
+          "buffer": true,
+          "read_only": true
+        },
+        {
+          "name": "b",
+          "type": "f32",
+          "buffer": true,
+          "read_only": true
+        },
+        {
+          "name": "out",
+          "type": "f32",
+          "buffer": true,
+          "read_only": false
+        },
+        {
+          "name": "n",
+          "type": "i32",
+          "buffer": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "name": "affine",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "f32",
+          "buffer": true,
+          "read_only": true
+        },
+        {
+          "name": "b",
+          "type": "f32",
+          "buffer": true,
+          "read_only": true
+        },
+        {
+          "name": "out",
+          "type": "f32",
+          "buffer": true,
+          "read_only": false
+        },
+        {
+          "name": "n",
+          "type": "i32",
+          "buffer": false,
+          "read_only": false
+        },
+        {
+          "name": "scale",
+          "type": "f32",
+          "buffer": false,
+          "read_only": false
+        }
+      ]
+    }
+  ],
+  "frontend_module": "verified_ir",
+  "case": {
+    "path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/cases/ir_affine.toml",
+    "sha256": "cfb98004697daf8c82c490bf129a76f872e83ffd218d708c9891b178fad9a84e",
+    "name": "ir-affine-1003",
+    "entry": "affine",
+    "description": ""
+  },
+  "launch": {
+    "grid": [
+      4,
+      1,
+      1
+    ],
+    "block": [
+      256,
+      1,
+      1
+    ]
+  },
+  "cpu_fallback": false,
+  "run_id": "1790694043470468-57823",
+  "artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine",
+  "runtime_log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/runtime.log",
+  "runtime_events_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/runtime-events.ndjson",
+  "device_selector": "metal:0",
+  "device": {
+    "selector": "metal:0",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 7,
+    "scalar_types": 7
+  },
+  "arguments": [
+    {
+      "name": "a",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "read",
+      "origin": "file",
+      "initial_sha256": "daed10ac0acd21c0624c83ee0373c0827d04d991260ff0e7b6d5bdd3799aea33",
+      "output": false
+    },
+    {
+      "name": "b",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "read",
+      "origin": "file",
+      "initial_sha256": "b2530182fd402df693e7bb978a5e65601cc4eeaec7a10a6e22d509231c8d8748",
+      "output": false
+    },
+    {
+      "name": "out",
+      "kind": "buffer",
+      "dtype": "f32",
+      "length": 1003,
+      "access": "write",
+      "origin": "fill",
+      "initial_sha256": "df7de1d051d6386b79c9fd932ff69a027b4b2a2332989e476b6a02dbb1ba36af",
+      "output": true
+    },
+    {
+      "name": "n",
+      "kind": "scalar",
+      "dtype": "i32",
+      "bits": 1003
+    },
+    {
+      "name": "scale",
+      "kind": "scalar",
+      "dtype": "f32",
+      "bits": 1056964608
+    }
+  ],
+  "backend_compilation": "passed",
+  "timing": {
+    "completed": true,
+    "duration_valid": true,
+    "duration_seconds": 6.583519279956818e-06,
+    "timestamps_valid": true,
+    "clock_domain": 2,
+    "start_seconds": 3283069.1123180417,
+    "end_seconds": 3283069.1123246253
+  },
+  "runtime_evidence_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/runtime/execution.json",
+  "runtime_evidence": {
+    "backend": "Metal",
+    "device": "Apple M5",
+    "registry_id": 4294968361,
+    "stable_device_id": "metal:registry:0000000100000429",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "physical_memory_bytes": 17179869184,
+    "unified_memory": true,
+    "metal_language_version": "3.1",
+    "thermal_state_at_capture": 0,
+    "low_power_mode_at_capture": false,
+    "paralyn_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "paralyn_dirty": false,
+    "paralyn_revision_source": "embedded_build",
+    "paralyn_runtime_build": {
+      "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+      "dirty": false,
+      "changes_sha256": null,
+      "captured": "build"
+    },
+    "llvm_version": "21.1.8",
+    "math_mode": "safe",
+    "floating_point_functions": "precise",
+    "cpu_fallback": false,
+    "runtime_owned_current_buffer_bytes": 12036,
+    "runtime_owned_peak_buffer_bytes": 12036,
+    "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+    "launches": [
+      {
+        "kernel": "affine",
+        "grid": [
+          4,
+          1,
+          1
+        ],
+        "block": [
+          256,
+          1,
+          1
+        ],
+        "command_status": "completed",
+        "gpu_start_seconds": 3283069.1123180417,
+        "gpu_end_seconds": 3283069.1123246253,
+        "gpu_duration_seconds": 6.583519279956818e-06,
+        "gpu_duration_valid": true,
+        "gpu_timestamps_valid": true,
+        "gpu_clock_domain": "metal_system_mach",
+        "pipeline_compile_seconds": 0,
+        "source_file": "source-0.metal",
+        "error": ""
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "out",
+      "dtype": "f32",
+      "elements": 1003,
+      "encoding": "little-endian 32-bit",
+      "path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine/outputs/out.bin",
+      "sha256": "b076c07b78b56a3701703e5f5dfe6127c8725e8488999dd8e3012800120c7b19"
+    }
+  ],
+  "verification": {
+    "status": "passed",
+    "compared": 1003,
+    "checks": [
+      {
+        "buffer": "out",
+        "dtype": "f32",
+        "reference": {
+          "kind": "file",
+          "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/cases/data/affine_expected.f32",
+          "sha256": "b076c07b78b56a3701703e5f5dfe6127c8725e8488999dd8e3012800120c7b19"
+        },
+        "tolerance": {
+          "kind": "ulp",
+          "ulp": 0
+        },
+        "compared": 1003,
+        "mismatches": 0,
+        "status": "passed",
+        "first_mismatches": [],
+        "max_abs_error": 0.0,
+        "max_ulp_distance": 0
+      }
+    ],
+    "comparison": "host comparison of GPU output against the declared independent reference"
+  }
+}

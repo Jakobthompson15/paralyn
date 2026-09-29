@@ -1,0 +1,1 @@
+Paralyn shutdown failed: Expected a live cudaMalloc base token; interior, foreign, and freed pointers are unsupported

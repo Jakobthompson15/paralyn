@@ -1,0 +1,1 @@
+error[P-RUNTIME]: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/qualification/unsupported_double.cu:1:44: ParalynError: CUDA feature "device_type_double" is not currently supported.

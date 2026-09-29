@@ -1,0 +1,31 @@
+-- The C compiler identification is AppleClang 17.0.0.17000603
+-- The CXX compiler identification is AppleClang 17.0.0.17000603
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14 (found version "3.14.5") found components: Interpreter
+-- Paralyn SPIR-V import: SPIRV-Tools vulkan-sdk-1.4.363.0 (ef96ed763b43b59b33b31b362f09a02b729fa1c9); SPIRV-Cross vulkan-sdk-1.4.363.0 (f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7); SPIRV-Headers vulkan-sdk-1.4.363.0 (496543121ce6419f23d6fa5d7194ba66c36212d2)
+-- The OBJCXX compiler identification is AppleClang 17.0.0.17000603
+-- Detecting OBJCXX compiler ABI info
+-- Detecting OBJCXX compiler ABI info - done
+-- Check for working OBJCXX compiler: /usr/bin/clang++ - skipped
+-- Performing Test HAVE_FFI_CALL
+-- Performing Test HAVE_FFI_CALL - Success
+-- Found FFI: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libffi.tbd
+-- Looking for histedit.h
+-- Looking for histedit.h - found
+-- Found LibEdit: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include (found version "2.11")
+-- Found ZLIB: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd (found version "1.2.12")
+-- Found zstd: /opt/homebrew/lib/libzstd.dylib
+-- Found LibXml2: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libxml2.tbd (found version "2.9.13")
+-- Paralyn frontend: LLVM 21.1.8 at /opt/homebrew/Cellar/llvm@21/21.1.8
+-- Configuring done (3.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177

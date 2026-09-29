@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "source_dirty_at_configuration": false,
+  "recording_scope": "Post-run readback of the exact installed/runtime-only binaries used by installation-validation.json",
+  "records": [
+    {
+      "profile": "relocated-cli",
+      "original_path": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/bin/paralyn",
+      "snapshot": "installation-builds/relocated-cli/bin/paralyn",
+      "sha256": "e16e05cac51ebdc5598ab5685787227efa583c5144a41ee85c2b6ede4476be9a"
+    },
+    {
+      "profile": "relocated-cli",
+      "original_path": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/lib/libparalyn_native.dylib",
+      "snapshot": "installation-builds/relocated-cli/lib/libparalyn_native.dylib",
+      "sha256": "9f7661469f86f1a0fe156f0e696638cad9836cb38c98c3b5d7fa97b687fc1ef0"
+    },
+    {
+      "profile": "relocated-cli",
+      "original_path": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/prefix-relocated/share/paralyn/operators.prk",
+      "snapshot": "installation-builds/relocated-cli/share/paralyn/operators.prk",
+      "sha256": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/paralyn",
+      "snapshot": "installation-builds/runtime-only/paralyn",
+      "sha256": "b6df0a6fa4fbd48757a99e8195ceec1a9f9db704238655e5644cf2863b80c934"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/libparalyn_native.dylib",
+      "snapshot": "installation-builds/runtime-only/libparalyn_native.dylib",
+      "sha256": "bcbcc8918115046568327019dd0d45f005c37c79a3e5ba5aaf8076521b56b839"
+    },
+    {
+      "profile": "runtime-only",
+      "original_path": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/runtime-only-cccb177/CMakeCache.txt",
+      "snapshot": "installation-builds/runtime-only/CMakeCache.txt",
+      "sha256": "0495e34819522ae4f7a91089c0065c42578d66913d712039b60ca2c67e1c65ed"
+    }
+  ]
+}

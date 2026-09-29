@@ -1,0 +1,20 @@
+{
+  "verification": "PASS",
+  "gpu_events": 4,
+  "cases": [
+    {
+      "language": "cpp",
+      "gpu_events": 2,
+      "device": "Apple M5",
+      "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+      "report": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/installed-cli/cpp/report.json"
+    },
+    {
+      "language": "py",
+      "gpu_events": 2,
+      "device": "Apple M5",
+      "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+      "report": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/installed-cli/py/report.json"
+    }
+  ]
+}

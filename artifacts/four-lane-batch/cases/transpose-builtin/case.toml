@@ -1,0 +1,36 @@
+# tiled_transpose with the registered transpose-f32 host reference.
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "transpose-33x19-builtin"
+entry = "tiled_transpose"
+
+[launch]
+grid = [3, 2, 1]
+block = [16, 16, 1]
+
+[scalars.width]
+type = "u32"
+value = 33
+
+[scalars.height]
+type = "u32"
+value = 19
+
+[buffers.input]
+dtype = "f32"
+length = 627
+file = "data/transpose_input.f32"
+sha256 = "d40ce7cb3bb134170883819c00f2749654a20e5e11f3b9ea0b5fb3abeb2f50ec"
+
+[buffers.output]
+dtype = "f32"
+length = 629       # two trailing sentinels beyond width*height
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "output"
+reference = { builtin = "transpose-f32", input = "input", width = "width", height = "height" }
+tolerance = { kind = "exact" }

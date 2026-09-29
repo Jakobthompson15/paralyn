@@ -1,0 +1,1 @@
+Verification: PASS native C++ arrays (19 source-linked + 2 retained-output GPU events, independent CPU references)

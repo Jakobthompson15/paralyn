@@ -1,0 +1,9 @@
+Paralyn: launching block_reduce (case block-reduce-1003)
+Paralyn
+Kernel       block_reduce (case block-reduce-1003)
+Device       Apple M5 / Metal
+GPU          completed (8.00006e-06 s GPU duration)
+Output       output: 18 f32 -> /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/block-reduce/outputs/output.bin
+  output: 18 compared, 0 mismatches (exact vs builtin reference)
+Verification: PASS (18 values compared across 1 declared check(s))
+Report       /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/block-reduce/report.json

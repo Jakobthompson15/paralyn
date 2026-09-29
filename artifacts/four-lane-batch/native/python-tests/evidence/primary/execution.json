@@ -1,0 +1,33 @@
+{
+  "backend": "Metal",
+  "device": "Apple M5",
+  "registry_id": 4294968361,
+  "stable_device_id": "metal:registry:0000000100000429",
+  "os": "Version 26.5.1 (Build 25F80)",
+  "physical_memory_bytes": 17179869184,
+  "unified_memory": true,
+  "metal_language_version": "3.1",
+  "thermal_state_at_capture": 0,
+  "low_power_mode_at_capture": false,
+  "paralyn_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "paralyn_dirty": false,
+  "paralyn_revision_source": "environment",
+  "paralyn_runtime_build": {"revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca", "dirty": false, "changes_sha256": null, "captured": "build"},
+  "llvm_version": "21.1.8",
+  "math_mode": "safe",
+  "floating_point_functions": "precise",
+  "cpu_fallback": false,
+  "runtime_owned_current_buffer_bytes": 12180,
+  "runtime_owned_peak_buffer_bytes": 12184,
+  "buffer_accounting": "requested MTLBuffer lengths; excludes host vectors, pipelines, driver allocations",
+  "launches": [
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1803243752, "gpu_end_seconds": 3282908.1803306253, "gpu_duration_seconds": 6.2501057982444763e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 4.8000000000000001e-05, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "affine", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1808326668, "gpu_end_seconds": 3282908.1808385001, "gpu_duration_seconds": 5.8333389461040497e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 5.9375e-05, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "affine", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1811548751, "gpu_end_seconds": 3282908.1811606251, "gpu_duration_seconds": 5.7499855756759644e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-1.metal", "error": ""},
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.181474417, "gpu_end_seconds": 3282908.1814794168, "gpu_duration_seconds": 4.9998052418231964e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1817561667, "gpu_end_seconds": 3282908.1817618753, "gpu_duration_seconds": 5.7085417211055756e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1820926671, "gpu_end_seconds": 3282908.1820983752, "gpu_duration_seconds": 5.7080760598182678e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 4.6749999999999998e-05, "source_file": "source-2.metal", "error": ""},
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1830223752, "gpu_end_seconds": 3282908.1830280419, "gpu_duration_seconds": 5.666632205247879e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""},
+    {"kernel": "vector_add", "grid": [16,1,1], "block": [64,1,1], "command_status": "completed", "gpu_start_seconds": 3282908.1833110419, "gpu_end_seconds": 3282908.18331675, "gpu_duration_seconds": 5.7080760598182678e-06, "gpu_duration_valid": true, "gpu_timestamps_valid": true, "gpu_clock_domain": "metal_system_mach", "pipeline_compile_seconds": 0, "source_file": "source-0.metal", "error": ""}
+  ]
+}

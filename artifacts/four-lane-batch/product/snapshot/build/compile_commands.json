@@ -1,0 +1,254 @@
+[
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/ir.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/ir.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_ir.dir/compiler/ir/ir.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/artifact.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/artifact.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_ir.dir/compiler/ir/artifact.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/codegen/metal.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/codegen/metal.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_ir.dir/compiler/codegen/metal.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/executable.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/ir/executable.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_ir.dir/compiler/ir/executable.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_ir.dir/compiler/codegen/cuda.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/codegen/cuda.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/codegen/cuda.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_ir.dir/compiler/codegen/cuda.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated/spirv -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/_spirv/src/SPIRV-Tools-ef96ed763b43b59b33b31b362f09a02b729fa1c9/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/_spirv/src/SPIRV-Cross-f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7 -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_spirv.dir/compiler/spirv/importer.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/spirv/importer.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/spirv/importer.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_spirv.dir/compiler/spirv/importer.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/clang++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -x objective-c++ -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/backends/metal/runtime.mm.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/metal/runtime.mm",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/metal/runtime.mm",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/backends/metal/runtime.mm.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/clang++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -x objective-c++ -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/backends/metal/engine.mm.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/metal/engine.mm",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/metal/engine.mm",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/backends/metal/engine.mm.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/telemetry.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/telemetry.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/runtime/telemetry.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/backends/cuda/loader.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda/loader.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda/loader.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/backends/cuda/loader.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/backends/cuda/engine.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda/engine.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda/engine.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/backends/cuda/engine.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -fobjc-arc -o CMakeFiles/paralyn_runtime.dir/runtime/registry.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/registry.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/registry.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_runtime.dir/runtime/registry.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_HAS_METAL=1 -Dparalyn_native_EXPORTS -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_native.dir/runtime/native.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/native.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/native.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_native.dir/runtime/native.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_HAS_METAL=1 -Dparalyn_native_EXPORTS -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_native.dir/runtime/tensor.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/tensor.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/runtime/tensor.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_native.dir/runtime/tensor.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_CLANG_PATH=\\\"/opt/homebrew/Cellar/llvm@21/21.1.8/bin/clang++\\\" -DPARALYN_INCLUDE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include\\\" -DPARALYN_RESOURCE_DIR=\\\"/opt/homebrew/Cellar/llvm@21/21.1.8/lib/clang/21\\\" -DPARALYN_SDK_PATH=\\\"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk\\\" -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /opt/homebrew/Cellar/llvm@21/21.1.8/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn_frontend.dir/compiler/frontend/frontend.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/frontend/frontend.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/compiler/frontend/frontend.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn_frontend.dir/compiler/frontend/frontend.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_BINARY_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177\\\" -DPARALYN_BUILD_COMMIT=\\\"cccb17788046dad66ab5c08e0c0c3f145d6865ca\\\" -DPARALYN_BUILD_DIRTY=\\\"false\\\" -DPARALYN_DEPLOYMENT_TARGET=\\\"26.0\\\" -DPARALYN_HAS_COMPILER=1 -DPARALYN_HAS_METAL=1 -DPARALYN_HAS_SPIRV=1 -DPARALYN_HOST_CC=\\\"/usr/bin/cc\\\" -DPARALYN_HOST_CXX=\\\"/usr/bin/c++\\\" -DPARALYN_HOST_CXX_ID=\\\"AppleClang\\\" -DPARALYN_HOST_CXX_VARIANT=\\\"GNU\\\" -DPARALYN_INCLUDE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include\\\" -DPARALYN_IR_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_ir.a\\\" -DPARALYN_LLVM_VERSION=\\\"21.1.8\\\" -DPARALYN_NATIVE_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_NATIVE_LINK_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_RUNTIME_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_runtime.a\\\" -DPARALYN_SOURCE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1\\\" -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/third_party -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn.dir/cli/main.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/main.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/main.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn.dir/cli/main.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_BINARY_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177\\\" -DPARALYN_BUILD_COMMIT=\\\"cccb17788046dad66ab5c08e0c0c3f145d6865ca\\\" -DPARALYN_BUILD_DIRTY=\\\"false\\\" -DPARALYN_DEPLOYMENT_TARGET=\\\"26.0\\\" -DPARALYN_HAS_COMPILER=1 -DPARALYN_HAS_METAL=1 -DPARALYN_HAS_SPIRV=1 -DPARALYN_HOST_CC=\\\"/usr/bin/cc\\\" -DPARALYN_HOST_CXX=\\\"/usr/bin/c++\\\" -DPARALYN_HOST_CXX_ID=\\\"AppleClang\\\" -DPARALYN_HOST_CXX_VARIANT=\\\"GNU\\\" -DPARALYN_INCLUDE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include\\\" -DPARALYN_IR_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_ir.a\\\" -DPARALYN_LLVM_VERSION=\\\"21.1.8\\\" -DPARALYN_NATIVE_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_NATIVE_LINK_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_RUNTIME_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_runtime.a\\\" -DPARALYN_SOURCE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1\\\" -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/third_party -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn.dir/cli/kernel_case.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/kernel_case.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/kernel_case.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn.dir/cli/kernel_case.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_BINARY_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177\\\" -DPARALYN_BUILD_COMMIT=\\\"cccb17788046dad66ab5c08e0c0c3f145d6865ca\\\" -DPARALYN_BUILD_DIRTY=\\\"false\\\" -DPARALYN_DEPLOYMENT_TARGET=\\\"26.0\\\" -DPARALYN_HAS_COMPILER=1 -DPARALYN_HAS_METAL=1 -DPARALYN_HAS_SPIRV=1 -DPARALYN_HOST_CC=\\\"/usr/bin/cc\\\" -DPARALYN_HOST_CXX=\\\"/usr/bin/c++\\\" -DPARALYN_HOST_CXX_ID=\\\"AppleClang\\\" -DPARALYN_HOST_CXX_VARIANT=\\\"GNU\\\" -DPARALYN_INCLUDE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include\\\" -DPARALYN_IR_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_ir.a\\\" -DPARALYN_LLVM_VERSION=\\\"21.1.8\\\" -DPARALYN_NATIVE_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_NATIVE_LINK_LIBRARY=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib\\\" -DPARALYN_RUNTIME_ARCHIVE=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_runtime.a\\\" -DPARALYN_SOURCE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1\\\" -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/generated -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/third_party -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/paralyn.dir/cli/process_posix.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/process_posix.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/process_posix.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/paralyn.dir/cli/process_posix.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/ir_tests.dir/tests/ir_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/ir_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/ir_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/ir_tests.dir/tests/ir_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/artifact_tests.dir/tests/artifact_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/artifact_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/artifact_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/artifact_tests.dir/tests/artifact_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/executable_tests.dir/tests/executable_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/executable_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/executable_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/executable_tests.dir/tests/executable_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -DPARALYN_TEST_SOURCE_DIR=\\\"/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1\\\" -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/frontend_tests.dir/tests/frontend_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/frontend_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/frontend_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/frontend_tests.dir/tests/frontend_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/runtime_smoke.dir/tests/runtime_smoke.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/runtime_smoke.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/runtime_smoke.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/runtime_smoke.dir/tests/runtime_smoke.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/cc -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu11 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/native_c.dir/examples/native/vector_add.c.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/vector_add.c",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/vector_add.c",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_c.dir/examples/native/vector_add.c.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/native_cpp.dir/examples/native/vector_add.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/vector_add.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/vector_add.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_cpp.dir/examples/native/vector_add.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/native_tests.dir/tests/native/native_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/native_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/native_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_tests.dir/tests/native/native_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -O2 -fno-fast-math -ffp-contract=off -o CMakeFiles/gate_b_benchmark.dir/benchmarks/gate_b_benchmark.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/benchmarks/gate_b_benchmark.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/benchmarks/gate_b_benchmark.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/gate_b_benchmark.dir/benchmarks/gate_b_benchmark.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/native_query_tests.dir/tests/native/query_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/query_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/query_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_query_tests.dir/tests/native/query_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/msl_tests.dir/tests/metal/msl_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/metal/msl_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/metal/msl_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/msl_tests.dir/tests/metal/msl_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/cuda_codegen_tests.dir/tests/cuda/codegen_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/codegen_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/codegen_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/cuda_codegen_tests.dir/tests/cuda/codegen_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/cuda_backend_tests.dir/tests/cuda/backend_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/backend_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/backend_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/cuda_backend_tests.dir/tests/cuda/backend_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/backends/cuda -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/cuda_backend_tests.dir/tests/cuda/fake_driver.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/fake_driver.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/fake_driver.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/cuda_backend_tests.dir/tests/cuda/fake_driver.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -Dcuda_cwd_probe_EXPORTS -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/cuda_cwd_probe.dir/tests/cuda/cwd_probe.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/cwd_probe.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/cuda/cwd_probe.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/cuda_cwd_probe.dir/tests/cuda/cwd_probe.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/third_party -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/telemetry_tests.dir/tests/telemetry_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/telemetry_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/telemetry_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/telemetry_tests.dir/tests/telemetry_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/native_arrays.dir/examples/native/arrays.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/arrays.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/arrays.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_arrays.dir/examples/native/arrays.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/array_tests.dir/tests/native/array_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/array_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/array_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/array_tests.dir/tests/native/array_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/process_tests.dir/tests/process_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/process_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/process_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/process_tests.dir/tests/process_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/process_tests.dir/cli/process_posix.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/process_posix.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/cli/process_posix.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/process_tests.dir/cli/process_posix.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -isystem /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/third_party -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/tensor_tests.dir/tests/native/tensor_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/tensor_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/tensor_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/tensor_tests.dir/tests/native/tensor_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/native_mlp.dir/examples/native/mlp.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/mlp.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/mlp.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/native_mlp.dir/examples/native/mlp.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/spirv_importer_tests.dir/tests/spirv/importer_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/importer_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/importer_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/spirv_importer_tests.dir/tests/spirv/importer_tests.cpp.o"
+},
+{
+  "directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+  "command": "/usr/bin/c++ -I/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/include -g -std=gnu++17 -arch arm64 -mmacosx-version-min=26.0 -fPIE -Wall -Wextra -Wpedantic -fno-fast-math -ffp-contract=off -o CMakeFiles/spirv_metal_tests.dir/tests/spirv/metal_tests.cpp.o -c /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/metal_tests.cpp",
+  "file": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/spirv/metal_tests.cpp",
+  "output": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/CMakeFiles/spirv_metal_tests.dir/tests/spirv/metal_tests.cpp.o"
+}
+]

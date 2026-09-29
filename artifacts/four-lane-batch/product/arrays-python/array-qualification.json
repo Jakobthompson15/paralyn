@@ -1,0 +1,158 @@
+{
+  "status": "verified",
+  "dtype": "float32",
+  "shape_contract": "one-dimensional contiguous",
+  "device": {
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "registry_id": 4294968361,
+    "max_buffer_bytes": 9534832640,
+    "unified_memory": true
+  },
+  "python_version": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "events": [
+    {
+      "length": 1,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2594252503,
+      "gpu_end_seconds": 3282880.2594316253
+    },
+    {
+      "length": 1,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2594768754,
+      "gpu_end_seconds": 3282880.25948275
+    },
+    {
+      "length": 1,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2598055,
+      "gpu_end_seconds": 3282880.2598113753
+    },
+    {
+      "length": 17,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.263889125,
+      "gpu_end_seconds": 3282880.263895375
+    },
+    {
+      "length": 17,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.264438417,
+      "gpu_end_seconds": 3282880.2644445
+    },
+    {
+      "length": 17,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.264900417,
+      "gpu_end_seconds": 3282880.2649066253
+    },
+    {
+      "length": 256,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.266704,
+      "gpu_end_seconds": 3282880.26671
+    },
+    {
+      "length": 256,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2673057504,
+      "gpu_end_seconds": 3282880.267312042
+    },
+    {
+      "length": 256,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2682037503,
+      "gpu_end_seconds": 3282880.2682097917
+    },
+    {
+      "length": 257,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.270321375,
+      "gpu_end_seconds": 3282880.2703273753
+    },
+    {
+      "length": 257,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2706895,
+      "gpu_end_seconds": 3282880.27069525
+    },
+    {
+      "length": 257,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2709927503,
+      "gpu_end_seconds": 3282880.270998375
+    },
+    {
+      "length": 1003,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.27440825,
+      "gpu_end_seconds": 3282880.274414667
+    },
+    {
+      "length": 1003,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.282533125,
+      "gpu_end_seconds": 3282880.282539417
+    },
+    {
+      "length": 1003,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.2843862916,
+      "gpu_end_seconds": 3282880.284392
+    },
+    {
+      "length": 1000003,
+      "operation": "add",
+      "completed": true,
+      "gpu_start_seconds": 3282880.4762187502,
+      "gpu_end_seconds": 3282880.476370417
+    },
+    {
+      "length": 1000003,
+      "operation": "affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.476241875,
+      "gpu_end_seconds": 3282880.4764388753
+    },
+    {
+      "length": 1000003,
+      "operation": "dependent_affine",
+      "completed": true,
+      "gpu_start_seconds": 3282880.4767275,
+      "gpu_end_seconds": 3282880.476834
+    },
+    {
+      "length": 3,
+      "operation": "same_input_alias",
+      "completed": true,
+      "gpu_start_seconds": 3282880.5132055418,
+      "gpu_end_seconds": 3282880.513211667
+    }
+  ],
+  "post_context_close_event": {
+    "completed": true,
+    "gpu_start_seconds": 3282880.521724417,
+    "gpu_end_seconds": 3282880.5218640002
+  },
+  "cpu_fallback": false,
+  "operator_module_sha256": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07",
+  "native_library_sha256": "9f7661469f86f1a0fe156f0e696638cad9836cb38c98c3b5d7fa97b687fc1ef0",
+  "evidence_scope": "19 source-linked commands plus one actual retained-output event after context close"
+}

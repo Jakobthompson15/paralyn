@@ -1,0 +1,480 @@
+{
+ "steps": [
+  {
+   "name": "configure",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "cmake",
+    "-S",
+    ".",
+    "-B",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DPARALYN_ENABLE_SPIRV=ON"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 3.1535234581679106,
+   "log": "configure.log"
+  },
+  {
+   "name": "build",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "cmake",
+    "--build",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "-j8"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 46.5829200418666,
+   "log": "build.log"
+  },
+  {
+   "name": "ctest",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "ctest",
+    "--test-dir",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "--output-on-failure",
+    "-j1"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 46.84146466571838,
+   "log": "ctest.log"
+  },
+  {
+   "name": "product",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/qualify_product.py",
+    "--build",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "--output",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product",
+    "--require-clean"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 9.678959124721587,
+   "log": "product.log"
+  },
+  {
+   "name": "product-audit",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/qualify_product.py",
+    "--output",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product",
+    "--audit-only"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.11459220899268985,
+   "log": "product-audit.log"
+  },
+  {
+   "name": "audit-corruption",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/product_audit_tests.py",
+    "--capture",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.4639623751863837,
+   "log": "audit-corruption.log"
+  },
+  {
+   "name": "native",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/qualify_native.py",
+    "--build",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "--output",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native",
+    "--require-clean"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.6915981252677739,
+   "log": "native.log"
+  },
+  {
+   "name": "gate-a",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/verify_gate_a.py",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--source",
+    "examples/vector_add.cu",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/gate-a",
+    "--require-clean"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.6730431248433888,
+   "log": "gate-a.log"
+  },
+  {
+   "name": "cuda",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/qualify_gate_b.py",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cuda",
+    "--require-clean"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 7.8017790000885725,
+   "log": "cuda.log"
+  },
+  {
+   "name": "native-cli",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/native/cli_arrays.py",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native-cli"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.046151291579008,
+   "log": "native-cli.log"
+  },
+  {
+   "name": "benchmark",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/verify_benchmark.py",
+    "--benchmark",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/gate_b_benchmark",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--source",
+    "examples/vector_add.cu",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/benchmark",
+    "--require-clean"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 5.644413209054619,
+   "log": "benchmark.log"
+  },
+  {
+   "name": "ctest-new-suites-verbose",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "ctest",
+    "--test-dir",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "-V",
+    "-j1",
+    "-R",
+    "^(tensors_|kernel_cases$|spirv_)"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 13.92053429223597,
+   "log": "ctest-new-suites-verbose.log"
+  },
+  {
+   "name": "tensors-cpp-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PARALYN_LIBRARY=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "PYTHONPATH=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/bindings/python",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/tensor_tests",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/tensors/cpp"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.14357170788571239,
+   "log": "tensors-cpp-evidence.log"
+  },
+  {
+   "name": "tensors-python-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PARALYN_LIBRARY=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "PYTHONPATH=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/bindings/python",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "/opt/homebrew/bin/python3.14",
+    "tests/native/test_tensors.py",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/tensors/python"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.11361645814031363,
+   "log": "tensors-python-evidence.log"
+  },
+  {
+   "name": "mlp-cpp-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PARALYN_LIBRARY=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native_mlp",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/tensors/mlp-cpp"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.03943829098716378,
+   "log": "mlp-cpp-evidence.log"
+  },
+  {
+   "name": "mlp-python-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "env",
+    "-u",
+    "PARALYN_ARTIFACT_DIR",
+    "PARALYN_LIBRARY=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "PYTHONPATH=/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/bindings/python",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "/opt/homebrew/bin/python3.14",
+    "examples/native/mlp.py",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/tensors/mlp-python"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.22408929094672203,
+   "log": "mlp-python-evidence.log"
+  },
+  {
+   "name": "spirv-metal-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/spirv/run_spirv.py",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--examples",
+    "examples/spirv",
+    "--negative",
+    "tests/spirv/negative",
+    "--assembled",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures",
+    "--mode",
+    "gpu",
+    "--driver",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv_metal_tests",
+    "--library",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/libparalyn_native.dylib",
+    "--python-path",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/bindings/python",
+    "--keep",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/spirv/metal"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.9701026659458876,
+   "log": "spirv-metal-evidence.log"
+  },
+  {
+   "name": "spirv-cli-evidence",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/spirv/run_spirv.py",
+    "--paralyn",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "--examples",
+    "examples/spirv",
+    "--negative",
+    "tests/spirv/negative",
+    "--assembled",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures",
+    "--mode",
+    "cli",
+    "--keep",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/spirv/cli"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 1.839368584100157,
+   "log": "spirv-cli-evidence.log"
+  },
+  {
+   "name": "spirv-importer",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv_importer_tests",
+    "examples/spirv",
+    "tests/spirv/negative",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/spirv-fixtures"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.15521116694435477,
+   "log": "spirv-importer.log"
+  },
+  {
+   "name": "case-vector-add",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "vector-add",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.19148100027814507,
+   "log": "case-vector-add.log"
+  },
+  {
+   "name": "case-vector-add-inline",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "vector-add-inline",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/vector-add-inline"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.07439870806410909,
+   "log": "case-vector-add-inline.log"
+  },
+  {
+   "name": "case-block-reduce",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "block-reduce",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/block-reduce"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.20278870780020952,
+   "log": "case-block-reduce.log"
+  },
+  {
+   "name": "case-transpose",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "transpose",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/transpose"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.07994912518188357,
+   "log": "case-transpose.log"
+  },
+  {
+   "name": "case-transpose-builtin",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "examples/cases/paralyn.toml",
+    "--case",
+    "transpose-builtin",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/transpose-builtin"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.24614012520760298,
+   "log": "case-transpose-builtin.log"
+  },
+  {
+   "name": "case-ir-affine",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "verify",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native-kernels.prk",
+    "--case",
+    "examples/cases/ir_affine.toml",
+    "--device",
+    "metal:0",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cases/ir-affine"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.16541879205033183,
+   "log": "case-ir-affine.log"
+  },
+  {
+   "name": "doctor-build",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+    "doctor",
+    "--device",
+    "metal:0",
+    "--json",
+    "--artifacts",
+    "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/doctor-build"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.19857479073107243,
+   "log": "doctor-build.log"
+  }
+ ]
+}

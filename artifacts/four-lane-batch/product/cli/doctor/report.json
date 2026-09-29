@@ -1,0 +1,96 @@
+{
+  "schema": "paralyn.report",
+  "schema_version": 1,
+  "paralyn_version": "0.0.1",
+  "command": "doctor",
+  "status": "passed",
+  "compiler": {
+    "available": true,
+    "llvm_version": "21.1.8"
+  },
+  "source_revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+  "build_dirty": false,
+  "build": {
+    "revision": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "dirty": false,
+    "changes_sha256": null,
+    "captured": "build"
+  },
+  "devices": [
+    {
+      "selector": "metal:0",
+      "stable_id": "metal:registry:0000000100000429",
+      "name": "Apple M5",
+      "backend": "Metal",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "unified_memory": true,
+      "max_buffer_bytes": 9534832640,
+      "max_threadgroup_memory_bytes": 32768,
+      "max_block_dimensions": [
+        1024,
+        1024,
+        1024
+      ],
+      "artifact_formats": 7,
+      "scalar_types": 7
+    }
+  ],
+  "backends": {
+    "metal": {
+      "implemented": true,
+      "available": true,
+      "device_count": 1,
+      "reason": ""
+    },
+    "cuda": {
+      "implemented": true,
+      "available": false,
+      "device_count": 0,
+      "reason": "CUDA driver library not found (NVIDIA ships no CUDA driver for this platform, so no library is loaded by default; set PARALYN_CUDA_DRIVER_LIBRARY to an absolute path); NVRTC library not found (no default NVRTC location on this platform; set PARALYN_NVRTC_LIBRARY to an absolute path)",
+      "driver_library": "",
+      "nvrtc_library": "",
+      "driver_version": null,
+      "nvrtc_version": null,
+      "qualification": "unavailable"
+    },
+    "hip": {
+      "implemented": false,
+      "available": false,
+      "device_count": 0,
+      "reason": "HIP/HIPRTC backend is not implemented"
+    }
+  },
+  "device": {
+    "selector": "auto",
+    "stable_id": "metal:registry:0000000100000429",
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "unified_memory": true,
+    "max_buffer_bytes": 9534832640,
+    "max_threadgroup_memory_bytes": 32768,
+    "max_block_dimensions": [
+      1024,
+      1024,
+      1024
+    ],
+    "artifact_formats": 7,
+    "scalar_types": 7
+  },
+  "timing": {
+    "completed": true,
+    "duration_valid": true,
+    "duration_seconds": 6.292015314102173e-06,
+    "timestamps_valid": true,
+    "clock_domain": 2,
+    "start_seconds": 3282885.39234675,
+    "end_seconds": 3282885.392353042
+  },
+  "verification": {
+    "status": "passed",
+    "reference": "builtin:vector-add-v1",
+    "elements": 257
+  },
+  "cpu_fallback": false,
+  "artifacts": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/product/cli/doctor"
+}

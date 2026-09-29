@@ -1,0 +1,33 @@
+{
+ "steps": [
+  {
+   "name": "archive-product-audit",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "scripts/qualify_product.py",
+    "--output",
+    "artifacts/four-lane-batch/product",
+    "--audit-only"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.08746995823457837,
+   "log": "archive-product-audit.log"
+  },
+  {
+   "name": "archive-audit-corruption",
+   "cwd": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+   "command": [
+    "/opt/homebrew/bin/python3.14",
+    "tests/product_audit_tests.py",
+    "--capture",
+    "artifacts/four-lane-batch/product"
+   ],
+   "expected_exit_code": 0,
+   "exit_code": 0,
+   "wall_seconds": 0.2208923753350973,
+   "log": "archive-audit-corruption.log"
+  }
+ ]
+}

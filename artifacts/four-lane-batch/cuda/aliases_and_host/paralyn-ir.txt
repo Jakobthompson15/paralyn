@@ -1,0 +1,29 @@
+paralyn.ir v0
+kernel alias_steps(a: read_write buffer<f32>, b: read_write buffer<f32>, c: read_write buffer<f32>, n: i32, scale: f32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store a[i] = (load a[i] + load b[i])
+    store c[i] = ((load a[i] * scale) + load b[i])
+  }
+}
+
+paralyn.ir v0
+kernel const_alias(input: read buffer<f32>, output: read_write buffer<f32>, n: i32) {
+  let i:i32 = i32(((blockIdx.x * blockDim.x) + threadIdx.x))
+  if (i < n) {
+    store output[i] = (load input[i] + 1.0E+0:f32)
+    store output[i] = (load input[i] + 2.0E+0:f32)
+  }
+}
+
+paralyn.ir v0
+kernel mixed_pointees(a: read_write buffer<f32>, b: read_write buffer<i32>) {
+  store b[0:i32] = 1:i32
+}
+
+paralyn.ir v0
+kernel unsigned_values(output: read_write buffer<u32>, bias: u32) {
+  let i:i32 = i32(threadIdx.x)
+  store output[i] = (threadIdx.x + bias)
+}
+

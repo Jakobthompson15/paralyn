@@ -1,0 +1,36 @@
+{
+  "status": "verified",
+  "gpu_executed": true,
+  "python": "3.9.6 (default, Dec  2 2025, 07:27:58) \n[Clang 17.0.0 (clang-1700.6.3.2)]",
+  "discovery": {
+    "package": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python39/venv/lib/python3.9/site-packages/paralyn/__init__.py",
+    "library": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python39/venv/lib/python3.9/site-packages/paralyn/_native/libparalyn_native.dylib",
+    "operators": "/private/tmp/claude-501/-Users-jakob/12fed7f7-6fc0-4bdb-83dd-cdf4f9242028/scratchpad/installed-cccb177/python39/venv/lib/python3.9/site-packages/paralyn/_data/operators.prk",
+    "abi": 1
+  },
+  "packaging_provenance": {
+    "abi_version": 1,
+    "compiler_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+    "native_dependencies": [
+      "/System/Library/Frameworks/Metal.framework/Versions/A/Metal (compatibility version 1.0.0, current version 370.64.2)",
+      "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 4201.0.0)",
+      "/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)",
+      "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)",
+      "/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)"
+    ],
+    "native_library_sha256": "9f7661469f86f1a0fe156f0e696638cad9836cb38c98c3b5d7fa97b687fc1ef0",
+    "operator_module_sha256": "2d7e08d5aae96cd35d6f6c1fbeff1fb6dda085af0b9a414f39546738fb9d5c07",
+    "operator_source_sha256": "985acdfa19a4cadf2e7bdf4ee1079f5eb38b9cc1b00064038d09c5d5e2a304ac",
+    "packaging_source_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "packaging_source_dirty": false,
+    "platform_tag": "py3-none-macosx_26_0_arm64",
+    "schema": 1
+  },
+  "wheel_sha256": "d4cb114cbacfa79aeabfa5be496f0b7214b024fb26e5c917b9834c7c5f2dd43a",
+  "device": "Apple M5",
+  "os": "Version 26.5.1 (Build 25F80)",
+  "gpu_events": 2,
+  "cpu_fallback": false,
+  "elapsed_seconds": 1.824467042,
+  "timing_scope": "local venv creation, offline wheel installation, import and requested example; dependencies already installed"
+}

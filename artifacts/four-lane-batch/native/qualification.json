@@ -1,0 +1,254 @@
+{
+  "status": "verified",
+  "started_utc": "2026-09-29T14:58:01.685136+00:00",
+  "provenance": {
+    "paralyn_commit": "cccb17788046dad66ab5c08e0c0c3f145d6865ca",
+    "paralyn_dirty": false,
+    "paralyn_version": "Paralyn v0.0.1 (LLVM 21.1.8)",
+    "llvm_version": "21.1.8",
+    "native_abi_version": 1,
+    "repository": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1",
+    "build": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177",
+    "python_version": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "python_executable": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "host_platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+    "build_configuration": {
+      "CMAKE_BUILD_TYPE": "Debug",
+      "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+      "CMAKE_C_COMPILER": "/usr/bin/cc",
+      "CMAKE_OBJCXX_COMPILER": "/usr/bin/clang++",
+      "CMAKE_OSX_DEPLOYMENT_TARGET": "26.0"
+    },
+    "host_compiler_versions": {
+      "CMAKE_C_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_CXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "CMAKE_OBJCXX_COMPILER": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.5.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+    },
+    "cmake_cache_sha256": "cd372ad6c37858565173348df721871f3f54a15cc4dffef425988ef0b1a4a8bb",
+    "binary_sha256": {
+      "paralyn": "846092c66239cc6a4e1a4c3585137be8a8aef18da9421d5b4a332262c9f064c0",
+      "libparalyn_native.dylib": "9f7661469f86f1a0fe156f0e696638cad9836cb38c98c3b5d7fa97b687fc1ef0",
+      "native_c": "62d66bd1060a418ff80ffbd01e2b85e6b0b3ec36bac6e3156d4b4d95c5b34f97",
+      "native_cpp": "1076a0bf7abeb36d31e694f6dc99df411d5a03cc5880dae16cb09eab72a87bd8",
+      "native_tests": "f342af1ee2c213d9994b092ad0bda6b585a4104f261a446528a92d3783da95f3"
+    },
+    "source_sha256": {
+      "CMakeLists.txt": "bb89692be114f595de04367c0f4e080b20446acafeb014d3d8410c4394b48a93",
+      "backends/metal/engine.mm": "c73d457e9041bf613a6e0d3717e93273b253d197de3d7164e8810d95c7165001",
+      "backends/metal/runtime.mm": "09c1ec31ce7815ec1dbb01c1be97417ce2fb4e16238e94ec55d036e9f965c0da",
+      "bindings/python/paralyn/__init__.py": "40a2e45cfabcd1082d3098068a384493978b47c50a5947c5afec23fda36db051",
+      "bindings/python/paralyn/array.py": "2d87e1a2529e9287ae5611abbd05946ecc5d44b5c619541305098120a88cad65",
+      "bindings/python/paralyn/tensor.py": "f5264963aa8cf264dc02a6e243f28422da09d81bd0b91ae617b69e4b44d692b3",
+      "cli/diagnostic.hpp": "6daf645424761e5562f5a93e76348deac46a28e772774a2e8bc465c0042ede61",
+      "cli/kernel_case.cpp": "4e27749da2e5d84f09af73bc9f5694c3d11b81b969966a4f2754e6a0ba743498",
+      "cli/kernel_case.hpp": "54223d9d2dde2b1c75aaed3773cf9fbbfdc422c2931cf31988a4e142bd79a094",
+      "cli/main.cpp": "810586cb084580f320ff2fb7ab0a7ae3f9154753183755b9ebd8012ff2781a5d",
+      "cli/platform.hpp": "6ca950c9fb5423a87d011a4d3b0f8195aa120ed9662b35420be9f41bcc4b7709",
+      "cli/process.hpp": "ea8b0d98ea79dc38efed285463a9596d69067ab52f148f789592990a8143a116",
+      "cli/process_posix.cpp": "f53ff09365d7d9ba281b4ea085f9e86721b52da4ae13a22600104df4379d1649",
+      "cli/process_windows.cpp": "f839078ece8e2cfce831dc33bc086219103a5b166758b8dcd49713706680fc69",
+      "compiler/codegen/cuda.cpp": "7df91b8b7f3dda0d735a87e1a6e0e4e3714c004ef1e780d9acd446c166f5c55f",
+      "compiler/codegen/metal.cpp": "e865c468dfb66f57c03574b8eb5e9731666effe594bcb680b4d6e642507833a9",
+      "compiler/frontend/frontend.cpp": "3fb0f657b7a67d346fead393952c54df3fdd35e20227739a4951c55a8d70f221",
+      "compiler/ir/artifact.cpp": "863208c9c4ffb0d7f24c474e384e4996f7428ca84c56874c9f46cd394bbe171e",
+      "compiler/ir/executable.cpp": "fee2e2559199424e59b73834a231349050d1a83739df82c787ae9e4302982329",
+      "compiler/ir/ir.cpp": "e4ba0a60de30760aa644afed935e507d5a55c2136b2d6e8872697af3a3a31876",
+      "compiler/spirv/importer.cpp": "50292a0f4c20002d2f3de5a474bd613e40d88fd514e33f440cf9e825048efc17",
+      "examples/native/arrays.cpp": "ff824ac5fde8b20faad1bde5dc13094bfca9df4720225d927713e6769b4d451d",
+      "examples/native/arrays.py": "6e3a608cfcb8d9210a0ff0dbb60f19caa23e669cfe76b1fc085a71702475c190",
+      "examples/native/kernels.cu": "d1f6c234945f0b5da4dbb20696a3610664eb7ba810bb9bd6438b7a20e14547dc",
+      "examples/native/mlp.cpp": "c32812188b10acc5f9af68511adf98b95f6041836b155b96b3d7e581fd4d534f",
+      "examples/native/mlp.py": "c59bf5c64d7c8f3e5c11aa110ab1e5d3b19f1e3c9608ca2bc9d6800cd6a0d384",
+      "examples/native/vector_add.c": "d03b0f96e30e2baca774130499695b8fc7e664d2279b5c46ff3fccfa55652749",
+      "examples/native/vector_add.cpp": "1db3ec553941fd66058705b6f5e94a598a109893a0e8e937f777126c8d9dbbfb",
+      "examples/native/vector_add.py": "aca68d86886bbcf763ffccff07107433346aeaccc38aea24d16b4b33bcebd631",
+      "include/cuda_runtime.h": "433940f25472200bd82a488ebdf5eec7f016c9ecd7667ba1ceea8b3c48636a5a",
+      "include/paralyn/array.hpp": "1491528d73a0544644d8ded65806769f164c2d479df292d4ff3cc38d434636c1",
+      "include/paralyn/artifact.hpp": "da9f549acb3973e4b43214e336cfd76a7fe53d98266b29fe05096255ede6e843",
+      "include/paralyn/cuda_codegen.hpp": "f61b9d5f2c5f2fa814f31335a68a2cfb0db9bf7d365d7c9347dad38532e283fc",
+      "include/paralyn/cuda_parse.hpp": "1106361e086e25ad347dbb3b7c00419c444df7c940fd7ef1b08d287022c5d35c",
+      "include/paralyn/detail/backend.hpp": "08fbdae2b76ea5ae7b118c311ee82e1c96a4afe8262ecec03c3906b47efb500e",
+      "include/paralyn/detail/cuda_backend.hpp": "8faa9de3d1be4b2120a90a21f353dcd05b3e53c71217a2fa327ebf620ea93060",
+      "include/paralyn/executable.hpp": "fddb61ca7f46655e4d081f3cb2fb7f8503744bb6695077e1225f846b3047d6aa",
+      "include/paralyn/frontend.hpp": "029da381df237b29699cc2c7c62182bbd17d9ff7b3795b547ed60712c4288f3c",
+      "include/paralyn/ir.hpp": "705ff88cdd2ee2297ae1b7f723738c894859c46bbeb50b6a4db1c1c66c9dafed",
+      "include/paralyn/native.h": "5316b0805d73df7fc5441e1c251677d8eb13669f95f98a0bb1228dd5038cadf9",
+      "include/paralyn/native.hpp": "ba3467a74b9544d3097ec1cc16b4dc12c175cd46a3984bb13de7d2c26c0d4874",
+      "include/paralyn/runtime.hpp": "b56a022b45dc1dbaa1d54800d96a355970cd6c85f23e808e2ae8ffb9ebe17c53",
+      "include/paralyn/spirv.hpp": "f6b56ecf6b36e7792d166c470597c19724e95ca1c750b13307217aa3bac57944",
+      "include/paralyn/tensor.h": "717e8ca04bfcc9c5fea422f882622356e90ceb54d1a3051b97cc987e3020f3d5",
+      "include/paralyn/tensor.hpp": "5c1011effdde53fee68867900e6c6765e9937ed7b8b29cdb6f4e6c5d4906de6b",
+      "include/unicuda/cuda_parse.hpp": "50511e85666d997c8ad91e6c8ce95dc653f81e01622425d49cb1f902d810e681",
+      "include/unicuda/frontend.hpp": "8d845e77aff676842c9143fdb31db991d6257594550cc4f6469618ac55e571fc",
+      "include/unicuda/ir.hpp": "bb68fe72e764c44976061b14bec238b8af791f53c2313a015f47a9ca082d230a",
+      "include/unicuda/namespace.hpp": "315303525e96fee23e70fed407de4d0b363fb53dfeaacfaf50b12a39a4ea1fb8",
+      "include/unicuda/runtime.hpp": "f014939c7b1ab3fcb324c33a14262e39ae817619c842108ac874d14a14459550",
+      "runtime/native.cpp": "173db3cd10f292ac61796a5913e6900cea109739cda24828935655b0d51a06a8",
+      "runtime/native_internal.hpp": "1e2839d8a8b334c259e58da79c9b4874362e82f75e0eba0e85bfa32daaaf3e6b",
+      "runtime/registry.cpp": "5159066d404801b30e08c7149133527de87ee6990992869df1a27b300172baf1",
+      "runtime/telemetry.cpp": "844bd4f25bb90f831fe605de6b0a42d48c7420ac57ae5fc2f297db51d1c04fa0",
+      "runtime/tensor.cpp": "72c05c878b5d99c27f1118afcd813b4786aece9b2f182aac279fac994b16c7d3",
+      "scripts/qualify_native.py": "0ea33b0edfbb55101dd6ede71d94a663e42f7459459113419315992f88f631de",
+      "tests/native/array_tests.cpp": "eef03ac7aeb0a3f52b73dae36548f3a5e5fae37ed11413cf1caa034b1e660a0c",
+      "tests/native/cli_arrays.py": "c358d0310d6865c9ce7a70e8f6f7bf3a38f1092654545c368f949161497684b9",
+      "tests/native/native_tests.cpp": "bc0b32c8bfdc7da37fe5c9e3a080ae45c14e7ce9089ec9a669baefa82a464448",
+      "tests/native/query_tests.cpp": "c521eb66b7a81fdfd3ff529e00e6aa09cb6bc3946677e19f3a091401b24949e9",
+      "tests/native/run_arrays.py": "f0861da489a0d1508b6a73ba092a656c589a8d6167890e0edec7b28371427057",
+      "tests/native/run_example.py": "1673201cfb6426af625d034159a224f55bae39b22f72ecfe8ca09dea5553d1b0",
+      "tests/native/run_tensors.py": "a34aefcc8c856dcdf207941fe91f62130a3431bc768a6fded29034f40861bd17",
+      "tests/native/tensor_tests.cpp": "b45ef3ad2162fa6639bfab62db50be6e2103e72f0d2e15dc07b2a8856429a6ae",
+      "tests/native/test_arrays.py": "72de4d812f6a511a60c4b0a89842e8d72ba6247c53848b5a3db7c446eed2117a",
+      "tests/native/test_python.py": "538df61c51f0a90a56fb47633880710a444b77b774acbadd7e414fe4724d8064",
+      "tests/native/test_tensors.py": "cc102578a248f193a2d8e4d838f245bafe545e62129f314ec543cb72035ccba0"
+    }
+  },
+  "cases": [
+    {
+      "command": [
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native_c",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-c/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-c/process.log",
+      "kind": "native-c",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 2,
+      "verified_gpu_events": 2,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-c/evidence"
+    },
+    {
+      "command": [
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native_cpp",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-cpp/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-cpp/process.log",
+      "kind": "native-cpp",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 1,
+      "verified_gpu_events": 1,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-cpp/evidence"
+    },
+    {
+      "command": [
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/native_tests",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-tests/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-tests/process.log",
+      "kind": "native-tests",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 8,
+      "verified_gpu_events": 8,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/native-tests/evidence"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/tests/native/test_python.py",
+        "--module",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+        "--artifacts",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-tests/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-tests/process.log",
+      "kind": "python-tests",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 8,
+      "verified_gpu_events": 9,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-tests/evidence"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/vector_add.py",
+        "--module",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+        "--artifacts",
+        "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-example/evidence"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-example/process.log",
+      "kind": "python-example",
+      "status": "verified",
+      "device": "Apple M5",
+      "os": "Version 26.5.1 (Build 25F80)",
+      "registry_id": 4294968361,
+      "native_command_records": 1,
+      "verified_gpu_events": 1,
+      "cpu_fallback": false,
+      "evidence_directory": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-example/evidence"
+    }
+  ],
+  "cpu_fallback": false,
+  "module_sha256": "52a31e2054e10966f040c0bcb2f07cff9dd65512e908770f58c675173cf398ef",
+  "kernel_source_sha256": "d1f6c234945f0b5da4dbb20696a3610664eb7ba810bb9bd6438b7a20e14547dc",
+  "compile": {
+    "command": [
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+      "compile",
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/kernels.cu",
+      "--output",
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk"
+    ],
+    "exit_status": 0,
+    "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/compile.log"
+  },
+  "inspect": {
+    "command": [
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/build/capture-cccb177/paralyn",
+      "inspect",
+      "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/examples/native/kernels.cu"
+    ],
+    "exit_status": 0,
+    "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/inspect.txt"
+  },
+  "host_failure_policy": {
+    "kind": "python-finalizer",
+    "status": "verified",
+    "gpu_launches": 0,
+    "scope": "host exit/error policy through real C ABI invalid-handle failures; no GPU fault injection",
+    "unobserved": {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-c",
+        "import paralyn as p; context=p.Context(); buffer=context.buffer(4); buffer._lib.check(buffer._lib.api.pr_release(buffer.handle)); del buffer; print('UNREACHABLE_SUCCESS')"
+      ],
+      "exit_status": 1,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-finalizer/unobserved.log"
+    },
+    "observed": {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-c",
+        "import paralyn as p\ncontext=p.Context()\nbuffer=context.buffer(4)\nbuffer._lib.check(buffer._lib.api.pr_release(buffer.handle))\ntry:\n buffer.close()\nexcept p.Error as error:\n assert error.code==p.Status.INVALID_HANDLE\nelse:\n raise RuntimeError('explicit close did not report its error')\ncontext.close()\nprint('Explicit close error recovered')\n"
+      ],
+      "exit_status": 0,
+      "log": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/python-finalizer/observed.log"
+    }
+  },
+  "finished_utc": "2026-09-29T14:58:02.953134+00:00",
+  "native_command_records": 20,
+  "verified_gpu_events": 21,
+  "observation": "Python ownership case intentionally releases the context handle before its ninth launch; its pr_event_wait timestamps are audited separately from eight source-linked native records"
+}

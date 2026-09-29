@@ -1,0 +1,4 @@
+Paralyn: executable prepared
+Verification: PASS xyz_builtins cases=3 launches=3 compared=10824
+Paralyn: application exited successfully
+Paralyn: execution completed; report /Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/cuda/xyz_builtins/report.json

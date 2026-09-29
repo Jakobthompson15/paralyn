@@ -1,0 +1,16 @@
+{
+  "cli11/CLI11.hpp": "3935283e4c9db7089ed304476dbab2805c9311c41b125a55e92da4659df0d660",
+  "cli11/LICENSE": "3ee4a90b05dd076b70a36a0330be8bdfecbe75bbd0fc3343a4f289c86e2063aa",
+  "nlohmann/LICENSE.MIT": "86b998c792894ccb911a1cb7994f7a9652894e7a094c0b5e45be2f553f45cf14",
+  "nlohmann/json.hpp": "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6",
+  "tomlplusplus/LICENSE": "529bc3900a9571e49db285b0df432397e70b881cc3bf48de6667ae74ff4b06d8",
+  "tomlplusplus/toml.hpp": "6b5172ad4dd6519aec67b919181fa7a38a2234131e5b2afa232dfe444819783e",
+  "spirv/SPIRV-Cross-f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7.tar.gz": "92b0458889ed77eac9892b3be5a41e3cf716849fd90f39632e159e555abf3d03",
+  "spirv/SPIRV-Headers-496543121ce6419f23d6fa5d7194ba66c36212d2.tar.gz": "a9bb9c48713245eacf97cc539b6f1d45405a92d8813f8b82e635f0a085ee9898",
+  "spirv/SPIRV-Tools-ef96ed763b43b59b33b31b362f09a02b729fa1c9.tar.gz": "82c62146083fd558735a3171cf97cfc47903ca7d368482e87f94bd44883c0f00",
+  "spirv/licenses/SPIRV-Cross/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "spirv/licenses/SPIRV-Cross/MIT.txt": "8f25018489d6fe0dec34a352314c38dc146247b7de65735790f4398a92afa84b",
+  "spirv/licenses/SPIRV-Headers/LICENSE": "ea43b1de38a6f90c488800d66dec1ed671e68cda530266bc96951fb5b6307613",
+  "spirv/licenses/SPIRV-Headers/MIT.txt": "6d7c9e9d7d12c8d3753bdb24417b84819ba4d6c2f025c37948113d86dc81eef9",
+  "spirv/licenses/SPIRV-Tools/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+}

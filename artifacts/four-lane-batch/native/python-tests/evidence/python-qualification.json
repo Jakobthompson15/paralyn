@@ -1,0 +1,73 @@
+{
+  "status": "verified",
+  "api": "Python ctypes over Paralyn C ABI 1",
+  "cpu_fallback": false,
+  "device": {
+    "name": "Apple M5",
+    "backend": "Metal",
+    "os": "Version 26.5.1 (Build 25F80)",
+    "registry_id": 4294968361,
+    "max_buffer_bytes": 9534832640,
+    "unified_memory": true
+  },
+  "module": "/Users/jakob/Desktop/paralyn/.claude/worktrees/wf_2f802cff-5d1-1/artifacts/runs/capture-cccb177/native/kernels.prk",
+  "native_evidence_directory": "primary",
+  "evidence_scope": "first eight events have full native command/source records; the final ownership test intentionally consumes the context handle before launching and records its actual pr_event_wait completion/timestamps here",
+  "events": [
+    {
+      "label": "vector_add_offset_partial_block",
+      "completed": true,
+      "gpu_start_seconds": 3282908.180324375,
+      "gpu_end_seconds": 3282908.1803306253
+    },
+    {
+      "label": "affine_negative_scalar",
+      "completed": true,
+      "gpu_start_seconds": 3282908.180832667,
+      "gpu_end_seconds": 3282908.1808385
+    },
+    {
+      "label": "affine_short_scalar_bound",
+      "completed": true,
+      "gpu_start_seconds": 3282908.181154875,
+      "gpu_end_seconds": 3282908.181160625
+    },
+    {
+      "label": "zero_logical_length",
+      "completed": true,
+      "gpu_start_seconds": 3282908.181474417,
+      "gpu_end_seconds": 3282908.181479417
+    },
+    {
+      "label": "repeated_vector_add",
+      "completed": true,
+      "gpu_start_seconds": 3282908.1817561667,
+      "gpu_end_seconds": 3282908.1817618753
+    },
+    {
+      "label": "same_allocation_alias",
+      "completed": true,
+      "gpu_start_seconds": 3282908.182092667,
+      "gpu_end_seconds": 3282908.182098375
+    },
+    {
+      "label": "ctypes_scalar_storage_copied",
+      "completed": true,
+      "gpu_start_seconds": 3282908.183022375,
+      "gpu_end_seconds": 3282908.183028042
+    },
+    {
+      "label": "released_buffer_module_kernel_owners",
+      "completed": true,
+      "gpu_start_seconds": 3282908.183311042,
+      "gpu_end_seconds": 3282908.18331675
+    },
+    {
+      "label": "released_context_queue_kernel_owners",
+      "completed": true,
+      "gpu_start_seconds": 3282908.1841881666,
+      "gpu_end_seconds": 3282908.184194
+    }
+  ],
+  "checks": "vector_add/affine, offset views/canaries, explicit scalars, repeated/zero logical lengths, aliasing, ownership, invalid inputs/handles/contexts, C ABI scalar copy"
+}
