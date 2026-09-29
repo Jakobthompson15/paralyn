@@ -82,7 +82,7 @@ Matrix layer_norm(const Matrix &x, std::uint64_t rows, std::uint64_t cols, const
   return out;
 }
 struct Check {
-  double worst = 0, max_abs = 0;
+  double worst = 0, max_abs = 0, max_bound = 0;
 };
 Check verify(const std::string &stage, const std::vector<float> &gpu, const Matrix &ref) {
   if (gpu.size() != ref.size()) throw std::runtime_error(stage + ": size mismatch");
@@ -94,6 +94,7 @@ Check verify(const std::string &stage, const std::vector<float> &gpu, const Matr
                                std::to_string(ref[i].e));
     c.worst = std::max(c.worst, r::ratio(gpu[i], ref[i]));
     c.max_abs = std::max(c.max_abs, std::fabs(double(gpu[i]) - ref[i].v));
+    c.max_bound = std::max(c.max_bound, ref[i].e);
   }
   return c;
 }
@@ -209,56 +210,92 @@ int main(int argc, char **argv) {
     }
 
     // ---- Independent float64 reference with running error bounds (CPU, verification only).
+    // Two modes, both enforced: "end_to_end" chains reference values from the exact inputs
+    // (errors compose through all stages, so the bound is loose late in the block);
+    // "stage_local" recomputes every stage from the GPU's own FP32 inputs to that stage
+    // (taken as exact), which gives a tight per-stage bound.
     const auto G1 = bounded(g1), BE1 = bounded(be1), Wqkv = bounded(wqkv), Bqkv = bounded(bqkv), Wo = bounded(wo),
                Bo = bounded(bo), G2 = bounded(g2), BE2 = bounded(be2), W1 = bounded(w1), B1 = bounded(b1),
                W2 = bounded(w2), B2 = bounded(b2), X = bounded(x);
-    const auto rLn1 = layer_norm(X, T, D, G1, BE1, double(eps));
-    const auto rQkv = linear(rLn1, T, D, Wqkv, W3, Bqkv);
-    Matrix rScores(H * T * T), rProbs(H * T * T), rAttn(T * D);
-    for (std::uint64_t h = 0; h < H; ++h)
-      for (std::uint64_t i = 0; i < T; ++i) {
-        std::vector<r::B> a(Dh), b(Dh);
-        for (std::uint64_t j = 0; j < T; ++j) {
-          for (std::uint64_t c = 0; c < Dh; ++c) {
-            a[c] = rQkv[i * W3 + h * Dh + c];
-            b[c] = rQkv[j * W3 + D + h * Dh + c];
+    auto reference = [&](bool local) {
+      std::map<std::string, Matrix> ref;
+      auto in = [&](const std::string &stage) -> Matrix { return local ? bounded(gpu.at(stage)) : ref.at(stage); };
+      ref["ln1"] = layer_norm(X, T, D, G1, BE1, double(eps));
+      ref["qkv"] = linear(in("ln1"), T, D, Wqkv, W3, Bqkv);
+      const auto qkvIn = in("qkv");
+      Matrix scoresRef(H * T * T), attnRef(T * D);
+      for (std::uint64_t h = 0; h < H; ++h)
+        for (std::uint64_t i = 0; i < T; ++i) {
+          std::vector<r::B> a(Dh), b(Dh);
+          for (std::uint64_t j = 0; j < T; ++j) {
+            for (std::uint64_t c = 0; c < Dh; ++c) {
+              a[c] = qkvIn[i * W3 + h * Dh + c];
+              b[c] = qkvIn[j * W3 + D + h * Dh + c];
+            }
+            scoresRef[(h * T + i) * T + j] = r::dot(a, b);
           }
-          rScores[(h * T + i) * T + j] = r::dot(a, b);
         }
-        const auto row = r::softmax_row(Matrix(rScores.begin() + (h * T + i) * T, rScores.begin() + (h * T + i + 1) * T),
-                                        double(scale), causal ? i + 1 : T);
-        std::copy(row.begin(), row.end(), rProbs.begin() + (h * T + i) * T);
+      ref["scores"] = scoresRef;
+      const auto scoresIn = in("scores");
+      Matrix probsRef(H * T * T);
+      for (std::uint64_t row = 0; row < H * T; ++row) {
+        const auto i = row % T;
+        const auto p = r::softmax_row(Matrix(scoresIn.begin() + row * T, scoresIn.begin() + (row + 1) * T),
+                                      double(scale), causal ? i + 1 : T);
+        std::copy(p.begin(), p.end(), probsRef.begin() + row * T);
       }
-    for (std::uint64_t h = 0; h < H; ++h)
-      for (std::uint64_t i = 0; i < T; ++i)
-        for (std::uint64_t c = 0; c < Dh; ++c) {
-          std::vector<r::B> a(T), b(T);
-          for (std::uint64_t s = 0; s < T; ++s) {
-            a[s] = rProbs[(h * T + i) * T + s];
-            b[s] = rQkv[s * W3 + 2 * D + h * Dh + c];
+      ref["probs"] = probsRef;
+      const auto probsIn = in("probs");
+      for (std::uint64_t h = 0; h < H; ++h)
+        for (std::uint64_t i = 0; i < T; ++i)
+          for (std::uint64_t c = 0; c < Dh; ++c) {
+            std::vector<r::B> a(T), b(T);
+            for (std::uint64_t s2 = 0; s2 < T; ++s2) {
+              a[s2] = probsIn[(h * T + i) * T + s2];
+              b[s2] = qkvIn[s2 * W3 + 2 * D + h * Dh + c];
+            }
+            attnRef[i * D + h * Dh + c] = r::dot(a, b);
           }
-          rAttn[i * D + h * Dh + c] = r::dot(a, b);
-        }
-    const auto rProj = linear(rAttn, T, D, Wo, D, Bo);
-    Matrix rH1(T * D);
-    for (std::uint64_t i = 0; i < T * D; ++i) rH1[i] = r::add(X[i], rProj[i]);
-    const auto rLn2 = layer_norm(rH1, T, D, G2, BE2, double(eps));
-    auto rF1 = linear(rLn2, T, D, W1, F, B1);
-    for (auto &v : rF1) v = r::gelu(v);
-    const auto rF2 = linear(rF1, T, F, W2, D, B2);
-    Matrix rY(T * D);
-    for (std::uint64_t i = 0; i < T * D; ++i) rY[i] = r::add(rH1[i], rF2[i]);
-    const std::map<std::string, const Matrix *> refs{
-        {"ln1", &rLn1},   {"qkv", &rQkv}, {"scores", &rScores}, {"probs", &rProbs}, {"attention", &rAttn},
-        {"projection", &rProj}, {"h1", &rH1}, {"ln2", &rLn2}, {"ff1", &rF1}, {"ff2", &rF2}, {"output", &rY}};
+      ref["attention"] = attnRef;
+      ref["projection"] = linear(in("attention"), T, D, Wo, D, Bo);
+      const auto projIn = in("projection");
+      Matrix h1Ref(T * D);
+      for (std::uint64_t i = 0; i < T * D; ++i) h1Ref[i] = r::add(X[i], projIn[i]);
+      ref["h1"] = h1Ref;
+      const auto h1In = in("h1");
+      ref["ln2"] = layer_norm(h1In, T, D, G2, BE2, double(eps));
+      auto f1Ref = linear(in("ln2"), T, D, W1, F, B1);
+      for (auto &v : f1Ref) v = r::gelu(v);
+      ref["ff1"] = f1Ref;
+      ref["ff2"] = linear(in("ff1"), T, F, W2, D, B2);
+      const auto f2In = in("ff2");
+      Matrix yRef(T * D);
+      for (std::uint64_t i = 0; i < T * D; ++i) yRef[i] = r::add(h1In[i], f2In[i]);
+      ref["output"] = yRef;
+      return ref;
+    };
+    // Residual adds are one correctly rounded FP32 addition: stage-locally they must be bit-exact.
+    for (std::uint64_t i = 0; i < T * D; ++i) {
+      const float h = x[i] + gpu.at("projection")[i], out = gpu.at("h1")[i] + gpu.at("ff2")[i];
+      if (!r::same_bits(gpu.at("h1")[i], h) || !r::same_bits(gpu.at("output")[i], out))
+        throw std::runtime_error("residual add differs from FP32 x + y of its GPU inputs at " + std::to_string(i));
+    }
     nlohmann::json checks = nlohmann::json::object(), hashes = nlohmann::json::object();
-    double worst = 0, max_abs = 0;
-    for (const auto &[stage, values] : gpu) {
-      const auto c = verify(stage, values, *refs.at(stage));
-      checks[stage] = {{"worst_error_to_bound", c.worst}, {"max_abs_error", c.max_abs}};
-      hashes[stage] = sha256(values);
-      worst = std::max(worst, c.worst);
-      if (stage == "output") max_abs = c.max_abs;
+    double worst = 0, worst_local = 0, max_abs = 0;
+    for (const bool local : {false, true}) {
+      const auto refs = reference(local);
+      const char *mode = local ? "stage_local" : "end_to_end";
+      for (const auto &[stage, values] : gpu) {
+        const auto c = verify(std::string(mode) + " " + stage, values, refs.at(stage));
+        checks[mode][stage] = {{"worst_error_to_bound", c.worst}, {"max_abs_error", c.max_abs},
+                               {"max_bound", c.max_bound}};
+        if (local) worst_local = std::max(worst_local, c.worst);
+        else {
+          worst = std::max(worst, c.worst);
+          hashes[stage] = sha256(values);
+          if (stage == "output") max_abs = c.max_abs;
+        }
+      }
     }
 
     std::cout << "Device: " << device.name << "; provider paralyn.msl.tensor; pre-LN encoder block T=" << T
@@ -268,7 +305,8 @@ int main(int argc, char **argv) {
       std::cout << "GPU " << s["stage"].get<std::string>() << ": " << std::fixed << std::setprecision(3)
                 << s["gpu_duration_seconds"].get<double>() * 1e6 << " us\n";
     std::cout << std::scientific << std::setprecision(3) << "Output max |error| vs float64 reference: " << max_abs
-              << std::fixed << "; worst error/bound over " << gpu.size() << " audited stages: " << worst << '\n';
+              << std::fixed << "; worst error/bound over " << gpu.size() << " audited stages: end-to-end "
+              << worst << ", stage-local " << worst_local << '\n';
     if (!artifacts.empty()) {
       const auto artifact = t::operators_artifact();
       nlohmann::json report{
@@ -287,7 +325,9 @@ int main(int argc, char **argv) {
           {"reference", "float64 from exact FP32 inputs with a-priori running error bounds"},
           {"tolerance", "docs/transformer-operators.md"},
           {"checks", checks},
-          {"worst_error_to_bound", worst},
+          {"worst_error_to_bound", std::max(worst, worst_local)},
+          {"worst_error_to_bound_end_to_end", worst},
+          {"worst_error_to_bound_stage_local", worst_local},
           {"max_abs_error_output", max_abs},
           {"cpu_fallback", false},
           {"stage_sha256", hashes},
@@ -295,7 +335,7 @@ int main(int argc, char **argv) {
       std::ofstream(std::filesystem::path(artifacts) / "transformer-report.json") << report.dump(2) << '\n';
     }
     std::cout << "Verification: PASS pre-LN transformer block (" << gpu.size() << " stages, " << T * D
-              << " outputs within float64 running-error bounds; " << events.size() << " GPU commands)\n";
+              << " outputs within end-to-end and stage-local float64 running-error bounds; " << events.size() << " GPU commands)\n";
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Transformer block failed: " << e.what() << '\n';

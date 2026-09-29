@@ -173,53 +173,86 @@ def main():
         return out
 
     X = bounded(x)
-    r_ln1 = layer_norm(X, T, D, bounded(g1), bounded(be1))
-    r_qkv = linear(r_ln1, T, D, columns(wqkv, D, W3), bounded(bqkv))
-    r_scores, r_probs = [], []
-    for h in range(H):
-        for i in range(T):
-            q = r_qkv[i * W3 + h * Dh:i * W3 + (h + 1) * Dh]
-            row = [ref.dot(q, r_qkv[j * W3 + D + h * Dh:j * W3 + D + (h + 1) * Dh]) for j in range(T)]
-            r_scores.extend(row)
-            r_probs.extend(ref.softmax_row(row, scale, i + 1 if args.causal else T))
-    r_attn = [None] * (T * D)
-    for h in range(H):
-        v_columns = [[r_qkv[s * W3 + 2 * D + h * Dh + c] for s in range(T)] for c in range(Dh)]
-        for i in range(T):
-            prow = r_probs[(h * T + i) * T:(h * T + i + 1) * T]
-            for c in range(Dh):
-                r_attn[i * D + h * Dh + c] = ref.dot(prow, v_columns[c])
-    r_proj = linear(r_attn, T, D, columns(wo, D, D), bounded(bo))
-    r_h1 = [ref.add(a, b) for a, b in zip(X, r_proj)]
-    r_ln2 = layer_norm(r_h1, T, D, bounded(g2), bounded(be2))
-    r_f1 = [ref.gelu(v) for v in linear(r_ln2, T, D, columns(w1, D, F), bounded(b1))]
-    r_f2 = linear(r_f1, T, F, columns(w2, F, D), bounded(b2))
-    r_y = [ref.add(a, b) for a, b in zip(r_h1, r_f2)]
-    refs = {"ln1": r_ln1, "qkv": r_qkv, "scores": r_scores, "probs": r_probs, "attention": r_attn,
-            "projection": r_proj, "h1": r_h1, "ln2": r_ln2, "ff1": r_f1, "ff2": r_f2, "output": r_y}
-    checks, hashes, worst = {}, {}, 0.0
-    for stage in sorted(gpu):
-        values_, bounds = gpu[stage], refs[stage]
-        if len(values_) != len(bounds):
-            raise RuntimeError(f"{stage}: size mismatch")
-        stage_worst = stage_abs = 0.0
-        for index, value in enumerate(values_):
-            if not ref.within(value, bounds[index]):
-                raise RuntimeError(f"{stage}: GPU value {value} at {index} differs from float64 reference "
-                                   f"{bounds[index][0]} beyond bound {bounds[index][1]}")
-            stage_worst = max(stage_worst, ref.ratio(value, bounds[index]))
-            stage_abs = max(stage_abs, abs(value - bounds[index][0]))
-        checks[stage] = {"worst_error_to_bound": stage_worst, "max_abs_error": stage_abs}
-        hashes[stage] = hashlib.sha256(values_.tobytes()).hexdigest()
-        worst = max(worst, stage_worst)
-    max_abs = checks["output"]["max_abs_error"]
+    G1, BE1, G2, BE2 = bounded(g1), bounded(be1), bounded(g2), bounded(be2)
+    Wqkv, Wo, W1, W2 = columns(wqkv, D, W3), columns(wo, D, D), columns(w1, D, F), columns(w2, F, D)
+    Bqkv, Bo, B1, B2 = bounded(bqkv), bounded(bo), bounded(b1), bounded(b2)
+
+    def reference(local):
+        """end_to_end chains reference values from the exact inputs (errors compose, loose
+        late in the block); stage_local recomputes each stage from the GPU's own FP32
+        inputs to that stage, taken as exact (tight per-stage bound)."""
+        r = {}
+
+        def source(stage):
+            return bounded(gpu[stage]) if local else r[stage]
+
+        r["ln1"] = layer_norm(X, T, D, G1, BE1)
+        r["qkv"] = linear(source("ln1"), T, D, Wqkv, Bqkv)
+        qkv_in = source("qkv")
+        r["scores"] = []
+        for h in range(H):
+            for i in range(T):
+                q = qkv_in[i * W3 + h * Dh:i * W3 + (h + 1) * Dh]
+                r["scores"].extend(ref.dot(q, qkv_in[j * W3 + D + h * Dh:j * W3 + D + (h + 1) * Dh])
+                                   for j in range(T))
+        scores_in = source("scores")
+        r["probs"] = []
+        for row in range(H * T):
+            i = row % T
+            r["probs"].extend(ref.softmax_row(scores_in[row * T:(row + 1) * T], scale,
+                                              i + 1 if args.causal else T))
+        probs_in = source("probs")
+        r["attention"] = [None] * (T * D)
+        for h in range(H):
+            v_columns = [[qkv_in[s * W3 + 2 * D + h * Dh + c] for s in range(T)] for c in range(Dh)]
+            for i in range(T):
+                prow = probs_in[(h * T + i) * T:(h * T + i + 1) * T]
+                for c in range(Dh):
+                    r["attention"][i * D + h * Dh + c] = ref.dot(prow, v_columns[c])
+        r["projection"] = linear(source("attention"), T, D, Wo, Bo)
+        r["h1"] = [ref.add(a, b) for a, b in zip(X, source("projection"))]
+        h1_in = source("h1")
+        r["ln2"] = layer_norm(h1_in, T, D, G2, BE2)
+        r["ff1"] = [ref.gelu(v) for v in linear(source("ln2"), T, D, W1, B1)]
+        r["ff2"] = linear(source("ff1"), T, F, W2, B2)
+        r["output"] = [ref.add(a, b) for a, b in zip(h1_in, source("ff2"))]
+        return r
+
+    # Residual adds are one correctly rounded FP32 addition: stage-locally they must be bit-exact.
+    for i in range(T * D):
+        if not (ref.same_bits(gpu["h1"][i], ref.f32(x[i] + gpu["projection"][i])) and
+                ref.same_bits(gpu["output"][i], ref.f32(gpu["h1"][i] + gpu["ff2"][i]))):
+            raise RuntimeError(f"residual add differs from FP32 x + y of its GPU inputs at {i}")
+    checks, hashes, worst, worst_local = {"end_to_end": {}, "stage_local": {}}, {}, 0.0, 0.0
+    for mode in ("end_to_end", "stage_local"):
+        refs = reference(mode == "stage_local")
+        for stage in sorted(gpu):
+            values_, bounds = gpu[stage], refs[stage]
+            if len(values_) != len(bounds):
+                raise RuntimeError(f"{stage}: size mismatch")
+            stage_worst = stage_abs = stage_bound = 0.0
+            for index, value in enumerate(values_):
+                if not ref.within(value, bounds[index]):
+                    raise RuntimeError(f"{mode} {stage}: GPU value {value} at {index} differs from float64 "
+                                       f"reference {bounds[index][0]} beyond bound {bounds[index][1]}")
+                stage_worst = max(stage_worst, ref.ratio(value, bounds[index]))
+                stage_abs = max(stage_abs, abs(value - bounds[index][0]))
+                stage_bound = max(stage_bound, bounds[index][1])
+            checks[mode][stage] = {"worst_error_to_bound": stage_worst, "max_abs_error": stage_abs,
+                                   "max_bound": stage_bound}
+            if mode == "end_to_end":
+                hashes[stage] = hashlib.sha256(values_.tobytes()).hexdigest()
+                worst = max(worst, stage_worst)
+            else:
+                worst_local = max(worst_local, stage_worst)
+    max_abs = checks["end_to_end"]["output"]["max_abs_error"]
 
     print(f"Device: {device.name}; provider paralyn.msl.tensor; pre-LN encoder block T={T} d_model={D} "
           f"heads={H} d_head={Dh} d_ff={F} causal={'yes' if args.causal else 'no'} seed {args.seed}")
     for stage in stages:
         print(f"GPU {stage['stage']}: {stage['gpu_duration_seconds'] * 1e6:.3f} us")
     print(f"Output max |error| vs float64 reference: {max_abs:.3e}; worst error/bound over {len(gpu)} "
-          f"audited stages: {worst:.3f}")
+          f"audited stages: end-to-end {worst:.3f}, stage-local {worst_local:.3f}")
     if args.artifacts:
         report = {
             "application": "pre-LN transformer encoder block, FP32 inference (Python)",
@@ -230,12 +263,13 @@ def main():
             "gelu": "tanh approximation, FP32 constants", "gpu_commands": len(events), "stages": stages,
             "reference": "float64 from exact FP32 inputs with a-priori running error bounds",
             "tolerance": "docs/transformer-operators.md", "checks": checks,
-            "worst_error_to_bound": worst, "max_abs_error_output": max_abs, "cpu_fallback": False,
+            "worst_error_to_bound": max(worst, worst_local), "worst_error_to_bound_end_to_end": worst,
+            "worst_error_to_bound_stage_local": worst_local, "max_abs_error_output": max_abs, "cpu_fallback": False,
             "stage_sha256": hashes, "output_sha256": hashes["output"],
         }
         Path(args.artifacts, "transformer-report.json").write_text(json.dumps(report, indent=2) + "\n")
-    print(f"Verification: PASS pre-LN transformer block ({len(gpu)} stages, {T * D} outputs within float64 "
-          f"running-error bounds; {len(events)} GPU commands)")
+    print(f"Verification: PASS pre-LN transformer block ({len(gpu)} stages, {T * D} outputs within end-to-end "
+          f"and stage-local float64 running-error bounds; {len(events)} GPU commands)")
 
 
 if __name__ == "__main__":
