@@ -3,8 +3,10 @@
 // examples/hlsl (pinned glslang/DXC worker -> SPIR-V -> importer -> MSL).
 // Every output is compared with an independent CPU reference computed here;
 // no kernel runs on the CPU in place of the GPU.
-// Usage: shader_metal_tests GLSL_VECTOR_ADD.prx BLUR_ROWS.prx BLUR_COLUMNS.prx
+// Usage: shader_metal_tests LANGUAGES GLSL_VECTOR_ADD.prx BLUR_ROWS.prx BLUR_COLUMNS.prx
 //                           HLSL_VECTOR_ADD.prx TRANSPOSE.prx REDUCE_SUM.prx NEW_EVIDENCE_DIR
+// LANGUAGES is glsl, hlsl or glsl,hlsl (the frontends in the build); the
+// modules of a language that is not built are given as "-".
 #include "paralyn/executable.hpp"
 #include "paralyn/native.h"
 #include <algorithm>
@@ -342,9 +344,16 @@ void reduce(Handles &h, pr_context context, pr_queue queue, pr_kernel k) {
 
 int main(int argc, char **argv) {
   try {
-    require(argc == 8, "Usage: shader_metal_tests GLSL_VECTOR_ADD.prx BLUR_ROWS.prx BLUR_COLUMNS.prx "
+    require(argc == 9, "Usage: shader_metal_tests LANGUAGES GLSL_VECTOR_ADD.prx BLUR_ROWS.prx BLUR_COLUMNS.prx "
                        "HLSL_VECTOR_ADD.prx TRANSPOSE.prx REDUCE_SUM.prx NEW_EVIDENCE_DIR");
-    const std::filesystem::path evidence = argv[7];
+    const std::string languages = argv[1];
+    const bool glsl = languages == "glsl" || languages == "glsl,hlsl";
+    const bool hlsl = languages == "hlsl" || languages == "glsl,hlsl";
+    require(glsl || hlsl, "LANGUAGES must be glsl, hlsl or glsl,hlsl");
+    for (int i = 2; i <= 7; ++i)
+      require((std::string(argv[i]) == "-") == (i <= 4 ? !glsl : !hlsl),
+              "a module is given exactly for each built language ('-' otherwise)");
+    const std::filesystem::path evidence = argv[8];
     require(!std::filesystem::exists(evidence), "Evidence directory must be new");
     Handles h;
     pr_context context = 0;
@@ -359,35 +368,44 @@ int main(int argc, char **argv) {
     success(pr_queue_get(context, &queue));
     h.keep(queue);
 
-    auto glsl_add = load(h, context, argv[1], "vector_add");
-    auto rows = load(h, context, argv[2], "blur_rows");
-    auto columns = load(h, context, argv[3], "blur_columns");
-    auto hlsl_add = load(h, context, argv[4], "vector_add");
-    auto tiled = load(h, context, argv[5], "transpose_tiled");
-    auto sum = load(h, context, argv[6], "reduce_sum");
-
     const std::vector<pr_access> add_access{PR_READ, PR_READ, PR_WRITE, PR_READ};
     const std::vector<pr_type> add_types{PR_F32, PR_F32, PR_F32, PR_U32};
-    check_parameters(glsl_add, "GLSL vector_add", {"a", "b", "c", "n"}, add_access, add_types, 3);
-    check_parameters(hlsl_add, "HLSL vector_add", {"a", "b", "c", "n"}, add_access, add_types, 3);
-    for (auto k : {rows, columns})
-      check_parameters(k, "blur", {"src", "weights", "dst", "width", "height", "radius"},
-                       {PR_READ, PR_READ, PR_WRITE, PR_READ, PR_READ, PR_READ},
-                       {PR_F32, PR_F32, PR_F32, PR_U32, PR_U32, PR_I32}, 3);
-    check_parameters(tiled, "transpose_tiled", {"src", "dst", "width", "height"},
-                     {PR_READ, PR_WRITE, PR_READ, PR_READ}, {PR_F32, PR_F32, PR_U32, PR_U32}, 2);
-    check_parameters(sum, "reduce_sum", {"input", "partial", "n", "scale"},
-                     {PR_READ, PR_WRITE, PR_READ, PR_READ}, {PR_F32, PR_F32, PR_U32, PR_F32}, 2);
+    pr_kernel glsl_add = 0, rows = 0, columns = 0, hlsl_add = 0, tiled = 0, sum = 0;
+    if (glsl) {
+      glsl_add = load(h, context, argv[2], "vector_add");
+      rows = load(h, context, argv[3], "blur_rows");
+      columns = load(h, context, argv[4], "blur_columns");
+      check_parameters(glsl_add, "GLSL vector_add", {"a", "b", "c", "n"}, add_access, add_types, 3);
+      for (auto k : {rows, columns})
+        check_parameters(k, "blur", {"src", "weights", "dst", "width", "height", "radius"},
+                         {PR_READ, PR_READ, PR_WRITE, PR_READ, PR_READ, PR_READ},
+                         {PR_F32, PR_F32, PR_F32, PR_U32, PR_U32, PR_I32}, 3);
+    }
+    if (hlsl) {
+      hlsl_add = load(h, context, argv[5], "vector_add");
+      tiled = load(h, context, argv[6], "transpose_tiled");
+      sum = load(h, context, argv[7], "reduce_sum");
+      check_parameters(hlsl_add, "HLSL vector_add", {"a", "b", "c", "n"}, add_access, add_types, 3);
+      check_parameters(tiled, "transpose_tiled", {"src", "dst", "width", "height"},
+                       {PR_READ, PR_WRITE, PR_READ, PR_READ}, {PR_F32, PR_F32, PR_U32, PR_U32}, 2);
+      check_parameters(sum, "reduce_sum", {"input", "partial", "n", "scale"},
+                       {PR_READ, PR_WRITE, PR_READ, PR_READ}, {PR_F32, PR_F32, PR_U32, PR_F32}, 2);
+    }
 
-    const auto before_glsl = gpu_events;
-    vector_add(h, context, queue, glsl_add, "GLSL vector_add");
-    blur_pipeline(h, context, queue, rows, columns);
-    const auto glsl_events = gpu_events - before_glsl;
-    const auto before_hlsl = gpu_events;
-    vector_add(h, context, queue, hlsl_add, "HLSL vector_add");
-    transpose(h, context, queue, tiled);
-    reduce(h, context, queue, sum);
-    const auto hlsl_events = gpu_events - before_hlsl;
+    unsigned glsl_events = 0, hlsl_events = 0;
+    if (glsl) {
+      const auto before = gpu_events;
+      vector_add(h, context, queue, glsl_add, "GLSL vector_add");
+      blur_pipeline(h, context, queue, rows, columns);
+      glsl_events = gpu_events - before;
+    }
+    if (hlsl) {
+      const auto before = gpu_events;
+      vector_add(h, context, queue, hlsl_add, "HLSL vector_add");
+      transpose(h, context, queue, tiled);
+      reduce(h, context, queue, sum);
+      hlsl_events = gpu_events - before;
+    }
 
     // Launch-contract violations: refused before dispatch, no event returned.
     {
@@ -396,26 +414,30 @@ int main(int argc, char **argv) {
       auto r1 = view(h, b1, 0, 256, PR_READ), w2 = view(h, b2, 0, 256, PR_WRITE),
            rw1 = view(h, b1, 0, 256, PR_READ_WRITE), r2 = view(h, b2, 0, 256, PR_READ);
       pr_event e = 0;
-      std::vector<pr_argument> blur{view_arg(r1), view_arg(r1), view_arg(w2), u32(16), u32(16), i32(1)};
-      failure(pr_launch(queue, rows, {2, 2, 1}, {8, 8, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
-              "launch", "workgroup");
-      blur[5] = u32(1); // radius is i32
-      failure(pr_launch(queue, rows, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
-              "launch", "scalar type");
-      blur[5] = i32(1);
-      blur[2] = view_arg(r2); // dst needs write access
-      failure(pr_launch(queue, rows, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
-              "launch", "access");
-      blur[0] = view_arg(rw1);
-      blur[2] = view_arg(rw1); // in-place blur: a writable alias of src
-      failure(pr_launch(queue, columns, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_UNSUPPORTED,
-              "launch", "repeated-allocation");
-      std::vector<pr_argument> t{view_arg(r1), view_arg(w2), u32(16)};
-      failure(pr_launch(queue, tiled, {1, 1, 1}, {16, 16, 1}, t.data(), 3, &e), PR_INVALID_ARGUMENT,
-              "launch", "argument count");
-      std::vector<pr_argument> r{view_arg(r1), view_arg(w2), u32(256), f32(1.0f)};
-      failure(pr_launch(queue, sum, {1, 1, 1}, {64, 1, 1}, r.data(), 4, &e), PR_INVALID_ARGUMENT,
-              "launch", "workgroup");
+      if (glsl) {
+        std::vector<pr_argument> blur{view_arg(r1), view_arg(r1), view_arg(w2), u32(16), u32(16), i32(1)};
+        failure(pr_launch(queue, rows, {2, 2, 1}, {8, 8, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
+                "launch", "workgroup");
+        blur[5] = u32(1); // radius is i32
+        failure(pr_launch(queue, rows, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
+                "launch", "scalar type");
+        blur[5] = i32(1);
+        blur[2] = view_arg(r2); // dst needs write access
+        failure(pr_launch(queue, rows, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_INVALID_ARGUMENT,
+                "launch", "access");
+        blur[0] = view_arg(rw1);
+        blur[2] = view_arg(rw1); // in-place blur: a writable alias of src
+        failure(pr_launch(queue, columns, {1, 1, 1}, {16, 16, 1}, blur.data(), 6, &e), PR_UNSUPPORTED,
+                "launch", "repeated-allocation");
+      }
+      if (hlsl) {
+        std::vector<pr_argument> t{view_arg(r1), view_arg(w2), u32(16)};
+        failure(pr_launch(queue, tiled, {1, 1, 1}, {16, 16, 1}, t.data(), 3, &e), PR_INVALID_ARGUMENT,
+                "launch", "argument count");
+        std::vector<pr_argument> r{view_arg(r1), view_arg(w2), u32(256), f32(1.0f)};
+        failure(pr_launch(queue, sum, {1, 1, 1}, {64, 1, 1}, r.data(), 4, &e), PR_INVALID_ARGUMENT,
+                "launch", "workgroup");
+      }
       require(e == 0, "refused launch returned an event");
       require(readback(b1, 256) == ones, "a refused launch modified an input allocation");
       compared_values += 256;
@@ -423,10 +445,12 @@ int main(int argc, char **argv) {
 
     success(pr_context_synchronize(context));
     success(pr_context_write_evidence(context, evidence.string().c_str()));
-    std::cout << "GLSL on Metal: " << glsl_events << " GPU events; HLSL on Metal: " << hlsl_events
-              << " GPU events; " << compared_values << " values independently compared; "
-              << negative_checks << " rejection checks; blur max |GPU - double reference| = "
-              << blur_max_abs_error_vs_double << "\n";
+    std::cout << "Languages: " << languages << "; GLSL on Metal: " << glsl_events
+              << " GPU events; HLSL on Metal: " << hlsl_events << " GPU events; " << compared_values
+              << " values independently compared; " << negative_checks << " rejection checks";
+    if (glsl)
+      std::cout << "; blur max |GPU - double reference| = " << blur_max_abs_error_vs_double;
+    std::cout << "\n";
     std::cout << "Verification: PASS\n";
     return 0;
   } catch (const std::exception &e) {
