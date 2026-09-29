@@ -34,6 +34,14 @@ This lane extends the existing `paralyn.msl.tensor` provider and the FP32 tensor
 - `pr_layer_norm_f32` with `pr_layer_norm_v1`
 - `pr_add_f32` with `pr_add_v1`
 - The new enum value `PR_ACTIVATION_GELU_TANH = 2`, accepted by the existing `pr_bias_activation_f32`. With a bias it is a fused bias+GELU; with `bias == NULL` it is GELU alone.
+- `pr_tensor_operators_capabilities` with `pr_tensor_operators_capabilities_v1`: a library-level query of the implemented operators, activations and reductions, and of the enforced shape limits (see below).
+
+**Deliberate deviation: GELU is an enum value, not a separate entry point.** The task asked for a new versioned entry point per operator. GELU instead widens the accepted values of the existing version-1 `pr_bias_activation_v1` record, because fused bias+GELU is exactly that record's operation and a second record would duplicate its validation, alias rules and kernel. The record version stays 1, and native ABI 1 is untouched. To avoid trial-and-error detection, the provider now has a versioned capability query:
+
+- `activations` has bit `PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_GELU_TANH)` set when GELU is accepted. The C++ wrapper is `paralyn::tensors::supports_activation`, and the Python binding is `paralyn.tensor_operators_capabilities().activations`.
+- GELU and the query were added on the same branch. A library that lacks the `pr_tensor_operators_capabilities` symbol therefore also lacks GELU.
+- The query reports what this library implements. It does not report device availability; execution still requires Metal.
+- Tests check that the record agrees with behavior. Each of the 64 activation values 0–63 is submitted to `pr_bias_activation_f32`. Exactly the three advertised values run on the GPU and are value-checked; the other 61 are `PR_INVALID_ARGUMENT`.
 
 ### Shared-file edits
 
@@ -77,6 +85,8 @@ Every new operator follows the tensor v1 contract:
 - **Descriptors.** They are validated as in v1. All operators except batched matmul require contiguous row-major layouts; any other layout is `PR_UNSUPPORTED`. Nothing is reordered or copied.
 - **Handles and contexts.** An unknown, released or wrong-kind queue or module is `PR_INVALID_HANDLE`. A module that was not returned by `pr_tensor_operators_load` is `PR_INVALID_ARGUMENT`; this includes the genuine artifact loaded with plain `pr_module_load`. A module or buffer from another context is `PR_CONTEXT_MISMATCH`. All of these are checked before the zero-work decision.
 - **Zero work.** When there is no output element, nothing is submitted and `*event = 0`.
+- **Row limit.** The row operators (`reduce_rows`, `softmax_rows`, `layer_norm`) launch one 256-lane threadgroup per row. The backends reject a logical grid dimension (threadgroups × lanes) above 2³²−1, so these operators accept at most `PR_TENSOR_ROW_OPERATOR_MAX_ROWS` = ⌊(2³²−1)/256⌋ = **16,777,215** rows. For softmax the limit applies to batch × rows. Larger shapes are `PR_UNSUPPORTED`, with an operator-level message that names the limit. The check uses the shape and runs before the zero-work decision, so `[2²⁴, 0]` is rejected as well. The exact boundary `[16777215, 1]` runs on the GPU in the tests (row sum, row max, softmax and LayerNorm, each with an exact expected value), and `[2²⁴, 1]` is rejected. Before this check, `[2²⁴+5, 1]` failed at `pr_launch` with the backend's `Logical grid dimension exceeds 32-bit indexing`.
+- **Other grids are within limits by construction.** Batched matmul launches `(⌈n/16⌉, ⌈m/16⌉, batch)` groups of 16×16×1. With `m`, `n` and `batch` each at most INT32_MAX, every logical dimension stays below 2³². The elementwise and fill launches cover at most INT32_MAX elements in groups of 256.
 - **Aliasing.** Inputs may alias each other. An output that overlaps an input is `PR_INVALID_ARGUMENT`. An output in the same allocation as an input but in a disjoint range is `PR_UNSUPPORTED`. The rule is allocation-based and applies to empty tensors too.
 - **Errors.** `pr_error.operation` is the entry name: `batched_matmul_f32`, `reduce_rows_f32`, `softmax_rows_f32`, `layer_norm_f32` or `add_f32`. Success clears `pr_last_error`.
 - **Numerics.** Policy 1 applies: safe math, precise functions and `FP_CONTRACT OFF`. Each operation rounds separately.
@@ -274,6 +284,7 @@ Verification covers 11 read-back stages: ln1, qkv, scores, probs, attention, pro
 
 - A reference that ignores the causal mask fails at the attention stage in both C++ and Python.
 - A V view pointing at the K columns fails as well.
+- With the row-limit check disabled, `transformer_ops_cpp` fails at `reduce sum [2^24,1]` with status 1 and `launch: Logical grid dimension exceeds 32-bit indexing`. This reproduces the review finding, and the check was restored afterwards.
 
 **C++/Python comparison.** `transformer_block_match` runs both applications, causal and bidirectional. It requires identical provider artifact hashes, shapes, seed, causal flag and SHA-256 of all 11 stage outputs. The output SHA-256 is `6452f43f1cdacccedbfb27b51b55b060fd7312fa2d54876d56a5d9e4afdedafa` (causal) and `b689479ea51f82de2f68250ba868c1081d0c7750acca7792f31e7729cd16bb48` (bidirectional). Both were identical across C++ and Python on the recorded M5.
 
@@ -281,19 +292,19 @@ Per-stage GPU durations printed by the applications are single-run informational
 
 ## Evidence on this branch
 
-Recorded on an Apple M5, macOS 26, LLVM/Clang 21.1.8, Debug, `-DPARALYN_ENABLE_SPIRV=ON`, in the lane worktree. `ctest -j1` passed 41/41, including these five new tests. The benchmark and timing qualification were not run, and `artifacts/` was not modified.
+Recorded on an Apple M5, macOS 26, LLVM/Clang 21.1.8, Debug, `-DPARALYN_ENABLE_SPIRV=ON`, in the lane worktree. `ctest -j1` passed 41/41, including these five new tests, both in the first round and after the review fixes (row limit and capability query). The fixes add no new CTest; they extend `transformer_ops_cpp` and `transformer_ops_python`. The benchmark and timing qualification were not run, and `artifacts/` was not modified.
 
-**`transformer_ops_cpp`** covers 82 source-linked GPU commands, with per-kernel counts equal to the observed events:
+**`transformer_ops_cpp`** covers 89 source-linked GPU commands, with per-kernel counts equal to the observed events. This is 82 from the first round, plus 3 activation-consistency launches and 4 row-limit boundary launches:
 
 | Kernel | Commands |
 |---|---|
 | batched_matmul | 22 |
 | batched_fill | 3 |
-| reduce_rows | 20 |
+| reduce_rows | 22 |
 | fill | 2 |
-| softmax_rows | 13 |
-| layer_norm | 9 |
-| activation | 5 |
+| softmax_rows | 14 |
+| layer_norm | 10 |
+| activation | 8 |
 | bias_activation | 1 |
 | add | 7 |
 
@@ -319,7 +330,7 @@ The shapes cover:
 - rank 0, 1, 3 and 8 adds
 - transposed, broadcast and attention head-split views
 
-**`transformer_ops_python`** covers 28 low-level plus 8 high-level GPU launches (36 audited). Its worst error/bound ratios are matmul 0.372, GELU 0.487, LayerNorm 0.155, softmax 0.111 and row sum 0.002.
+**`transformer_ops_python`** covers 31 low-level plus 8 high-level GPU launches (39 audited). The 31 include 3 launches, one per advertised activation. Its worst error/bound ratios are matmul 0.372, GELU 0.487, LayerNorm 0.155, softmax 0.111 and row sum 0.002.
 
 **Negative coverage, per operator, in C++:**
 
@@ -334,6 +345,8 @@ The shapes cover:
 - non-FP32 or non-contiguous inputs, and negative strides
 - self-overlapping strided outputs
 - dimension limits and the 2²⁴ LayerNorm column limit
+- the row limit: `[2²⁴,1]` and `[2²⁴,0]` for sum, max, softmax and LayerNorm; `[2,2²³,1]` and `[2³²,2²⁰,0]` for batched softmax. Each case asserts `PR_UNSUPPORTED`, the operation, a cleared event and a message naming 16777215.
+- the capability record: its contents, version 2 (`PR_UNSUPPORTED`), a short record and a null pointer (`PR_INVALID_ARGUMENT`), and agreement with the accepted activation values 0–63
 - invalid scale, ε, causal flag, reduce op and activation values
 - causal masking with rows > columns
 
@@ -350,7 +363,7 @@ Each case asserts both the status and `pr_error.operation`. The Python tests cov
 - Strided layouts are accepted only by batched matmul. Other operators require contiguous layouts; there is no general broadcast or elementwise-view algebra.
 - Batched matmul is rank 3 only, with no multi-dimensional batch.
 - The row operators always use one 256-lane threadgroup per row. Very short rows waste lanes and very long rows run in a single threadgroup. This is a correctness-first design, not a performance one.
-- Grid limits for very large row or batch counts were not probed beyond the tested sizes.
+- The row operators accept at most 16,777,215 rows (batch × rows for softmax); see the row limit above. A kernel that tiles several rows per threadgroup, or loops over rows, would lift this limit. It has not been written.
 - There is no GELU (erf) variant, no RMSNorm, no dropout, no KV cache and no attention fusion (FlashAttention-style). Mask shapes other than causal are not supported.
 - There are no FP16/BF16 variants or other accumulation policies.
 
