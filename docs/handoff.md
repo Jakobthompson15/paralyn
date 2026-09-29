@@ -11,7 +11,7 @@ Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-c
    - Rebuild the wheel so it includes `tensor.py` and the tensor provider, then requalify the installed and runtime-only builds (including doctor provenance).
 2. **Runtime/backends:**
    - Per [the platform decision](decisions/2026-09-28-platform-scope.md): Metal only for now, and Linux replaces native Windows.
-   - Next: make the runtime-only, compiler and CLI builds pass their CPU/host tests on Linux in a local container, and add Linux packaging.
+   - Linux: the default build (no backend, no compiler) builds and passes **8/8 CPU/host tests** in an `ubuntu:24.04` arm64 container (GCC, 2026-09-28; build evidence only, no GPU). Two GCC warnings remain (`cli/main.cpp:48` uses the C++20 keyword `requires` as an identifier; `runtime/native.cpp:263` mixes enum and non-enum types in a conditional). Next: build with the compiler enabled (LLVM 21 on Linux), add x86_64, add a Linux wheel, and add Linux packaging.
    - NVIDIA qualification (steps in `docs/cuda-backend.md`) and the HIP/HIPRTC backend are blocked on hardware. They stay required.
 3. **Compilers/frontends:**
    - Put HLSL (DXC) and GLSL (glslang) on the pinned SPIR-V importer.
@@ -25,7 +25,7 @@ Base `4f8fb22`. Lane branches: `lane/tensors-matmul-mlp`, `lane/project-kernel-c
    - Extend kernel cases to more dtypes.
    - Qualify Linux capture (POSIX runner) in the container.
 
-The M8 PTX/SASS prerequisites are unchanged. No hardware acquisition, remote execution or push is authorized.
+M8: the PTX/SASS terms research and the clean-room fixture policy are in [docs/legal/ptx-sass-terms.md](legal/ptx-sass-terms.md). PTX may proceed clean-room only. SASS waits for a lawyer. No hardware acquisition, remote execution or push is authorized.
 
 ---
 

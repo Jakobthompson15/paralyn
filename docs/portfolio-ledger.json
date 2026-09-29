@@ -3057,14 +3057,16 @@
     {
       "id": "ptx_provenance_reference",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "policy_adopted",
+      "qualification": "unavailable",
+      "note": "Clean-room PTX fixture policy in docs/legal/ptx-sass-terms.md (open-toolchain or hand-written PTX only). NVIDIA reference comparison blocked: no NVIDIA hardware."
     },
     {
       "id": "sass_provenance_reference",
       "required": true,
-      "implementation": "not_started",
-      "qualification": "unavailable"
+      "implementation": "blocked",
+      "qualification": "unavailable",
+      "note": "Deferred pending legal review; no clean fixture route (docs/legal/ptx-sass-terms.md) and no NVIDIA hardware."
     },
     {
       "id": "full_terminal_command_family",
