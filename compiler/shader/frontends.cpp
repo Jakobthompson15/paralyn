@@ -68,15 +68,125 @@ bool identifier(const std::string &s) {
   return std::regex_match(s, pattern);
 }
 
-// First line (1-based) holding an #include directive, or 0.
-std::uint32_t include_line(const std::string &source) {
-  static const std::regex directive(R"(^[ \t]*#[ \t]*include\b)");
-  std::istringstream in(source);
-  std::string line;
-  for (std::uint32_t n = 1; std::getline(in, line); ++n)
-    if (std::regex_search(line, directive))
-      return n;
-  return 0;
+// One view of the source after translation phases 2-3: backslash-newline
+// splicing (strict: backslash immediately before the newline; lenient: also
+// with trailing blanks, as clang accepts) and comments replaced by one space,
+// optionally honouring "..." / '...' literals (clang does; glslang has no
+// character literals). Each kept character remembers its physical line.
+struct CleanChar {
+  char c;
+  std::uint32_t line;
+};
+std::vector<CleanChar> clean_view(const std::string &s, bool lenient_splice, bool literals) {
+  // Phase 1/2: newlines normalized (\r\n and lone \r count as one newline), splices removed.
+  std::vector<CleanChar> spliced;
+  spliced.reserve(s.size());
+  std::uint32_t line = 1;
+  auto newline_at = [&](std::size_t i) -> std::size_t { // length of a newline at i, or 0
+    if (i >= s.size())
+      return 0;
+    if (s[i] == '\r')
+      return i + 1 < s.size() && s[i + 1] == '\n' ? 2 : 1;
+    return s[i] == '\n' ? 1 : 0;
+  };
+  for (std::size_t i = 0; i < s.size();) {
+    if (s[i] == '\\') {
+      std::size_t j = i + 1;
+      if (lenient_splice)
+        while (j < s.size() && (s[j] == ' ' || s[j] == '\t'))
+          ++j;
+      if (const auto n = newline_at(j)) {
+        i = j + n;
+        ++line;
+        continue;
+      }
+    }
+    if (const auto n = newline_at(i)) {
+      spliced.push_back({'\n', line++});
+      i += n;
+      continue;
+    }
+    spliced.push_back({s[i], line});
+    ++i;
+  }
+  // Phase 3: comments become one space (a block comment may span newlines and
+  // then joins the lines around it, exactly as in the C preprocessor).
+  std::vector<CleanChar> out;
+  out.reserve(spliced.size());
+  for (std::size_t i = 0; i < spliced.size();) {
+    const char c = spliced[i].c;
+    const char next = i + 1 < spliced.size() ? spliced[i + 1].c : '\0';
+    if (c == '/' && next == '/') {
+      out.push_back({' ', spliced[i].line});
+      while (i < spliced.size() && spliced[i].c != '\n')
+        ++i;
+      continue;
+    }
+    if (c == '/' && next == '*') {
+      out.push_back({' ', spliced[i].line});
+      i += 2;
+      while (i < spliced.size() && !(spliced[i].c == '*' && i + 1 < spliced.size() && spliced[i + 1].c == '/'))
+        ++i;
+      i = std::min(spliced.size(), i + 2);
+      continue;
+    }
+    if (literals && (c == '"' || c == '\'')) {
+      out.push_back(spliced[i++]);
+      while (i < spliced.size() && spliced[i].c != '\n') {
+        const char d = spliced[i].c;
+        out.push_back(spliced[i++]);
+        if (d == '\\' && i < spliced.size() && spliced[i].c != '\n')
+          out.push_back(spliced[i++]);
+        else if (d == c)
+          break;
+      }
+      continue;
+    }
+    out.push_back(spliced[i++]);
+  }
+  return out;
+}
+
+bool blank(char c) { return c == ' ' || c == '\t' || c == '\v' || c == '\f'; }
+bool ident_char(char c) {
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+}
+
+// First directive in one clean view that reads another file (#include,
+// #include_next, #import; kind 0) and first GLSL #extension that enables
+// include support (kind 1). hits[kind] = {line or 0, spelling}.
+using Hit = std::pair<std::uint32_t, std::string>;
+void scan_view(const std::vector<CleanChar> &v, Hit hits[2]) {
+  bool line_start = true;
+  for (std::size_t i = 0; i < v.size(); ++i) {
+    const char c = v[i].c;
+    if (c == '\n') {
+      line_start = true;
+      continue;
+    }
+    if (blank(c))
+      continue;
+    if (c == '#' && line_start) {
+      std::size_t j = i + 1;
+      auto word = [&] {
+        while (j < v.size() && blank(v[j].c))
+          ++j;
+        std::string w;
+        while (j < v.size() && ident_char(v[j].c))
+          w += v[j++].c;
+        return w;
+      };
+      const auto name = word();
+      if ((name == "include" || name == "include_next" || name == "import") && !hits[0].first)
+        hits[0] = {v[i].line, "#" + name};
+      if (name == "extension" && !hits[1].first) {
+        const auto ext = word();
+        if (ext == "GL_GOOGLE_include_directive" || ext == "GL_ARB_shading_language_include")
+          hits[1] = {v[i].line, "#extension " + ext};
+      }
+    }
+    line_start = false;
+  }
 }
 
 std::string file_bytes(const std::string &path) {
@@ -84,6 +194,14 @@ std::string file_bytes(const std::string &path) {
   std::ostringstream s;
   s << in.rdbuf();
   return s.str();
+}
+
+// Characters a Make-style dependency list never escapes; the private
+// temporary directory is placed where every path consists only of these.
+bool plain_path(const std::string &p) {
+  return !p.empty() && std::all_of(p.begin(), p.end(), [](char c) {
+    return ident_char(c) || c == '/' || c == '.' || c == '-' || c == '+';
+  });
 }
 
 // Worker identity: SHA-256 of the executable (and of DXC's libdxcompiler,
@@ -117,6 +235,10 @@ struct TempDir {
     std::string pattern = std::string(base && *base ? base : "/tmp");
     if (pattern.back() != '/')
       pattern += '/';
+    // The worker's dependency list is compared path by path, so the directory
+    // must not need Make-style escaping (spaces, '$', '#', ':', ...).
+    if (!plain_path(pattern))
+      pattern = "/tmp/";
     pattern += "paralyn-shader-XXXXXX";
     std::vector<char> buffer(pattern.begin(), pattern.end());
     buffer.push_back('\0');
@@ -126,7 +248,7 @@ struct TempDir {
     path = buffer.data();
   }
   ~TempDir() {
-    for (const char *name : {"source", "out.spv"}) {
+    for (const char *name : {"source", "out.spv", "deps.d"}) {
       const auto p = path + "/" + name;
       ::unlink(p.c_str());
     }
@@ -355,11 +477,13 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
     fail(l, "input", "source must be nonempty and at most 1 MiB");
   if (source.find('\0') != std::string::npos || !utf8(source))
     fail(l, "input", "source must be UTF-8 text without NUL bytes");
-  if (const auto line = include_line(source))
+  std::string directive;
+  if (const auto line = include_directive_line(source, &directive))
     fail(l, "include",
-         "#include is outside the profile: exactly the given source bytes are compiled and "
-         "hashed, so included files cannot be resolved",
-         {{"error", options.source_name, line, 0, "#include is not supported"}});
+         directive + " on line " + std::to_string(line) +
+             ": #include is outside the profile: exactly the given source bytes are compiled and "
+             "hashed, so included files cannot be resolved",
+         {{"error", options.source_name, line, 0, directive + " is not supported"}});
   std::string entry = options.entry;
   if (l == Language::Hlsl) {
     if (entry.empty())
@@ -382,6 +506,7 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
   TempDir dir;
   const auto source_path = dir.path + "/source";
   const auto output_path = dir.path + "/out.spv";
+  const auto deps_path = dir.path + "/deps.d";
   try {
     write_file(source_path, source);
   } catch (const std::exception &e) {
@@ -389,8 +514,9 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
   }
   std::vector<std::string> args;
   if (l == Language::Glsl) {
+    // --depfile: glslang lists every file its preprocessor read (checked below).
     args = {PARALYN_GLSLANG_EXECUTABLE, "--target-env", "vulkan1.1", "-S", "comp", "--error-column",
-            "--quiet"};
+            "--quiet", "--depfile", deps_path};
     if (!entry.empty()) {
       args.insert(args.end(), {"-e", entry, "--source-entrypoint", "main"});
     }
@@ -409,6 +535,7 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
   for (auto a : args) {
     replace_all(a, source_path, display);
     replace_all(a, output_path, "<output>.spv");
+    replace_all(a, deps_path, "<output>.d");
     result.arguments.push_back(a);
   }
   std::string messages = worker.out + (worker.out.empty() || worker.err.empty() ? "" : "\n") + worker.err;
@@ -432,6 +559,42 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
                              : ": " + detail),
          diagnostics);
   }
+  // Compiler-enforced inclusion check: the pinned compiler itself reports
+  // every file its preprocessor read; anything but the source is rejected, so
+  // no preprocessor spelling of #include can smuggle unhashed code in.
+  std::string dependency_list;
+  if (l == Language::Glsl) {
+    dependency_list = file_bytes(deps_path);
+  } else {
+    auto dep_args = args; // identical options, -M: list dependencies, compile nothing
+    dep_args.insert(dep_args.end() - 1, "-M");
+    WorkerResult deps;
+    try {
+      deps = run_worker(dep_args);
+    } catch (const std::exception &e) {
+      fail(l, "worker", e.what());
+    }
+    if (deps.timed_out || deps.signaled || deps.status != 0)
+      fail(l, "worker", "the DXC dependency listing (-M) failed after a successful compilation");
+    dependency_list = deps.out;
+  }
+  bool well_formed = false;
+  auto extra = unexpected_dependencies(dependency_list, output_path, source_path, &well_formed);
+  if (!well_formed)
+    fail(l, "worker", "could not verify which files the compiler read: its dependency list does not "
+                      "name exactly the output and the source");
+  if (!extra.empty()) {
+    std::string names;
+    for (auto &x : extra) {
+      replace_all(x, source_path, display);
+      names += (names.empty() ? "" : ", ") + x;
+    }
+    fail(l, "include",
+         std::string(l == Language::Glsl ? "glslang" : "DXC") + " read " + std::to_string(extra.size()) +
+             " file(s) besides " + display + " (" + names +
+             "): #include is outside the profile: exactly the given source bytes are compiled and hashed",
+         {{"error", options.source_name, 0, 0, "the compiler included another file"}});
+  }
   struct stat info {};
   if (::stat(output_path.c_str(), &info) != 0 || info.st_size <= 0)
     fail(l, "worker", "the compiler worker reported success but wrote no SPIR-V");
@@ -445,8 +608,74 @@ CompileResult compile(const std::string &source, const CompileOptions &options) 
   for (auto &d : diagnostics)
     if (d.severity == "warning")
       result.warnings.push_back(d);
-  result.toolchain = worker_identity(l);
+  result.toolchain = worker_identity(l) + "; files read: source only (checked with " +
+                     (l == Language::Glsl ? "glslang --depfile" : "dxc -M") + ")";
   return result;
+}
+
+std::uint32_t include_directive_line(const std::string &source, std::string *directive) {
+  Hit first[2] = {{0, ""}, {0, ""}};
+  auto consider = [&](int kind, const Hit &hit) {
+    if (hit.first && (!first[kind].first || hit.first < first[kind].first))
+      first[kind] = hit;
+  };
+  // Every combination of splicing and literal handling the pinned
+  // preprocessors (clang-based DXC, glslang) might apply; flag the union.
+  for (bool lenient : {false, true})
+    for (bool literals : {false, true}) {
+      Hit hits[2] = {{0, ""}, {0, ""}};
+      scan_view(clean_view(source, lenient, literals), hits);
+      consider(0, hits[0]);
+      consider(1, hits[1]);
+    }
+  // Also, conservatively, an #include at the start of any physical line, even
+  // inside a comment.
+  static const std::regex raw(R"(^[ \t]*#[ \t]*include\b)");
+  std::istringstream in(source);
+  std::string text;
+  for (std::uint32_t n = 1; std::getline(in, text); ++n)
+    if (std::regex_search(text, raw)) {
+      consider(0, {n, "#include"});
+      break;
+    }
+  // Report the file-reading directive itself when there is one, else the
+  // #extension that would enable one.
+  const auto &hit = first[0].first ? first[0] : first[1];
+  if (directive)
+    *directive = hit.second;
+  return hit.first;
+}
+
+std::vector<std::string> unexpected_dependencies(const std::string &dependency_list, const std::string &target,
+                                                 const std::string &source, bool *well_formed) {
+  *well_formed = false;
+  std::string text = dependency_list;
+  replace_all(text, "\\\r\n", " ");
+  replace_all(text, "\\\n", " ");
+  std::vector<std::string> tokens;
+  std::istringstream in(text);
+  for (std::string t; in >> t;)
+    tokens.push_back(t);
+  std::vector<std::string> extra;
+  if (tokens.empty() || target.empty() || source.empty())
+    return extra;
+  // "TARGET:" or "TARGET :" first.
+  std::size_t k = 0;
+  if (tokens[0] == target + ":")
+    k = 1;
+  else if (tokens.size() > 1 && tokens[0] == target && tokens[1] == ":")
+    k = 2;
+  else
+    return extra;
+  bool named = false;
+  for (; k < tokens.size(); ++k) {
+    if (tokens[k] == source)
+      named = true;
+    else
+      extra.push_back(tokens[k]);
+  }
+  *well_formed = named;
+  return extra;
 }
 
 std::vector<std::uint32_t> normalize_storage_buffers(const std::vector<std::uint32_t> &words,

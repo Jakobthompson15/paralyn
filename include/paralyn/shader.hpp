@@ -32,7 +32,8 @@ struct SourceDiagnostic {
 // Stable codes (the `code` member):
 //   <lang>.unavailable  frontend not built into this binary
 //   <lang>.input        unreadable, empty, oversized, non-UTF-8 or NUL-containing source
-//   <lang>.include      #include is outside the profile (the exact source bytes are compiled alone)
+//   <lang>.include      #include is outside the profile (the exact source bytes are compiled alone);
+//                       also raised when the compiler reports reading any other file
 //   <lang>.entry        missing/invalid entry-point name
 //   hlsl.profile        profile is not a compute profile cs_6_0 .. cs_6_8
 //   <lang>.compile      the pinned compiler rejected the source (see diagnostics)
@@ -88,4 +89,22 @@ ExecutableModule import_source(const std::string &source, const CompileOptions &
 // cannot retype exactly. Returns the input unchanged when nothing matches.
 std::vector<std::uint32_t> normalize_storage_buffers(const std::vector<std::uint32_t> &words,
                                                      std::string *summary = nullptr);
+
+// #include guard, exposed for tests. compile() rejects file inclusion twice:
+// (1) before compilation, include_directive_line() finds a directive that could
+// read another file -- #include/#include_next/#import, or a GLSL #extension that
+// enables GL_GOOGLE_include_directive / GL_ARB_shading_language_include --
+// after backslash-newline splicing and comment removal (under every splicing and
+// literal interpretation the pinned preprocessors might apply, so `#/**/include`
+// and `#\<newline>include` are found). Returns the 1-based physical line of the
+// first such directive (0 if none) and names it in *directive.
+// (2) after compilation, the pinned compiler itself lists every file it read
+// (glslang --depfile, dxc -M); unexpected_dependencies() parses that
+// Make-style list and returns every entry other than `source`. A list that
+// does not start with `target:` or does not name `source` is malformed:
+// *well_formed is set to false and compile() fails closed.
+std::uint32_t include_directive_line(const std::string &source, std::string *directive = nullptr);
+std::vector<std::string> unexpected_dependencies(const std::string &dependency_list,
+                                                 const std::string &target, const std::string &source,
+                                                 bool *well_formed);
 } // namespace paralyn::shader

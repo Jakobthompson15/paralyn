@@ -1,0 +1,7 @@
+// Negative fixture: a block comment spanning lines joins "#" and "include".
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+# /* a comment
+   spanning lines */ include "../secret2.glsl"
+layout(local_size_x = 64) in;
+void main() {}
