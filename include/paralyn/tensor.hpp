@@ -35,6 +35,19 @@ inline std::vector<unsigned char> operators_artifact() {
   native::check(pr_tensor_operators_artifact(bytes.data(), bytes.size(), &n));
   return bytes;
 }
+// What this library's provider implements (operators, activations, reductions,
+// shape limits); a library property, not device availability.
+inline pr_tensor_operators_capabilities_v1 operators_capabilities() {
+  pr_tensor_operators_capabilities_v1 caps{};
+  caps.struct_size = sizeof(caps);
+  caps.version = PR_TENSOR_VERSION_1;
+  native::check(pr_tensor_operators_capabilities(&caps));
+  return caps;
+}
+inline bool supports_activation(pr_activation activation) {
+  const auto value = static_cast<unsigned>(activation);
+  return value < 64 && (operators_capabilities().activations & PR_TENSOR_ACTIVATION_BIT(value));
+}
 inline native::Module load_operators(const native::Context &context) {
   pr_module m = 0;
   native::check(pr_tensor_operators_load(context.get(), &m));

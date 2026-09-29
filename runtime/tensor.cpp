@@ -25,6 +25,12 @@
 namespace {
 constexpr std::uint64_t max_elements = static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max());
 constexpr std::uint32_t tile = 16, group = 256;
+// Row operators launch one `group`-lane threadgroup per row; the backends reject a
+// logical grid dimension (threadgroups x lanes) above UINT32_MAX, so rows are
+// limited to floor((2^32 - 1) / 256) = 16,777,215 (PR_TENSOR_ROW_OPERATOR_MAX_ROWS).
+constexpr std::uint64_t max_rows = std::numeric_limits<std::uint32_t>::max() / group;
+static_assert(max_rows == PR_TENSOR_ROW_OPERATOR_MAX_ROWS, "row limit disagrees with tensor.h");
+constexpr std::uint64_t max_layer_norm_columns = std::uint64_t(1) << 24;
 
 // Kernels are self-contained MSL within the public executable source profile
 // (no macros, no backslashes). Accumulation order is part of the contract.
@@ -654,6 +660,13 @@ pr_argument stride(const pr_tensor_desc_v1 *d, std::uint32_t i) {
 pr_dim3 linear(std::uint64_t count) {
   return {static_cast<std::uint32_t>((count + group - 1) / group), 1, 1};
 }
+// Shape-level row limit of the one-threadgroup-per-row operators; checked before the
+// zero-work decision so the contract does not depend on whether columns == 0.
+void row_limit(std::uint64_t rows, const char *operation) {
+  if (rows > max_rows)
+    fail(PR_UNSUPPORTED, std::string(operation) + " supports at most " + std::to_string(max_rows) +
+                             " rows (one 256-lane threadgroup per row; got " + std::to_string(rows) + ")");
+}
 } // namespace
 
 extern "C" {
@@ -714,6 +727,29 @@ pr_status pr_tensor_operators_load(pr_context context, pr_module *out) {
       *out = 0;
       throw;
     }
+  });
+}
+pr_status pr_tensor_operators_capabilities(pr_tensor_operators_capabilities_v1 *out) {
+  return boundary("tensor_operators_capabilities", [&] {
+    require(out, PR_INVALID_ARGUMENT, "Missing capability record");
+    require(out->version == PR_TENSOR_VERSION_1, PR_UNSUPPORTED,
+            "Unsupported tensor capability record version");
+    require(out->struct_size == sizeof(pr_tensor_operators_capabilities_v1), PR_INVALID_ARGUMENT,
+            "Tensor capability record size mismatch");
+    pr_tensor_operators_capabilities_v1 caps{};
+    caps.struct_size = sizeof(caps);
+    caps.version = PR_TENSOR_VERSION_1;
+    caps.operations = PR_TENSOR_OP_MATMUL | PR_TENSOR_OP_BIAS_ACTIVATION | PR_TENSOR_OP_BATCHED_MATMUL |
+                      PR_TENSOR_OP_REDUCE_ROWS | PR_TENSOR_OP_SOFTMAX_ROWS | PR_TENSOR_OP_LAYER_NORM |
+                      PR_TENSOR_OP_ADD;
+    caps.activations = PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_NONE) |
+                       PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_RELU) |
+                       PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_GELU_TANH);
+    caps.reductions = PR_TENSOR_REDUCE_BIT(PR_REDUCE_SUM) | PR_TENSOR_REDUCE_BIT(PR_REDUCE_MAX);
+    caps.max_tensor_elements = max_elements;
+    caps.max_row_operator_rows = max_rows;
+    caps.max_layer_norm_columns = max_layer_norm_columns;
+    *out = caps;
   });
 }
 pr_status pr_matmul_f32(pr_queue queue, pr_module operators, const pr_matmul_v1 *op,
@@ -867,6 +903,7 @@ pr_status pr_reduce_rows_f32(pr_queue queue, pr_module operators, const pr_reduc
     const auto x = operand(op->x, "x", 2), o = operand(op->out, "out", 1);
     const auto rows = op->x->shape[0], columns = op->x->shape[1];
     expect_dims(op->out, "out [rows]", {rows});
+    row_limit(rows, "row reduction");
     no_alias(op->out, o, op->x, x, "x");
     same_context(queue, operators, {{op->x, "x"}, {op->out, "out"}});
     Owned fn;
@@ -911,6 +948,10 @@ pr_status pr_softmax_rows_f32(pr_queue queue, pr_module operators, const pr_soft
     if (op->causal && columns < rows)
       fail(PR_INVALID_ARGUMENT,
            "causal softmax requires columns >= rows (got " + shape(op->x) + ")");
+    std::uint64_t all_rows = rows; // batch * rows for rank 3 (overflow is already rejected by validate)
+    if (rank == 3 && !mul(all_rows, op->x->shape[0], all_rows))
+      all_rows = std::numeric_limits<std::uint64_t>::max();
+    row_limit(all_rows, "softmax (batch * rows)");
     no_alias(op->out, o, op->x, x, "x");
     same_context(queue, operators, {{op->x, "x"}, {op->out, "out"}});
     Owned fn;
@@ -944,8 +985,9 @@ pr_status pr_layer_norm_f32(pr_queue queue, pr_module operators, const pr_layer_
     expect_dims(op->out, "out", {rows, columns});
     expect_dims(op->gamma, "gamma", {columns});
     expect_dims(op->beta, "beta", {columns});
-    require(columns <= (std::uint64_t(1) << 24), PR_UNSUPPORTED,
+    require(columns <= max_layer_norm_columns, PR_UNSUPPORTED,
             "layer norm supports at most 2^24 columns (exact FP32 column count)");
+    row_limit(rows, "layer norm");
     no_alias(op->out, o, op->x, x, "x");
     no_alias(op->out, o, op->gamma, g, "gamma");
     no_alias(op->out, o, op->beta, b, "beta");

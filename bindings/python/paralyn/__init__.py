@@ -647,3 +647,5 @@ from .tensor import (Reduce, add_into, batched_matmul, batched_matmul_into, bias
 __all__ += ["Reduce", "add_into", "batched_matmul", "batched_matmul_into", "bias_gelu", "gelu",
             "layer_norm", "layer_norm_into", "reduce_rows_into", "residual_add", "row_max",
             "row_sum", "softmax", "softmax_rows_into"]
+from .tensor import TensorOperatorCapabilities, tensor_operators_capabilities
+__all__ += ["TensorOperatorCapabilities", "tensor_operators_capabilities"]

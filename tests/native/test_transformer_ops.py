@@ -318,6 +318,51 @@ def negative(s, stack):
     bogus_queue._handle = 0
 
 
+def capabilities_and_row_limits(s, stack):
+    """The capability record must agree with what the operators accept, and the
+    one-threadgroup-per-row limit is rejected from the shape (PR_UNSUPPORTED)."""
+    caps = p.tensor_operators_capabilities()
+    require(caps.operations == frozenset({"matmul", "bias_activation", "batched_matmul", "reduce_rows",
+                                          "softmax_rows", "layer_norm", "add"}), f"operations {caps.operations}")
+    require(caps.activations == frozenset(p.Activation) and p.Activation.GELU_TANH in caps.activations,
+            f"activations {caps.activations}")
+    require(caps.reductions == frozenset(p.Reduce), f"reductions {caps.reductions}")
+    limit = (2**32 - 1) // 256
+    require((caps.max_tensor_elements, caps.max_row_operator_rows, caps.max_layer_norm_columns)
+            == (2**31 - 1, limit, 2**24) and limit == 16777215, "capability limits")
+    xb, ob = s.buffer(values(16, 77, 3.0)), s.output(16)
+    for activation in caps.activations:  # every advertised activation runs on the GPU
+        event = p.bias_activation_into(s.queue, s.ops, p.TensorDescriptor(xb, (2, 8)), None,
+                                       p.TensorDescriptor(ob, (2, 8)), activation=activation)
+        s.completed(event, "paralyn_activation_f32", f"activation {activation!r}")
+    over = limit + 1
+    big_x = stack.enter_context(s.context.buffer(over * 4))
+    big_o = stack.enter_context(s.context.buffer(over * 4))
+    gb = s.buffer([1.0])
+    g1, g0 = p.TensorDescriptor(gb, (1,)), p.TensorDescriptor(gb, (0,))
+
+    def too_many(function, operation):
+        try:
+            function()
+        except p.Error as error:
+            require(error.code == p.Status.UNSUPPORTED and error.operation == operation and "16777215" in str(error),
+                    f"{operation}: wrong rejection {error!r}")
+            return
+        raise RuntimeError(f"{operation} accepted more than {limit} rows")
+
+    for cols in (1, 0):
+        x, o = p.TensorDescriptor(big_x, (over, cols)), p.TensorDescriptor(big_o, (over, cols))
+        for op in p.Reduce:
+            too_many(lambda: p.reduce_rows_into(s.queue, s.ops, x, p.TensorDescriptor(big_o, (over,)), op=op),
+                     "reduce_rows_f32")
+        too_many(lambda: p.softmax_rows_into(s.queue, s.ops, x, o), "softmax_rows_f32")
+        g = g1 if cols else g0
+        too_many(lambda: p.layer_norm_into(s.queue, s.ops, x, g, g, o), "layer_norm_f32")
+    batched = p.TensorDescriptor(big_x, (2, over // 2, 1)), p.TensorDescriptor(big_o, (2, over // 2, 1))
+    too_many(lambda: p.softmax_rows_into(s.queue, s.ops, *batched), "softmax_rows_f32")
+    return caps
+
+
 def high_level(s):
     context = s.context
     with ExitStack() as owned:
@@ -377,6 +422,7 @@ def main():
         layer_norm(s)
         gelu_and_add(s)
         negative(s, stack)
+        caps = capabilities_and_row_limits(s, stack)
         high = high_level(s)
         s.context.write_evidence(args.artifacts)
     execution = json.loads((args.artifacts / "execution.json").read_text())
@@ -387,6 +433,8 @@ def main():
         require(launch["command_status"] == "completed" and not launch["error"], "failed launch")
     print(f"Transformer operators (Python): {s.events} low-level GPU commands "
           f"({', '.join(f'{k} {v}' for k, v in sorted(s.kernels.items()))}), {high} high-level events")
+    print(f"Capabilities: {len(caps.operations)} operations, activations "
+          f"{', '.join(a.name for a in sorted(caps.activations))}; row limit {caps.max_row_operator_rows} enforced")
     for op, worst in sorted(s.worst.items()):
         print(f"worst error/bound {op}: {worst:.4f}")
     print("Verification: PASS Python batched strided matmul, row sum/max, softmax, LayerNorm, GELU, residual add "

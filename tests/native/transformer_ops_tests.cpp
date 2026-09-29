@@ -805,6 +805,161 @@ void negative(Suite &s) {
   status(pr_bias_activation_f32(Q, M, &bop, &e), PR_INVALID_ARGUMENT, "activation 3", "bias_activation_f32");
 }
 
+// ---------------------------------------------------------------- capabilities and row limits
+// The capability record must agree with what the operators actually accept.
+unsigned capabilities(Suite &s) {
+  const auto caps = t::operators_capabilities();
+  require(caps.struct_size == sizeof(caps) && caps.version == PR_TENSOR_VERSION_1, "capability header");
+  require(caps.operations == (PR_TENSOR_OP_MATMUL | PR_TENSOR_OP_BIAS_ACTIVATION | PR_TENSOR_OP_BATCHED_MATMUL |
+                              PR_TENSOR_OP_REDUCE_ROWS | PR_TENSOR_OP_SOFTMAX_ROWS | PR_TENSOR_OP_LAYER_NORM |
+                              PR_TENSOR_OP_ADD),
+          "capability operations");
+  require(caps.activations == 0x7 && (caps.activations & PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_GELU_TANH)),
+          "capability activations (NONE, RELU, GELU_TANH)");
+  require(caps.reductions == 0x3, "capability reductions (SUM, MAX)");
+  require(caps.max_tensor_elements == 2147483647ull && caps.max_row_operator_rows == 16777215ull &&
+              caps.max_row_operator_rows == PR_TENSOR_ROW_OPERATOR_MAX_ROWS &&
+              caps.max_layer_norm_columns == (1ull << 24),
+          "capability limits");
+  require(t::supports_activation(PR_ACTIVATION_GELU_TANH) && !t::supports_activation(static_cast<pr_activation>(3)),
+          "supports_activation");
+  pr_tensor_operators_capabilities_v1 bad{};
+  bad.struct_size = sizeof(bad);
+  bad.version = 2;
+  status(pr_tensor_operators_capabilities(&bad), PR_UNSUPPORTED, "capabilities: version 2", "tensor_operators_capabilities");
+  bad.version = PR_TENSOR_VERSION_1;
+  bad.struct_size = sizeof(bad) - 8;
+  status(pr_tensor_operators_capabilities(&bad), PR_INVALID_ARGUMENT, "capabilities: short record",
+         "tensor_operators_capabilities");
+  status(pr_tensor_operators_capabilities(nullptr), PR_INVALID_ARGUMENT, "capabilities: null",
+         "tensor_operators_capabilities");
+  // Advertised activations run on the GPU; every other value is rejected (0..63).
+  const auto x = random(16, 4242, 3.0f);
+  auto xb = s.upload(x), ob = s.output(16);
+  const auto xd = t::contiguous(xb, {2, 8}), od = t::contiguous(ob, {2, 8});
+  unsigned accepted = 0;
+  for (unsigned v = 0; v < 64; ++v) {
+    auto op = rec<pr_bias_activation_v1>();
+    op.activation = static_cast<pr_activation>(v);
+    op.x = &xd;
+    op.out = &od;
+    pr_event e = 0;
+    const bool advertised = caps.activations >> v & 1;
+    const std::string label = "activation " + std::to_string(v);
+    status(pr_bias_activation_f32(s.queue.get(), s.ops.get(), &op, &e),
+           advertised ? PR_SUCCESS : PR_INVALID_ARGUMENT, label, "bias_activation_f32");
+    if (!advertised) {
+      require(e == 0, label + ": event not cleared");
+      continue;
+    }
+    s.completed(n::Event(e), "paralyn_activation_f32", label);
+    const auto out = s.read(ob);
+    for (std::size_t i = 0; i < 16; ++i) {
+      const float want = v == PR_ACTIVATION_NONE ? x[i] : v == PR_ACTIVATION_RELU ? (x[i] >= 0.0f ? x[i] : 0.0f) : 0.0f;
+      if (v == PR_ACTIVATION_GELU_TANH)
+        require(r::within(out[i], r::gelu(r::exact(x[i]))), label + ": GELU outside its bound");
+      else
+        require(r::same_bits(out[i], want), label + ": wrong value");
+    }
+    ++accepted;
+  }
+  require(accepted == 3, "exactly the three advertised activations must run");
+  return accepted;
+}
+// One 256-lane threadgroup per row: rows <= floor((2^32-1)/256). The exact boundary runs
+// on the GPU (columns == 1, where every operator has an exact answer); one more row, and
+// any empty-column shape with too many rows, is PR_UNSUPPORTED before the zero-work decision.
+void row_limits(Suite &s) {
+  const std::uint64_t limit = PR_TENSOR_ROW_OPERATOR_MAX_ROWS, over = limit + 1;
+  require(limit == 16777215ull && limit * 256 <= 0xffffffffull && over * 256 > 0xffffffffull, "row limit arithmetic");
+  const auto Q = s.queue.get();
+  const auto M = s.ops.get();
+  auto xb = s.context.buffer(over * 4), ob = s.context.buffer(over * 4);
+  const auto gamma_ = s.upload({1.5f}), beta = s.upload({-0.25f});
+  const auto gd = t::contiguous(gamma_, {1}), bd = t::contiguous(beta, {1});
+  const auto gd0 = t::contiguous(gamma_, {0}), bd0 = t::contiguous(beta, {0});
+  pr_event e = 99;
+  auto reduce = [&](std::uint64_t rows, std::uint64_t cols, pr_reduce_op op) {
+    const auto xd = t::contiguous(xb, {rows, cols}), od = t::contiguous(ob, {rows});
+    auto r0 = rec<pr_reduce_rows_v1>();
+    r0.op = op;
+    r0.x = &xd;
+    r0.out = &od;
+    e = 99;
+    return pr_reduce_rows_f32(Q, M, &r0, &e);
+  };
+  auto softmax_ = [&](std::vector<std::uint64_t> shape) {
+    const auto xd = t::contiguous(xb, shape), od = t::contiguous(ob, shape);
+    auto op = rec<pr_softmax_rows_v1>();
+    op.scale = 1.0f;
+    op.x = &xd;
+    op.out = &od;
+    e = 99;
+    return pr_softmax_rows_f32(Q, M, &op, &e);
+  };
+  auto norm = [&](std::uint64_t rows, std::uint64_t cols) {
+    const auto xd = t::contiguous(xb, {rows, cols}), od = t::contiguous(ob, {rows, cols});
+    auto op = rec<pr_layer_norm_v1>();
+    op.epsilon = 1e-5f;
+    op.x = &xd;
+    op.gamma = cols ? &gd : &gd0;
+    op.beta = cols ? &bd : &bd0;
+    op.out = &od;
+    e = 99;
+    return pr_layer_norm_f32(Q, M, &op, &e);
+  };
+  auto rejected = [&](pr_status st, const std::string &label, const char *operation) {
+    status(st, PR_UNSUPPORTED, label, operation);
+    require(e == 0, label + ": event not cleared");
+    pr_error err{};
+    pr_last_error(&err);
+    require(std::string(err.message).find("16777215") != std::string::npos, label + ": message lacks the limit");
+  };
+  rejected(reduce(over, 1, PR_REDUCE_SUM), "reduce sum [2^24,1]", "reduce_rows_f32");
+  rejected(reduce(over, 1, PR_REDUCE_MAX), "reduce max [2^24,1]", "reduce_rows_f32");
+  rejected(reduce(over, 0, PR_REDUCE_SUM), "reduce sum [2^24,0]", "reduce_rows_f32");
+  rejected(softmax_({over, 1}), "softmax [2^24,1]", "softmax_rows_f32");
+  rejected(softmax_({over, 0}), "softmax [2^24,0] (no elements)", "softmax_rows_f32");
+  rejected(softmax_({2, over / 2, 1}), "softmax [2,2^23,1] (batch*rows)", "softmax_rows_f32");
+  rejected(softmax_({1ull << 32, 1ull << 20, 0}), "softmax [2^32,2^20,0] (no elements, batch*rows = 2^52)", "softmax_rows_f32");
+  rejected(norm(over, 1), "layer_norm [2^24,1]", "layer_norm_f32");
+  rejected(norm(over, 0), "layer_norm [2^24,0] (no elements)", "layer_norm_f32");
+
+  // The exact boundary executes on the GPU.
+  const auto x = random(limit, 5150, 8.0f);
+  xb.write(x.data(), limit * 4);
+  std::vector<float> out(limit);
+  const std::string rows_text = "[" + std::to_string(limit) + ",1]";
+  for (auto op : {PR_REDUCE_SUM, PR_REDUCE_MAX}) {
+    const std::string label = std::string(op == PR_REDUCE_SUM ? "reduce sum " : "reduce max ") + rows_text;
+    status(reduce(limit, 1, op), PR_SUCCESS, label, "");
+    s.completed(n::Event(e), "paralyn_reduce_rows_f32", label);
+    ob.read(out.data(), limit * 4);
+    // With one column the documented order reduces to +0.0 + x (sum) and x (max); the
+    // full 256-lane emulation re-derives that on every 4099th row and the last row.
+    for (std::uint64_t i = 0; i < limit; ++i) {
+      const float closed = op == PR_REDUCE_SUM ? 0.0f + x[i] : x[i];
+      const bool sampled = i % 4099 == 0 || i + 1 == limit;
+      if (!r::same_bits(out[i], closed) ||
+          (sampled && !r::same_bits(out[i], op == PR_REDUCE_SUM ? r::tree_sum_f32(&x[i], 1)
+                                                                : r::tree_max_f32(&x[i], 1))))
+        require(false, label + ": row " + std::to_string(i));
+    }
+  }
+  status(softmax_({limit, 1}), PR_SUCCESS, "softmax " + rows_text, "");
+  s.completed(n::Event(e), "paralyn_softmax_rows_f32", "softmax " + rows_text);
+  ob.read(out.data(), limit * 4);
+  for (std::uint64_t i = 0; i < limit; ++i)
+    if (!r::same_bits(out[i], 1.0f))
+      require(false, "softmax " + rows_text + ": row " + std::to_string(i) + " is not exactly 1");
+  status(norm(limit, 1), PR_SUCCESS, "layer_norm " + rows_text, "");
+  s.completed(n::Event(e), "paralyn_layer_norm_f32", "layer_norm " + rows_text);
+  ob.read(out.data(), limit * 4);
+  for (std::uint64_t i = 0; i < limit; ++i) // x - mean == 0 exactly, so out == 0*rstd*gamma + beta == beta
+    if (!r::same_bits(out[i], -0.25f))
+      require(false, "layer_norm " + rows_text + ": row " + std::to_string(i) + " is not beta");
+}
+
 // ---------------------------------------------------------------- high-level wrappers
 unsigned high_level() {
   t::Context ctx("auto");
@@ -880,6 +1035,8 @@ int main(int argc, char **argv) {
     gelu_specials(s);
     residual_add(s);
     negative(s);
+    const unsigned activations = capabilities(s);
+    row_limits(s);
     s.context.evidence(evidence.string());
     std::ifstream input(evidence / "execution.json");
     const auto execution = nlohmann::json::parse(input);
@@ -902,6 +1059,9 @@ int main(int argc, char **argv) {
       first = false;
     }
     std::cout << "), " << high << " high-level events\n";
+    std::cout << "Capability record matches accepted activations (" << activations
+              << " advertised, 61 rejected); row limit " << PR_TENSOR_ROW_OPERATOR_MAX_ROWS
+              << " executed at the boundary and rejected one row above it\n";
     for (const auto &[op, ratio] : s.worst) std::cout << "worst error/bound " << op << ": " << ratio << '\n';
     std::cout << "Verification: PASS batched strided matmul, row sum/max, softmax, LayerNorm, GELU, residual add "
                  "(bitwise FP32 order references and float64 running-error bounds)\n";

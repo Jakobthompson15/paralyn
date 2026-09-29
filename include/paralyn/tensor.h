@@ -114,6 +114,12 @@ typedef struct pr_reduce_rows_v1 {
   uint32_t reserved; /* must be zero */
   const pr_tensor_desc_v1 *x, *out;
 } pr_reduce_rows_v1;
+/* Row operators (reduce_rows, softmax_rows, layer_norm) launch one 256-lane
+ * threadgroup per row, and a logical grid dimension may not exceed 2^32-1 lanes, so
+ * they accept at most PR_TENSOR_ROW_OPERATOR_MAX_ROWS = floor((2^32-1)/256) rows
+ * (for softmax, batch*rows). More rows is PR_UNSUPPORTED, decided from the shape
+ * before the zero-work decision (so [2^24, 0] is rejected too). */
+#define PR_TENSOR_ROW_OPERATOR_MAX_ROWS 16777215u
 /* Row softmax over the last dimension of contiguous x/out, rank 2 [rows,columns]
  * or rank 3 [batch,rows,columns]: out = exp(s*x - max) / sum(exp(s*x - max)),
  * with s = scale (finite, > 0) and the max/sum over unmasked columns. causal = 1
@@ -150,6 +156,36 @@ pr_status pr_softmax_rows_f32(pr_queue queue, pr_module operators, const pr_soft
 pr_status pr_layer_norm_f32(pr_queue queue, pr_module operators, const pr_layer_norm_v1 *op,
                             pr_event *out);
 pr_status pr_add_f32(pr_queue queue, pr_module operators, const pr_add_v1 *op, pr_event *out);
+
+/* ---- Provider capability query (additive, version 1) ----
+ * Reports what this library's paralyn.msl.tensor provider implements and the
+ * shape limits it enforces. It is a library property, not device availability:
+ * execution still needs a backend that runs the provider's MSL (physical Metal).
+ * A client detects GELU as PR_TENSOR_ACTIVATION_BIT(PR_ACTIVATION_GELU_TANH) in
+ * `activations` instead of by trial; a library without this symbol predates the
+ * transformer-block operators (GELU shipped together with this query). Callers set
+ * struct_size = sizeof(record), version = PR_TENSOR_VERSION_1; unknown versions are
+ * PR_UNSUPPORTED and size mismatches PR_INVALID_ARGUMENT. Bits not defined here are
+ * reserved and reported as zero by this version. */
+#define PR_TENSOR_OP_MATMUL (1ull << 0)          /* pr_matmul_f32 */
+#define PR_TENSOR_OP_BIAS_ACTIVATION (1ull << 1) /* pr_bias_activation_f32 */
+#define PR_TENSOR_OP_BATCHED_MATMUL (1ull << 2)  /* pr_batched_matmul_f32 */
+#define PR_TENSOR_OP_REDUCE_ROWS (1ull << 3)     /* pr_reduce_rows_f32 */
+#define PR_TENSOR_OP_SOFTMAX_ROWS (1ull << 4)    /* pr_softmax_rows_f32 */
+#define PR_TENSOR_OP_LAYER_NORM (1ull << 5)      /* pr_layer_norm_f32 */
+#define PR_TENSOR_OP_ADD (1ull << 6)             /* pr_add_f32 */
+#define PR_TENSOR_ACTIVATION_BIT(activation) (1ull << (unsigned)(activation))
+#define PR_TENSOR_REDUCE_BIT(reduce) (1ull << (unsigned)(reduce))
+typedef struct pr_tensor_operators_capabilities_v1 {
+  uint32_t struct_size, version;
+  uint64_t operations;             /* PR_TENSOR_OP_* bits */
+  uint64_t activations;            /* PR_TENSOR_ACTIVATION_BIT(v) for each accepted pr_activation */
+  uint64_t reductions;             /* PR_TENSOR_REDUCE_BIT(v) for each accepted pr_reduce_op */
+  uint64_t max_tensor_elements;    /* per descriptor (INT32_MAX) */
+  uint64_t max_row_operator_rows;  /* PR_TENSOR_ROW_OPERATOR_MAX_ROWS */
+  uint64_t max_layer_norm_columns; /* 2^24 */
+} pr_tensor_operators_capabilities_v1;
+pr_status pr_tensor_operators_capabilities(pr_tensor_operators_capabilities_v1 *out);
 #ifdef __cplusplus
 }
 #endif

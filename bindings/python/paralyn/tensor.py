@@ -81,6 +81,13 @@ class _LayerNorm(_c.Structure):
                 ("beta", _c.POINTER(_TensorDesc)), ("out", _c.POINTER(_TensorDesc))]
 
 
+class _Capabilities(_c.Structure):
+    _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
+                ("operations", _c.c_uint64), ("activations", _c.c_uint64),
+                ("reductions", _c.c_uint64), ("max_tensor_elements", _c.c_uint64),
+                ("max_row_operator_rows", _c.c_uint64), ("max_layer_norm_columns", _c.c_uint64)]
+
+
 class _Add(_c.Structure):
     _fields_ = [("struct_size", _c.c_uint32), ("version", _c.c_uint32),
                 ("x", _c.POINTER(_TensorDesc)), ("y", _c.POINTER(_TensorDesc)),
@@ -102,6 +109,7 @@ def _api(lib):
             "pr_softmax_rows_f32": (_c.c_int, [h, h, ptr(_SoftmaxRows), ptr(h)]),
             "pr_layer_norm_f32": (_c.c_int, [h, h, ptr(_LayerNorm), ptr(h)]),
             "pr_add_f32": (_c.c_int, [h, h, ptr(_Add), ptr(h)]),
+            "pr_tensor_operators_capabilities": (_c.c_int, [ptr(_Capabilities)]),
         }
         for name, (result, arguments) in signatures.items():
             function = getattr(lib.api, name)
@@ -164,6 +172,47 @@ def tensor_operators_artifact(library=None):
     data = _c.create_string_buffer(size.value)
     lib.check(lib.api.pr_tensor_operators_artifact(data, size.value, _c.byref(size)))
     return data.raw[:size.value]
+
+
+_OPERATION_BITS = ("matmul", "bias_activation", "batched_matmul", "reduce_rows", "softmax_rows",
+                   "layer_norm", "add")
+
+
+@dataclass(frozen=True)
+class TensorOperatorCapabilities:
+    """What this library's paralyn.msl.tensor provider implements and the shape
+    limits it enforces (pr_tensor_operators_capabilities). A library property,
+    not device availability: execution still needs a Metal device."""
+    operations: frozenset
+    activations: frozenset
+    reductions: frozenset
+    max_tensor_elements: int
+    max_row_operator_rows: int
+    max_layer_norm_columns: int
+
+
+def _members(enum, mask):
+    known = frozenset(v for v in enum if mask >> int(v) & 1)
+    extra = mask & ~sum(1 << int(v) for v in known)
+    if extra:  # a newer library than these bindings; never silently dropped
+        raise Error(Status.UNSUPPORTED, "tensor_operators_capabilities",
+                    f"unknown {enum.__name__} bits 0x{extra:x}; update the Python bindings")
+    return known
+
+
+def tensor_operators_capabilities(library=None):
+    """Versioned capability record of the tensor operator provider; e.g.
+    Activation.GELU_TANH in caps.activations detects GELU without trial calls."""
+    lib = _api(_library(library))
+    caps = _Capabilities(_c.sizeof(_Capabilities), TENSOR_VERSION_1)
+    lib.check(lib.api.pr_tensor_operators_capabilities(_c.byref(caps)))
+    operations = frozenset(name for bit, name in enumerate(_OPERATION_BITS) if caps.operations >> bit & 1)
+    if caps.operations >> len(_OPERATION_BITS):
+        raise Error(Status.UNSUPPORTED, "tensor_operators_capabilities",
+                    f"unknown operation bits 0x{caps.operations:x}; update the Python bindings")
+    return TensorOperatorCapabilities(operations, _members(Activation, caps.activations),
+                                      _members(Reduce, caps.reductions), caps.max_tensor_elements,
+                                      caps.max_row_operator_rows, caps.max_layer_norm_columns)
 
 
 def load_tensor_operators(context):
