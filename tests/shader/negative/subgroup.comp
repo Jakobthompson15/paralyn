@@ -1,0 +1,10 @@
+// Negative fixture: subgroup (GroupNonUniform*) operations are outside the profile.
+#version 450
+#extension GL_KHR_shader_subgroup_arithmetic : require
+layout(local_size_x = 64) in;
+layout(set = 0, binding = 0) buffer Data { float data[]; } d;
+
+void main() {
+  uint i = gl_GlobalInvocationID.x;
+  d.data[i] = subgroupAdd(d.data[i]);
+}

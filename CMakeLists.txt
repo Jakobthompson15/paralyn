@@ -364,3 +364,28 @@ if(PARALYN_ENABLE_SPIRV)
     endif()
   endif()
 endif()
+if((PARALYN_ENABLE_GLSL AND PARALYN_ENABLE_HLSL) AND BUILD_TESTING)
+  # GLSL/HLSL compute frontends (docs/hlsl-glsl-frontends.md): CPU compile/import
+  # tests, CLI contract, physical-GPU execution and kernel cases.
+  add_executable(shader_frontend_tests tests/shader/frontend_tests.cpp)
+  target_link_libraries(shader_frontend_tests PRIVATE paralyn_shader)
+  add_test(NAME shader_frontends COMMAND shader_frontend_tests ${PROJECT_SOURCE_DIR}/examples
+    ${PROJECT_SOURCE_DIR}/tests/shader/negative)
+  set_tests_properties(shader_frontends PROPERTIES LABELS "shader;glsl;hlsl" TIMEOUT 180)
+  if(PARALYN_ENABLE_METAL)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    set(_shader_runner ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/shader/run_shader.py
+      --paralyn $<TARGET_FILE:paralyn> --examples ${PROJECT_SOURCE_DIR}/examples
+      --negative ${PROJECT_SOURCE_DIR}/tests/shader/negative)
+    add_test(NAME shader_cli COMMAND ${_shader_runner} --mode cli)
+    set_tests_properties(shader_cli PROPERTIES LABELS "gpu;shader;cli" TIMEOUT 300)
+    add_executable(shader_metal_tests tests/shader/metal_tests.cpp)
+    target_link_libraries(shader_metal_tests PRIVATE paralyn_native paralyn_ir)
+    target_compile_options(shader_metal_tests PRIVATE -fno-fast-math -ffp-contract=off)
+    add_test(NAME shader_metal COMMAND ${_shader_runner} --mode gpu --driver $<TARGET_FILE:shader_metal_tests>
+      --library $<TARGET_FILE:paralyn_native> --python-path ${PROJECT_SOURCE_DIR}/bindings/python)
+    set_tests_properties(shader_metal PROPERTIES LABELS "gpu;shader" TIMEOUT 300)
+    add_test(NAME shader_cases COMMAND ${_shader_runner} --mode cases)
+    set_tests_properties(shader_cases PROPERTIES LABELS "gpu;shader;cli;cases" TIMEOUT 300)
+  endif()
+endif()

@@ -1,0 +1,60 @@
+# Declarative project for the GLSL/HLSL compute examples (schema version 1).
+# GLSL modules may declare their entry point; HLSL modules must declare both
+# entry and profile. Select a case explicitly, e.g.
+#   paralyn verify --project examples/cases/shaders.toml --case glsl-blur-rows
+schema = "paralyn.project"
+schema_version = 1
+
+[project]
+name = "shader-kernel-examples"
+
+[modules.glsl-vector-add]
+source = "../glsl/vector_add.comp"
+entry = "vector_add"
+
+[modules.glsl-blur-rows]
+source = "../glsl/blur_rows.comp"
+entry = "blur_rows"
+
+[modules.glsl-blur-columns]
+source = "../glsl/blur_columns.comp"
+entry = "blur_columns"
+
+[modules.hlsl-vector-add]
+source = "../hlsl/vector_add.hlsl"
+entry = "vector_add"
+profile = "cs_6_0"
+
+[modules.hlsl-transpose]
+source = "../hlsl/transpose.hlsl"
+entry = "transpose_tiled"
+profile = "cs_6_0"
+
+[modules.hlsl-reduce-sum]
+source = "../hlsl/reduce_sum.hlsl"
+entry = "reduce_sum"
+profile = "cs_6_0"
+
+[cases.glsl-vector-add]
+module = "glsl-vector-add"
+file = "glsl_vector_add.toml"
+
+[cases.glsl-blur-rows]
+module = "glsl-blur-rows"
+file = "glsl_blur_rows.toml"
+
+[cases.glsl-blur-columns]
+module = "glsl-blur-columns"
+file = "glsl_blur_columns.toml"
+
+[cases.hlsl-vector-add]
+module = "hlsl-vector-add"
+file = "hlsl_vector_add.toml"
+
+[cases.hlsl-transpose]
+module = "hlsl-transpose"
+file = "hlsl_transpose.toml"
+
+[cases.hlsl-reduce-sum]
+module = "hlsl-reduce-sum"
+file = "hlsl_reduce_sum.toml"

@@ -1,0 +1,41 @@
+# Kernel case for examples/hlsl/vector_add.hlsl (profile cs_6_0) entry vector_add (HLSL compute via the pinned
+# DXC worker, SPIR-V import and Metal). Same hashed inputs and
+# independent Python reference as vector_add.toml; 1,003 elements (partial last group).
+schema = "paralyn.kernel-case"
+schema_version = 1
+
+[case]
+name = "hlsl-vector-add-1003"
+entry = "vector_add"
+description = "c[i] = a[i] + b[i] for i < n; reference file computed independently in Python"
+
+[launch]
+grid = [16, 1, 1]
+block = [64, 1, 1]  # the shader's LocalSize / numthreads
+
+[scalars.n]
+type = "u32"
+value = 1003
+
+[buffers.a]
+dtype = "f32"
+length = 1003
+file = "data/vector_add_a.f32"
+sha256 = "daed10ac0acd21c0624c83ee0373c0827d04d991260ff0e7b6d5bdd3799aea33"
+
+[buffers.b]
+dtype = "f32"
+length = 1003
+file = "data/vector_add_b.f32"
+sha256 = "b2530182fd402df693e7bb978a5e65601cc4eeaec7a10a6e22d509231c8d8748"
+
+[buffers.c]
+dtype = "f32"
+length = 1003
+fill = -65536.0
+output = true
+
+[[verify]]
+buffer = "c"
+reference = { file = "data/vector_add_expected.f32", sha256 = "32466146bcde7adf9a7b39cc5b5ae6c26175fdff8803c4cfeda231683cabca6a" }
+tolerance = { kind = "exact" }
